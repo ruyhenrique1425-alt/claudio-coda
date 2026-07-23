@@ -18,6 +18,7 @@ import { Route as AppBiRouteImport } from './routes/app.bi'
 import { Route as AppCargasRouteImport } from './routes/app.cargas'
 import { Route as AppCentralRouteImport } from './routes/app.central'
 import { Route as AppConsumoRouteImport } from './routes/app.consumo'
+import { Route as AppConsumoTempoRouteImport } from './routes/app.consumo-tempo'
 import { Route as AppEstoqueRouteImport } from './routes/app.estoque'
 import { Route as AppGovernancaRouteImport } from './routes/app.governanca'
 import { Route as AppImportarRouteImport } from './routes/app.importar'
@@ -79,6 +80,11 @@ const AppCentralRoute = AppCentralRouteImport.update({
 const AppConsumoRoute = AppConsumoRouteImport.update({
   id: '/consumo',
   path: '/consumo',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsumoTempoRoute = AppConsumoTempoRouteImport.update({
+  id: '/consumo-tempo',
+  path: '/consumo-tempo',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEstoqueRoute = AppEstoqueRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/app/cargas': typeof AppCargasRoute
   '/app/central': typeof AppCentralRoute
   '/app/consumo': typeof AppConsumoRoute
+  '/app/consumo-tempo': typeof AppConsumoTempoRoute
   '/app/estoque': typeof AppEstoqueRoute
   '/app/governanca': typeof AppGovernancaRoute
   '/app/importar': typeof AppImportarRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/app/cargas': typeof AppCargasRoute
   '/app/central': typeof AppCentralRoute
   '/app/consumo': typeof AppConsumoRoute
+  '/app/consumo-tempo': typeof AppConsumoTempoRoute
   '/app/estoque': typeof AppEstoqueRoute
   '/app/governanca': typeof AppGovernancaRoute
   '/app/importar': typeof AppImportarRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/app/cargas': typeof AppCargasRoute
   '/app/central': typeof AppCentralRoute
   '/app/consumo': typeof AppConsumoRoute
+  '/app/consumo-tempo': typeof AppConsumoTempoRoute
   '/app/estoque': typeof AppEstoqueRoute
   '/app/governanca': typeof AppGovernancaRoute
   '/app/importar': typeof AppImportarRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/app/cargas'
     | '/app/central'
     | '/app/consumo'
+    | '/app/consumo-tempo'
     | '/app/estoque'
     | '/app/governanca'
     | '/app/importar'
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/app/cargas'
     | '/app/central'
     | '/app/consumo'
+    | '/app/consumo-tempo'
     | '/app/estoque'
     | '/app/governanca'
     | '/app/importar'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/app/cargas'
     | '/app/central'
     | '/app/consumo'
+    | '/app/consumo-tempo'
     | '/app/estoque'
     | '/app/governanca'
     | '/app/importar'
@@ -409,6 +421,13 @@ declare module '@tanstack/react-router' {
       path: '/consumo'
       fullPath: '/app/consumo'
       preLoaderRoute: typeof AppConsumoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/consumo-tempo': {
+      id: '/app/consumo-tempo'
+      path: '/consumo-tempo'
+      fullPath: '/app/consumo-tempo'
+      preLoaderRoute: typeof AppConsumoTempoRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/estoque': {
@@ -539,6 +558,7 @@ interface AppRouteChildren {
   AppCargasRoute: typeof AppCargasRoute
   AppCentralRoute: typeof AppCentralRoute
   AppConsumoRoute: typeof AppConsumoRoute
+  AppConsumoTempoRoute: typeof AppConsumoTempoRoute
   AppEstoqueRoute: typeof AppEstoqueRoute
   AppGovernancaRoute: typeof AppGovernancaRoute
   AppImportarRoute: typeof AppImportarRoute
@@ -562,6 +582,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCargasRoute: AppCargasRoute,
   AppCentralRoute: AppCentralRoute,
   AppConsumoRoute: AppConsumoRoute,
+  AppConsumoTempoRoute: AppConsumoTempoRoute,
   AppEstoqueRoute: AppEstoqueRoute,
   AppGovernancaRoute: AppGovernancaRoute,
   AppImportarRoute: AppImportarRoute,

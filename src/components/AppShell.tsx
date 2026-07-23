@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Wrench,
   BarChart3,
+  TrendingUp,
   CreditCard,
   Package,
   Warehouse,
@@ -54,6 +55,7 @@ type NavKey =
   | "map"
   | "equipe"
   | "consumo"
+  | "consumotempo"
   | "manutencao"
   | "estoque"
   | "notas"
@@ -83,6 +85,7 @@ const NAV: NavItem[] = [
   { key: "cargas", to: "/app/cargas", label: "CARGAS HEINEKEN", icon: Truck },
   { key: "equipe", to: "/app/equipe-bar", label: "EQUIPE DE BAR", icon: CreditCard },
   { key: "consumo", to: "/app/consumo", label: "CONSUMO", icon: BarChart3 },
+  { key: "consumotempo", to: "/app/consumo-tempo", label: "CONSUMO × TEMPO", icon: TrendingUp },
   { key: "manutencao", to: "/app/manutencao", label: "MANUTENÇÃO", icon: Wrench },
   { key: "relatorio", to: "/app/relatorio", label: "RELATÓRIO", icon: FileText },
   { key: "importar", to: "/app/importar", label: "IMPORTAR", icon: Upload },
@@ -121,6 +124,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         return perms.canAccessEquipeBar;
       case "consumo":
         return perms.canAccessConsumo;
+      case "consumotempo":
+        return perms.isGestor || perms.isManutencao;
       case "manutencao":
         return perms.canAccessManutencao;
       case "backups":
