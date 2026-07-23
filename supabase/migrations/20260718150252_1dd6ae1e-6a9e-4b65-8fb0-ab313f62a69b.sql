@@ -1,0 +1,2 @@
+UPDATE public.profiles SET display_name='IURI GUEVARA', updated_at=now() WHERE id='58639598-00dd-4355-8838-f5f5bbbcb7d1';
+UPDATE auth.users SET raw_user_meta_data = raw_user_meta_data || jsonb_build_object('display_name','IURI GUEVARA') WHERE id='58639598-00dd-4355-8838-f5f5bbbcb7d1';

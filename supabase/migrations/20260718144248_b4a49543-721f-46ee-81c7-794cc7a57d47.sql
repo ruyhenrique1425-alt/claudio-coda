@@ -1,0 +1,1 @@
+ALTER TYPE public.bar_type ADD VALUE IF NOT EXISTS 'bar_parceiro';
