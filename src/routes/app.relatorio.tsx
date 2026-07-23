@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileDown, FileText, AlertTriangle, Thermometer, CreditCard, Beer, Trophy } from "lucide-react";
+import { FileDown, FileText, AlertTriangle, Thermometer, CreditCard, Beer, Trophy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 export const Route = createFileRoute("/app/relatorio")({ component: RelatorioPage });
 
@@ -18,6 +17,7 @@ function RelatorioPage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const canView = perms.isGestor || perms.isManutencao;
+  const [generating, setGenerating] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["relatorio-executivo"],
@@ -123,9 +123,15 @@ function RelatorioPage() {
     },
   });
 
-  const exportPdf = () => {
-    if (!data) return;
+  const exportPdf = async () => {
+    if (!data || generating) return;
+    setGenerating(true);
     try {
+      // jsPDF (+autoTable) são pesados (~600 kB); carregamos sob demanda.
+      const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+        import("jspdf"),
+        import("jspdf-autotable"),
+      ]);
       const doc = new jsPDF({ unit: "pt", format: "a4" });
       const now = new Date().toLocaleString("pt-BR");
       doc.setFont("helvetica", "bold");
@@ -202,6 +208,8 @@ function RelatorioPage() {
       toast.success("Relatório PDF gerado");
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar PDF");
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -222,8 +230,13 @@ function RelatorioPage() {
           </h1>
           <p className="text-xs text-muted-foreground">Consolidado da operação — exporte em PDF para o comando.</p>
         </div>
-        <Button onClick={exportPdf} disabled={!data || isLoading} className="min-h-[44px]">
-          <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
+        <Button onClick={exportPdf} disabled={!data || isLoading || generating} className="min-h-[44px]">
+          {generating ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <FileDown className="w-4 h-4 mr-2" />
+          )}
+          {generating ? "Gerando PDF…" : "Exportar PDF"}
         </Button>
       </div>
 

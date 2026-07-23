@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
@@ -40,11 +39,17 @@ function ImportarPage() {
     if (!f) return;
     setFileName(f.name);
     setResult(null);
-    const buf = await f.arrayBuffer();
-    const wb = XLSX.read(buf, { type: "array" });
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: null });
-    setRows(json);
+    try {
+      const buf = await f.arrayBuffer();
+      // xlsx é pesado (~560 kB); só carrega quando um arquivo é escolhido.
+      const XLSX = await import("xlsx");
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: null });
+      setRows(json);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Não foi possível ler a planilha");
+    }
   };
 
   const downloadTemplate = () => {
