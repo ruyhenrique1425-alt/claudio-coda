@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppBackupsRouteImport } from './routes/app.backups'
+import { Route as AppBiRouteImport } from './routes/app.bi'
 import { Route as AppCargasRouteImport } from './routes/app.cargas'
 import { Route as AppConsumoRouteImport } from './routes/app.consumo'
 import { Route as AppEstoqueRouteImport } from './routes/app.estoque'
@@ -57,6 +58,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppBackupsRoute = AppBackupsRouteImport.update({
   id: '/backups',
   path: '/backups',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBiRoute = AppBiRouteImport.update({
+  id: '/bi',
+  path: '/bi',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCargasRoute = AppCargasRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/backups': typeof AppBackupsRoute
+  '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
   '/app/consumo': typeof AppConsumoRoute
   '/app/estoque': typeof AppEstoqueRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/backups': typeof AppBackupsRoute
+  '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
   '/app/consumo': typeof AppConsumoRoute
   '/app/estoque': typeof AppEstoqueRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/backups': typeof AppBackupsRoute
+  '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
   '/app/consumo': typeof AppConsumoRoute
   '/app/estoque': typeof AppEstoqueRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/backups'
+    | '/app/bi'
     | '/app/cargas'
     | '/app/consumo'
     | '/app/estoque'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/backups'
+    | '/app/bi'
     | '/app/cargas'
     | '/app/consumo'
     | '/app/estoque'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/backups'
+    | '/app/bi'
     | '/app/cargas'
     | '/app/consumo'
     | '/app/estoque'
@@ -357,6 +369,13 @@ declare module '@tanstack/react-router' {
       path: '/backups'
       fullPath: '/app/backups'
       preLoaderRoute: typeof AppBackupsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/bi': {
+      id: '/app/bi'
+      path: '/bi'
+      fullPath: '/app/bi'
+      preLoaderRoute: typeof AppBiRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/cargas': {
@@ -497,6 +516,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppBackupsRoute: typeof AppBackupsRoute
+  AppBiRoute: typeof AppBiRoute
   AppCargasRoute: typeof AppCargasRoute
   AppConsumoRoute: typeof AppConsumoRoute
   AppEstoqueRoute: typeof AppEstoqueRoute
@@ -518,6 +538,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppBackupsRoute: AppBackupsRoute,
+  AppBiRoute: AppBiRoute,
   AppCargasRoute: AppCargasRoute,
   AppConsumoRoute: AppConsumoRoute,
   AppEstoqueRoute: AppEstoqueRoute,

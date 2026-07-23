@@ -48,6 +48,7 @@ import {
 
 type NavKey =
   | "dashboard"
+  | "bi"
   | "map"
   | "equipe"
   | "consumo"
@@ -71,6 +72,7 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { key: "dashboard", to: "/app", label: "DASHBOARD", icon: LayoutDashboard, exact: true },
+  { key: "bi", to: "/app/bi", label: "BI BARRIS", icon: BarChart3 },
   { key: "map", to: "/app/map", label: "MAPA", icon: MapPin },
   { key: "inventarios", to: "/app/inventarios", label: "INVENTÁRIOS", icon: ClipboardCheck },
   { key: "estoque", to: "/app/estoque", label: "ESTOQUE", icon: Package },
@@ -98,6 +100,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     switch (key) {
       case "dashboard":
         return perms.canAccessDashboard;
+      case "bi":
+        return perms.isGestor || perms.isManutencao;
       case "map":
         return perms.canAccessMap;
       case "inventarios":
