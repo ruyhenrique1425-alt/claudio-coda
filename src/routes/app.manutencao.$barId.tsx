@@ -10,7 +10,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Save, Plus, Phone, MessageCircle, FileText, Loader2, QrCode, MapPin, CheckCircle2, AlertTriangle, ExternalLink, Copy } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  Save,
+  Plus,
+  Phone,
+  MessageCircle,
+  FileText,
+  Loader2,
+  QrCode,
+  MapPin,
+  CheckCircle2,
+  AlertTriangle,
+  ExternalLink,
+  Copy,
+} from "lucide-react";
 import contratoAsset from "@/assets/comodato_2026.pdf.asset.json";
 
 export const Route = createFileRoute("/app/manutencao/$barId")({
@@ -33,7 +48,9 @@ const INSTALL_TYPES = [
 
 async function uploadPhoto(barId: string, kind: string, file: File): Promise<string | null> {
   const path = `${barId}/${kind}/${Date.now()}_${file.name.replace(/[^\w.-]/g, "_")}`;
-  const { error } = await supabase.storage.from("operacao-fotos").upload(path, file, { upsert: false });
+  const { error } = await supabase.storage
+    .from("operacao-fotos")
+    .upload(path, file, { upsert: false });
   if (error) {
     toast.error("Erro upload: " + error.message);
     return null;
@@ -42,7 +59,9 @@ async function uploadPhoto(barId: string, kind: string, file: File): Promise<str
 }
 
 async function getSignedUrl(path: string): Promise<string | null> {
-  const { data } = await supabase.storage.from("operacao-fotos").createSignedUrl(path, 60 * 60 * 24 * 7);
+  const { data } = await supabase.storage
+    .from("operacao-fotos")
+    .createSignedUrl(path, 60 * 60 * 24 * 7);
   return data?.signedUrl ?? null;
 }
 
@@ -59,26 +78,37 @@ function ManutencaoDetail() {
     const [{ data: b }, { data: i }, { data: l }] = await Promise.all([
       supabase.from("bars").select("*").eq("id", barId).maybeSingle(),
       supabase.from("bar_installations").select("*").eq("bar_id", barId).maybeSingle(),
-      supabase.from("bar_maintenance_logs").select("*").eq("bar_id", barId).order("performed_at", { ascending: false }),
+      supabase
+        .from("bar_maintenance_logs")
+        .select("*")
+        .eq("bar_id", barId)
+        .order("performed_at", { ascending: false }),
     ]);
     setBar(b);
     setInst(i);
     setLogs(l ?? []);
     setLoading(false);
   }
-  useEffect(() => { load(); }, [barId]);
+  useEffect(() => {
+    load();
+  }, [barId]);
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando…</div>;
   if (!bar) return <div className="p-8 text-center">Bar não encontrado</div>;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-4 pb-16">
-      <Link to="/app/manutencao" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-3">
+      <Link
+        to="/app/manutencao"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-3"
+      >
         <ArrowLeft className="w-3 h-3" /> Voltar
       </Link>
       <div className="flex items-center gap-2 mb-4">
         <h1 className="font-display text-xl tracking-wider">{bar.name}</h1>
-        <Badge variant="outline" className="text-[10px]">{bar.bar_type?.toUpperCase()}</Badge>
+        <Badge variant="outline" className="text-[10px]">
+          {bar.bar_type?.toUpperCase()}
+        </Badge>
       </div>
 
       <Tabs defaultValue="manutencao">
@@ -137,10 +167,13 @@ function MaintenanceTab({ barId, logs, onDone, userId }: any) {
       });
       if (error) return toast.error(error.message);
       toast.success("Manutenção registrada");
-      setDesc(""); setFile(null);
+      setDesc("");
+      setFile(null);
       onDone();
     } catch (err: any) {
-      toast.error("Falha ao registrar manutenção", { description: err?.message ?? "Verifique a conexão" });
+      toast.error("Falha ao registrar manutenção", {
+        description: err?.message ?? "Verifique a conexão",
+      });
     } finally {
       setSaving(false);
     }
@@ -153,20 +186,42 @@ function MaintenanceTab({ barId, logs, onDone, userId }: any) {
         <div className="font-display tracking-wider text-sm">REGISTRAR OCORRÊNCIA</div>
         <div>
           <Label>O que aconteceu?</Label>
-          <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={3} placeholder="Descreva o problema, peça trocada, ajuste feito…" />
+          <Textarea
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            rows={3}
+            placeholder="Descreva o problema, peça trocada, ajuste feito…"
+          />
         </div>
         <div>
           <Label>Foto (opcional)</Label>
-          <Input type="file" accept="image/*" capture="environment" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <Input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
         </div>
         <Button onClick={submit} disabled={saving} className="w-full">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4 mr-2" /> Registrar</>}
+          {saving ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" /> Registrar
+            </>
+          )}
         </Button>
       </Card>
 
       <div>
-        <div className="font-display tracking-wider text-sm mb-2 text-muted-foreground">HISTÓRICO</div>
-        {logs.length === 0 && <Card className="p-4 text-sm text-muted-foreground text-center">Nenhuma manutenção registrada.</Card>}
+        <div className="font-display tracking-wider text-sm mb-2 text-muted-foreground">
+          HISTÓRICO
+        </div>
+        {logs.length === 0 && (
+          <Card className="p-4 text-sm text-muted-foreground text-center">
+            Nenhuma manutenção registrada.
+          </Card>
+        )}
         <div className="space-y-2">
           {logs.map((l: any) => (
             <Card key={l.id} className="p-3">
@@ -293,7 +348,9 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
         contrato_photo_url: contrato,
         updated_by: userId,
       };
-      const { error } = await supabase.from("bar_installations").upsert(payload, { onConflict: "bar_id" });
+      const { error } = await supabase
+        .from("bar_installations")
+        .upsert(payload, { onConflict: "bar_id" });
       if (error) {
         console.error("[save installation]", error);
         toast.error("Erro ao salvar: " + error.message);
@@ -307,7 +364,10 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
             .from("bar_installations")
             .update({ contrato_photo_url: contrato, updated_by: userId })
             .eq("bar_id", bar.id);
-          if (contractError) toast.warning("Informações salvas, mas o contrato não foi vinculado: " + contractError.message);
+          if (contractError)
+            toast.warning(
+              "Informações salvas, mas o contrato não foi vinculado: " + contractError.message,
+            );
         } else {
           toast.warning("Informações salvas, mas o contrato não foi enviado.");
         }
@@ -335,7 +395,9 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const meta = (user?.user_metadata ?? {}) as Record<string, any>;
     const rawName =
-      meta.full_name || meta.name || meta.display_name ||
+      meta.full_name ||
+      meta.name ||
+      meta.display_name ||
       (user?.email ? user.email.split("@")[0].replace(/[._-]+/g, " ") : "");
     const installerName = rawName
       ? rawName.replace(/\b\w/g, (c: string) => c.toUpperCase())
@@ -382,7 +444,9 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
       `📞 *Suporte e dúvidas:* ${DISPEL_PHONE_LABEL}`,
       "",
       "✨ *A excelência não termina na entrega.* Nossa equipe técnica está pronta para manter sua operação sempre no mais alto nível.",
-    ].filter(Boolean).join("\n");
+    ]
+      .filter(Boolean)
+      .join("\n");
     const url = `https://wa.me/${withCountry}?text=${encodeURIComponent(lines)}`;
     window.open(url, "_blank");
   }
@@ -393,11 +457,17 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
       <Card className="p-4 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="font-display tracking-wider text-sm">EDITAR LOCAL</div>
-          {inst?.id && <Badge className="bg-primary text-primary-foreground text-[10px]">INSTALADO</Badge>}
+          {inst?.id && (
+            <Badge className="bg-primary text-primary-foreground text-[10px]">INSTALADO</Badge>
+          )}
         </div>
         <div>
           <Label>Nome do local</Label>
-          <Input value={localName} onChange={(e) => setLocalName(e.target.value)} placeholder="Nome do camarote, stand ou haras" />
+          <Input
+            value={localName}
+            onChange={(e) => setLocalName(e.target.value)}
+            placeholder="Nome do camarote, stand ou haras"
+          />
         </div>
         <div>
           <Label>Tipo</Label>
@@ -417,15 +487,35 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Latitude</Label>
-            <Input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="—" />
+            <Input
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              inputMode="decimal"
+              placeholder="—"
+            />
           </div>
           <div>
             <Label>Longitude</Label>
-            <Input value={lng} onChange={(e) => setLng(e.target.value)} inputMode="decimal" placeholder="—" />
+            <Input
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
+              inputMode="decimal"
+              placeholder="—"
+            />
           </div>
         </div>
-        <Button type="button" variant="outline" onClick={captureLocation} disabled={gettingLoc} className="w-full">
-          {gettingLoc ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <MapPin className="w-4 h-4 mr-2" />}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={captureLocation}
+          disabled={gettingLoc}
+          className="w-full"
+        >
+          {gettingLoc ? (
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : (
+            <MapPin className="w-4 h-4 mr-2" />
+          )}
           Atualizar localização atual
         </Button>
       </Card>
@@ -464,11 +554,25 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>Manômetros</Label>
-            <Input type="number" min={0} inputMode="numeric" placeholder="0" value={manometro === 0 ? "" : String(manometro)} onChange={(e) => setManometro(Number(e.target.value) || 0)} />
+            <Input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              placeholder="0"
+              value={manometro === 0 ? "" : String(manometro)}
+              onChange={(e) => setManometro(Number(e.target.value) || 0)}
+            />
           </div>
           <div>
             <Label>Cilindros</Label>
-            <Input type="number" min={0} inputMode="numeric" placeholder="0" value={cilindro === 0 ? "" : String(cilindro)} onChange={(e) => setCilindro(Number(e.target.value) || 0)} />
+            <Input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              placeholder="0"
+              value={cilindro === 0 ? "" : String(cilindro)}
+              onChange={(e) => setCilindro(Number(e.target.value) || 0)}
+            />
           </div>
         </div>
       </Card>
@@ -477,15 +581,30 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
         <div className="font-display tracking-wider text-sm">RESPONSÁVEL</div>
         <div>
           <Label>Nome</Label>
-          <Input value={respNome} onChange={(e) => setRespNome(e.target.value)} placeholder="Nome do responsável" />
+          <Input
+            value={respNome}
+            onChange={(e) => setRespNome(e.target.value)}
+            placeholder="Nome do responsável"
+          />
         </div>
         <div>
           <Label>Telefone</Label>
-          <Input value={respTel} onChange={(e) => setRespTel(e.target.value)} placeholder="(31) 99999-9999" inputMode="tel" />
+          <Input
+            value={respTel}
+            onChange={(e) => setRespTel(e.target.value)}
+            placeholder="(31) 99999-9999"
+            inputMode="tel"
+          />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Button type="button" variant="outline" onClick={callResp}><Phone className="w-4 h-4 mr-2" /> Ligar</Button>
-          <Button type="button" onClick={sendWhatsApp} className="bg-[#25D366] hover:bg-[#1fb655] text-white">
+          <Button type="button" variant="outline" onClick={callResp}>
+            <Phone className="w-4 h-4 mr-2" /> Ligar
+          </Button>
+          <Button
+            type="button"
+            onClick={sendWhatsApp}
+            className="bg-[#25D366] hover:bg-[#1fb655] text-white"
+          >
             <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
           </Button>
         </div>
@@ -495,29 +614,55 @@ function InstallationTab({ bar, inst, onDone, userId }: any) {
         <div className="font-display tracking-wider text-sm">CONTRATO & INFORMAÇÕES</div>
         <div>
           <Label>Foto do contrato assinado</Label>
-          <Input type="file" accept="image/*,application/pdf" capture="environment" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <Input
+            type="file"
+            accept="image/*,application/pdf"
+            capture="environment"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
           {contratoUrl && (
-            <a href={contratoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-accent mt-2">
+            <a
+              href={contratoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-accent mt-2"
+            >
               <FileText className="w-3 h-3" /> Ver contrato salvo
             </a>
           )}
         </div>
         <div>
           <Label>Valores</Label>
-          <Textarea rows={2} value={valores} onChange={(e) => setValores(e.target.value)} placeholder="Valores acordados, aluguel, consumo mínimo…" />
+          <Textarea
+            rows={2}
+            value={valores}
+            onChange={(e) => setValores(e.target.value)}
+            placeholder="Valores acordados, aluguel, consumo mínimo…"
+          />
         </div>
         <div>
           <Label>Informações relevantes</Label>
-          <Textarea rows={3} value={informacoes} onChange={(e) => setInformacoes(e.target.value)} placeholder="Observações, condições, horários, etc." />
+          <Textarea
+            rows={3}
+            value={informacoes}
+            onChange={(e) => setInformacoes(e.target.value)}
+            placeholder="Observações, condições, horários, etc."
+          />
         </div>
         <div className="text-[11px] text-muted-foreground border-t border-border pt-2">
           Contato Dispel para manutenção: <span className="text-accent">{DISPEL_PHONE_LABEL}</span>
         </div>
       </Card>
 
-
       <Button onClick={save} disabled={saving} className="w-full" size="lg">
-        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4 mr-2" /> {inst?.id ? "Atualizar instalação" : "Salvar instalação"}</>}
+        {saving ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            <Save className="w-4 h-4 mr-2" />{" "}
+            {inst?.id ? "Atualizar instalação" : "Salvar instalação"}
+          </>
+        )}
       </Button>
     </div>
   );
@@ -538,28 +683,38 @@ function QrCard({ barId, barName }: { barId: string; barName: string }) {
       .order("code");
     setLinkedCodes((data ?? []).map((r: any) => r.code));
   }
-  useEffect(() => { loadLinked(); /* eslint-disable-next-line */ }, [barId]);
+  useEffect(() => {
+    loadLinked(); /* eslint-disable-next-line */
+  }, [barId]);
 
   async function linkCode() {
     const code = newCode.trim().toUpperCase();
     if (!code) return;
     setLinking(true);
     const { data: existing } = await supabase
-      .from("qr_tokens").select("id,bar_id").eq("code", code).maybeSingle();
+      .from("qr_tokens")
+      .select("id,bar_id")
+      .eq("code", code)
+      .maybeSingle();
     if (!existing) {
       toast.error(`Código ${code} não existe. Use um da folha impressa (DSP-0001 a DSP-0070).`);
-      setLinking(false); return;
+      setLinking(false);
+      return;
     }
     if (existing.bar_id && existing.bar_id !== barId) {
       toast.error(`Código ${code} já está vinculado a outro ponto.`);
-      setLinking(false); return;
+      setLinking(false);
+      return;
     }
     const { error } = await supabase
       .from("qr_tokens")
       .update({ bar_id: barId, assigned_at: new Date().toISOString() })
       .eq("code", code);
     setLinking(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(`QR ${code} vinculado a ${barName}`);
     setNewCode("");
     loadLinked();
@@ -570,7 +725,10 @@ function QrCard({ barId, barName }: { barId: string; barName: string }) {
       .from("qr_tokens")
       .update({ bar_id: null, assigned_at: null })
       .eq("code", code);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(`QR ${code} desvinculado`);
     loadLinked();
   }
@@ -622,11 +780,23 @@ function QrCard({ barId, barName }: { barId: string; barName: string }) {
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-3">
-        <img src={qrSrc} alt={`QR ${barName}`} className="w-40 h-40 border border-border rounded bg-white p-1" />
+        <img
+          src={qrSrc}
+          alt={`QR ${barName}`}
+          className="w-40 h-40 border border-border rounded bg-white p-1"
+        />
         <div className="flex-1 space-y-2 w-full">
           <div className="text-[11px] text-muted-foreground break-all font-mono">{url}</div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copiado"); }}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                navigator.clipboard.writeText(url);
+                toast.success("Link copiado");
+              }}
+            >
               <Copy className="w-3 h-3 mr-1" /> Copiar
             </Button>
             <Button size="sm" variant="outline" className="flex-1" asChild>
@@ -635,7 +805,9 @@ function QrCard({ barId, barName }: { barId: string; barName: string }) {
               </a>
             </Button>
             <Button size="sm" variant="outline" asChild>
-              <a href={url} target="_blank" rel="noreferrer"><ExternalLink className="w-3 h-3" /></a>
+              <a href={url} target="_blank" rel="noreferrer">
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </Button>
           </div>
         </div>
@@ -671,16 +843,21 @@ function PublicRequestsPanel({ barId, userId }: { barId: string; userId?: string
     setUrls(Object.fromEntries(entries));
     setLoading(false);
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [barId]);
+  useEffect(() => {
+    load(); /* eslint-disable-next-line */
+  }, [barId]);
 
   async function completar(id: string) {
     if (!userId) return toast.error("Faça login");
-    const { error } = await supabase.from("public_maintenance_requests").update({
-      status: "concluida",
-      completed_at: new Date().toISOString(),
-      completed_by: userId,
-      completed_notes: notes.trim() || null,
-    }).eq("id", id);
+    const { error } = await supabase
+      .from("public_maintenance_requests")
+      .update({
+        status: "concluida",
+        completed_at: new Date().toISOString(),
+        completed_by: userId,
+        completed_notes: notes.trim() || null,
+      })
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Manutenção concluída");
     setCompletingId(null);
@@ -692,29 +869,36 @@ function PublicRequestsPanel({ barId, userId }: { barId: string; userId?: string
   const concluidas = reqs.filter((r) => r.status === "concluida");
 
   return (
-    <Card className={`p-4 space-y-3 ${pendentes.length > 0 ? "border-destructive" : "border-border"}`}>
+    <Card
+      className={`p-4 space-y-3 ${pendentes.length > 0 ? "border-destructive" : "border-border"}`}
+    >
       <div className="flex items-center gap-2">
         {pendentes.length > 0 ? (
           <AlertTriangle className="w-4 h-4 text-destructive" />
         ) : (
           <QrCode className="w-4 h-4 text-muted-foreground" />
         )}
-        <div className="font-display tracking-wider text-sm">
-          PEDIDOS DO QR CODE
-        </div>
+        <div className="font-display tracking-wider text-sm">PEDIDOS DO QR CODE</div>
         {pendentes.length > 0 && (
-          <Badge variant="destructive" className="ml-auto">{pendentes.length} pendente{pendentes.length !== 1 ? "s" : ""}</Badge>
+          <Badge variant="destructive" className="ml-auto">
+            {pendentes.length} pendente{pendentes.length !== 1 ? "s" : ""}
+          </Badge>
         )}
       </div>
 
       {loading && <div className="text-xs text-muted-foreground">Carregando…</div>}
 
       {!loading && reqs.length === 0 && (
-        <div className="text-xs text-muted-foreground">Nenhum pedido recebido ainda pelo QR Code.</div>
+        <div className="text-xs text-muted-foreground">
+          Nenhum pedido recebido ainda pelo QR Code.
+        </div>
       )}
 
       {pendentes.map((r) => (
-        <div key={r.id} className="border border-destructive/40 rounded p-3 bg-destructive/5 space-y-2">
+        <div
+          key={r.id}
+          className="border border-destructive/40 rounded p-3 bg-destructive/5 space-y-2"
+        >
           <div className="flex items-start gap-3">
             {urls[r.id] && (
               <a href={urls[r.id]} target="_blank" rel="noreferrer">
@@ -723,15 +907,22 @@ function PublicRequestsPanel({ barId, userId }: { barId: string; userId?: string
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="destructive" className="text-[9px]">PENDENTE</Badge>
-                {r.requester_name && <span className="text-[11px] font-medium">{r.requester_name}</span>}
-                <span className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleString("pt-BR")}</span>
+                <Badge variant="destructive" className="text-[9px]">
+                  PENDENTE
+                </Badge>
+                {r.requester_name && (
+                  <span className="text-[11px] font-medium">{r.requester_name}</span>
+                )}
+                <span className="text-[10px] text-muted-foreground">
+                  {new Date(r.created_at).toLocaleString("pt-BR")}
+                </span>
               </div>
               <div className="text-sm mt-1">{r.description}</div>
               {r.latitude != null && r.longitude != null && (
                 <a
                   href={`https://www.google.com/maps?q=${r.latitude},${r.longitude}`}
-                  target="_blank" rel="noreferrer"
+                  target="_blank"
+                  rel="noreferrer"
                   className="inline-flex items-center gap-1 text-[11px] text-accent mt-1"
                 >
                   <MapPin className="w-3 h-3" /> Ver localização
@@ -741,9 +932,23 @@ function PublicRequestsPanel({ barId, userId }: { barId: string; userId?: string
           </div>
           {completingId === r.id ? (
             <div className="space-y-2 pt-2 border-t border-border">
-              <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="O que foi feito? (opcional)" />
+              <Textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="O que foi feito? (opcional)"
+              />
               <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onClick={() => { setCompletingId(null); setNotes(""); }}>Cancelar</Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setCompletingId(null);
+                    setNotes("");
+                  }}
+                >
+                  Cancelar
+                </Button>
                 <Button size="sm" className="flex-1" onClick={() => completar(r.id)}>
                   <CheckCircle2 className="w-3 h-3 mr-1" /> Confirmar conclusão
                 </Button>
@@ -759,18 +964,28 @@ function PublicRequestsPanel({ barId, userId }: { barId: string; userId?: string
 
       {concluidas.length > 0 && (
         <details className="text-xs">
-          <summary className="cursor-pointer text-muted-foreground">Histórico concluído ({concluidas.length})</summary>
+          <summary className="cursor-pointer text-muted-foreground">
+            Histórico concluído ({concluidas.length})
+          </summary>
           <div className="mt-2 space-y-2">
             {concluidas.map((r) => (
               <div key={r.id} className="border border-border rounded p-2 flex gap-2">
                 {urls[r.id] && <img src={urls[r.id]} className="w-10 h-10 rounded object-cover" />}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-primary text-primary-foreground text-[9px]">CONCLUÍDA</Badge>
-                    <span className="text-[10px] text-muted-foreground">{r.completed_at ? new Date(r.completed_at).toLocaleString("pt-BR") : ""}</span>
+                    <Badge className="bg-primary text-primary-foreground text-[9px]">
+                      CONCLUÍDA
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">
+                      {r.completed_at ? new Date(r.completed_at).toLocaleString("pt-BR") : ""}
+                    </span>
                   </div>
                   <div className="text-[12px]">{r.description}</div>
-                  {r.completed_notes && <div className="text-[11px] italic text-muted-foreground">→ {r.completed_notes}</div>}
+                  {r.completed_notes && (
+                    <div className="text-[11px] italic text-muted-foreground">
+                      → {r.completed_notes}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

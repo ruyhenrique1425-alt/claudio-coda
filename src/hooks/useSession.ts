@@ -27,7 +27,11 @@ export function useRoles(userId: string | undefined) {
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    if (!userId) { setRoles([]); setLoading(true); return; }
+    if (!userId) {
+      setRoles([]);
+      setLoading(true);
+      return;
+    }
     setLoading(true);
     supabase
       .from("user_roles")

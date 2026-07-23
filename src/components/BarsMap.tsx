@@ -18,7 +18,11 @@ const TYPE_COLORS: Record<Bar["bar_type"], string> = {
 };
 
 declare global {
-  interface Window { google?: any; __initDispelMap?: () => void; gm_authFailure?: () => void; }
+  interface Window {
+    google?: any;
+    __initDispelMap?: () => void;
+    gm_authFailure?: () => void;
+  }
 }
 
 let mapsLoadPromise: Promise<void> | null = null;
@@ -34,7 +38,11 @@ function loadGoogleMaps(key: string, channel?: string) {
     window.gm_authFailure = () => {
       previousAuthFailure?.();
       mapsLoadPromise = null;
-      reject(new Error("Mapa indisponível neste aparelho. Use a localização atual ou preencha as coordenadas manualmente."));
+      reject(
+        new Error(
+          "Mapa indisponível neste aparelho. Use a localização atual ou preencha as coordenadas manualmente.",
+        ),
+      );
     };
     window.__initDispelMap = () => {
       const startedAt = Date.now();
@@ -90,9 +98,14 @@ export function BarsMap({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
-    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID as string | undefined;
-    if (!key) { setError("Google Maps não configurado."); return; }
+    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as
+      string | undefined;
+    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID as
+      string | undefined;
+    if (!key) {
+      setError("Google Maps não configurado.");
+      return;
+    }
     loadGoogleMaps(key, channel)
       .then(() => {
         if (!ref.current || mapRef.current) return;
@@ -121,7 +134,9 @@ export function BarsMap({
         window.setTimeout(() => {
           const text = ref.current?.innerText ?? "";
           if (text.includes("This page didn't load Google Maps correctly")) {
-            setError("Mapa indisponível neste aparelho. Use a localização atual ou preencha as coordenadas manualmente.");
+            setError(
+              "Mapa indisponível neste aparelho. Use a localização atual ou preencha as coordenadas manualmente.",
+            );
           }
         }, 1200);
         startWatchingUser();
@@ -178,7 +193,10 @@ export function BarsMap({
         centeredOnUserRef.current = true;
       }
     };
-    navigator.geolocation.getCurrentPosition(onPos, () => {}, { enableHighAccuracy: true, timeout: 8000 });
+    navigator.geolocation.getCurrentPosition(onPos, () => {}, {
+      enableHighAccuracy: true,
+      timeout: 8000,
+    });
     watchIdRef.current = navigator.geolocation.watchPosition(onPos, () => {}, {
       enableHighAccuracy: true,
       maximumAge: 5000,
@@ -211,7 +229,10 @@ export function BarsMap({
   useEffect(() => {
     const g = window.google?.maps;
     if (!mapRef.current || !g?.Marker || !g?.SymbolPath) return;
-    if (pickedMarkerRef.current) { pickedMarkerRef.current.setMap(null); pickedMarkerRef.current = null; }
+    if (pickedMarkerRef.current) {
+      pickedMarkerRef.current.setMap(null);
+      pickedMarkerRef.current = null;
+    }
     if (pickedPoint) {
       pickedMarkerRef.current = new g.Marker({
         position: pickedPoint,
@@ -230,7 +251,12 @@ export function BarsMap({
   }, [pickedPoint]);
 
   if (error) return <div className="p-4 text-destructive">{error}</div>;
-  return <div ref={ref} className="w-full h-full min-h-[400px] rounded-lg overflow-hidden border border-border" />;
+  return (
+    <div
+      ref={ref}
+      className="w-full h-full min-h-[400px] rounded-lg overflow-hidden border border-border"
+    />
+  );
 }
 
 const DARK_MAP_STYLE = [

@@ -54,7 +54,8 @@ function DefaultFallback({ error, reset }: { error: Error; reset: () => void }) 
         </div>
         <h2 className="font-display text-lg tracking-wider">ESTA TELA NÃO CARREGOU</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Tivemos um problema ao mostrar esta parte do painel. Você pode tentar novamente sem sair do app.
+          Tivemos um problema ao mostrar esta parte do painel. Você pode tentar novamente sem sair
+          do app.
         </p>
         {error.message && (
           <p className="mt-3 text-[11px] font-mono text-muted-foreground/80 break-words">

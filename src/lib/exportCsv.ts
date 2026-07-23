@@ -17,7 +17,7 @@ export function downloadCsv(filename: string, rows: Array<Record<string, unknown
     rows.reduce((set, r) => {
       Object.keys(r).forEach((k) => set.add(k));
       return set;
-    }, new Set<string>())
+    }, new Set<string>()),
   );
   const lines = [headers.join(",")];
   for (const row of rows) {
@@ -42,6 +42,6 @@ function triggerDownload(blob: Blob, filename: string) {
 export function timestampSlug(d = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(
-    d.getHours()
+    d.getHours(),
   )}${pad(d.getMinutes())}`;
 }

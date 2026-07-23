@@ -6,7 +6,16 @@ import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileDown, FileText, AlertTriangle, Thermometer, CreditCard, Beer, Trophy, Loader2 } from "lucide-react";
+import {
+  FileDown,
+  FileText,
+  AlertTriangle,
+  Thermometer,
+  CreditCard,
+  Beer,
+  Trophy,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/relatorio")({ component: RelatorioPage });
@@ -23,13 +32,30 @@ function RelatorioPage() {
     queryKey: ["relatorio-executivo"],
     enabled: canView,
     queryFn: async () => {
-      const [{ data: bars }, { data: emps }, { data: stds }, { data: temps }, { data: invs }, { data: sessions }] = await Promise.all([
+      const [
+        { data: bars },
+        { data: emps },
+        { data: stds },
+        { data: temps },
+        { data: invs },
+        { data: sessions },
+      ] = await Promise.all([
         supabase.from("bars").select("id,name,bar_type"),
         supabase.from("empties_removed").select("bar_id,brand,quantidade,performed_at"),
         supabase.from("bar_stock_standard").select("bar_id,brand,barris_padrao"),
-        supabase.from("bar_temperature_checks").select("bar_id,horario,temperatura,performed_at").order("performed_at", { ascending: false }).limit(500),
-        supabase.from("inventories").select("id,bar_id,performed_at,inventory_items(brand,status,quantidade)").order("performed_at", { ascending: false }),
-        supabase.from("bar_card_machine_sessions").select("bar_id,performed_at,quantidade_maquinas").order("performed_at", { ascending: false }),
+        supabase
+          .from("bar_temperature_checks")
+          .select("bar_id,horario,temperatura,performed_at")
+          .order("performed_at", { ascending: false })
+          .limit(500),
+        supabase
+          .from("inventories")
+          .select("id,bar_id,performed_at,inventory_items(brand,status,quantidade)")
+          .order("performed_at", { ascending: false }),
+        supabase
+          .from("bar_card_machine_sessions")
+          .select("bar_id,performed_at,quantidade_maquinas")
+          .order("performed_at", { ascending: false }),
       ]);
 
       const nameById: Record<string, string> = {};
@@ -54,15 +80,23 @@ function RelatorioPage() {
       // Padrão por bar
       const stdBy: Record<string, { heineken: number; amstel: number }> = {};
       (stds ?? []).forEach((s: any) => {
-        (stdBy[s.bar_id] ??= { heineken: 0, amstel: 0 });
+        stdBy[s.bar_id] ??= { heineken: 0, amstel: 0 };
         stdBy[s.bar_id][s.brand as Marca] = s.barris_padrao || 0;
       });
 
       // Último inventário por bar
       const lastInvByBar = new Map<string, any>();
-      (invs ?? []).forEach((i: any) => { if (!lastInvByBar.has(i.bar_id)) lastInvByBar.set(i.bar_id, i); });
+      (invs ?? []).forEach((i: any) => {
+        if (!lastInvByBar.has(i.bar_id)) lastInvByBar.set(i.bar_id, i);
+      });
 
-      const abaixoPadrao: { bar: string; marca: string; padrao: number; atual: number; delta: number }[] = [];
+      const abaixoPadrao: {
+        bar: string;
+        marca: string;
+        padrao: number;
+        atual: number;
+        delta: number;
+      }[] = [];
       vendaBars.forEach((barId) => {
         const inv = lastInvByBar.get(barId);
         const std = stdBy[barId] ?? { heineken: 0, amstel: 0 };
@@ -97,7 +131,9 @@ function RelatorioPage() {
 
       // Máquinas em campo (última sessão por bar) vs faltantes
       const lastSessionByBar = new Map<string, any>();
-      (sessions ?? []).forEach((s: any) => { if (!lastSessionByBar.has(s.bar_id)) lastSessionByBar.set(s.bar_id, s); });
+      (sessions ?? []).forEach((s: any) => {
+        if (!lastSessionByBar.has(s.bar_id)) lastSessionByBar.set(s.bar_id, s);
+      });
       let machinesInField = 0;
       let barsMissing = 0;
       vendaBars.forEach((barId) => {
@@ -177,13 +213,23 @@ function RelatorioPage() {
         autoTable(doc, {
           startY: (doc as any).lastAutoTable.finalY + 20,
           head: [["Bar", "Marca", "Padrão", "Atual", "Delta"]],
-          body: data.abaixoPadrao.map((r) => [r.bar, r.marca, String(r.padrao), String(r.atual), String(r.delta)]),
+          body: data.abaixoPadrao.map((r) => [
+            r.bar,
+            r.marca,
+            String(r.padrao),
+            String(r.atual),
+            String(r.delta),
+          ]),
           styles: { fontSize: 10 },
           headStyles: { fillColor: [220, 38, 38] },
           didDrawPage: () => {
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
-            doc.text("Bares abaixo do padrão", 40, (doc as any).lastAutoTable?.settings?.startY - 8);
+            doc.text(
+              "Bares abaixo do padrão",
+              40,
+              (doc as any).lastAutoTable?.settings?.startY - 8,
+            );
           },
         });
       }
@@ -193,13 +239,22 @@ function RelatorioPage() {
         autoTable(doc, {
           startY: (doc as any).lastAutoTable.finalY + 20,
           head: [["Bar", "Horário", "Temp (°C)", "Quando"]],
-          body: data.tempsFora.map((t) => [t.bar, t.horario, String(t.temp), new Date(t.at).toLocaleString("pt-BR")]),
+          body: data.tempsFora.map((t) => [
+            t.bar,
+            t.horario,
+            String(t.temp),
+            new Date(t.at).toLocaleString("pt-BR"),
+          ]),
           styles: { fontSize: 9 },
           headStyles: { fillColor: [234, 88, 12] },
           didDrawPage: () => {
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
-            doc.text("Temperaturas fora do padrão (> -1 °C)", 40, (doc as any).lastAutoTable?.settings?.startY - 8);
+            doc.text(
+              "Temperaturas fora do padrão (> -1 °C)",
+              40,
+              (doc as any).lastAutoTable?.settings?.startY - 8,
+            );
           },
         });
       }
@@ -228,9 +283,15 @@ function RelatorioPage() {
           <h1 className="font-display text-2xl tracking-wider flex items-center gap-2">
             <FileText className="h-6 w-6 text-primary" /> RELATÓRIO EXECUTIVO
           </h1>
-          <p className="text-xs text-muted-foreground">Consolidado da operação — exporte em PDF para o comando.</p>
+          <p className="text-xs text-muted-foreground">
+            Consolidado da operação — exporte em PDF para o comando.
+          </p>
         </div>
-        <Button onClick={exportPdf} disabled={!data || isLoading || generating} className="min-h-[44px]">
+        <Button
+          onClick={exportPdf}
+          disabled={!data || isLoading || generating}
+          className="min-h-[44px]"
+        >
           {generating ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : (
@@ -242,21 +303,60 @@ function RelatorioPage() {
 
       {isLoading || !data ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
         </div>
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Kpi icon={<Beer className="h-4 w-4" />} label="CONSUMO TOTAL" value={data.totals.totalConsumo} suffix="barris" />
-            <Kpi icon={<Trophy className="h-4 w-4" />} label="HEINEKEN" value={data.totals.heineken} suffix="barris" tone="brand" />
-            <Kpi icon={<Trophy className="h-4 w-4" />} label="AMSTEL" value={data.totals.amstel} suffix="barris" tone="gold" />
-            <Kpi icon={<CreditCard className="h-4 w-4" />} label="MAQUININHAS" value={data.totals.machinesInField} suffix={`em ${data.totals.totalVendaBars} bares`} />
+            <Kpi
+              icon={<Beer className="h-4 w-4" />}
+              label="CONSUMO TOTAL"
+              value={data.totals.totalConsumo}
+              suffix="barris"
+            />
+            <Kpi
+              icon={<Trophy className="h-4 w-4" />}
+              label="HEINEKEN"
+              value={data.totals.heineken}
+              suffix="barris"
+              tone="brand"
+            />
+            <Kpi
+              icon={<Trophy className="h-4 w-4" />}
+              label="AMSTEL"
+              value={data.totals.amstel}
+              suffix="barris"
+              tone="gold"
+            />
+            <Kpi
+              icon={<CreditCard className="h-4 w-4" />}
+              label="MAQUININHAS"
+              value={data.totals.machinesInField}
+              suffix={`em ${data.totals.totalVendaBars} bares`}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <Kpi icon={<AlertTriangle className="h-4 w-4" />} label="BARES ABAIXO PADRÃO" value={data.abaixoPadrao.length} tone="danger" />
-            <Kpi icon={<Thermometer className="h-4 w-4" />} label="TEMPS FORA DO PADRÃO" value={data.totals.totalTempsFora} tone="warn" />
-            <Kpi icon={<CreditCard className="h-4 w-4" />} label="BARES SEM MAQUININHA" value={data.totals.barsMissing} tone={data.totals.barsMissing > 0 ? "warn" : undefined} />
+            <Kpi
+              icon={<AlertTriangle className="h-4 w-4" />}
+              label="BARES ABAIXO PADRÃO"
+              value={data.abaixoPadrao.length}
+              tone="danger"
+            />
+            <Kpi
+              icon={<Thermometer className="h-4 w-4" />}
+              label="TEMPS FORA DO PADRÃO"
+              value={data.totals.totalTempsFora}
+              tone="warn"
+            />
+            <Kpi
+              icon={<CreditCard className="h-4 w-4" />}
+              label="BARES SEM MAQUININHA"
+              value={data.totals.barsMissing}
+              tone={data.totals.barsMissing > 0 ? "warn" : undefined}
+            />
           </div>
 
           <Card className="p-4">
@@ -281,7 +381,11 @@ function RelatorioPage() {
                     </tr>
                   ))}
                   {data.ranking.length === 0 && (
-                    <tr><td colSpan={3} className="text-center py-4 text-muted-foreground">Sem consumo registrado.</td></tr>
+                    <tr>
+                      <td colSpan={3} className="text-center py-4 text-muted-foreground">
+                        Sem consumo registrado.
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -311,7 +415,9 @@ function RelatorioPage() {
                         <td className="px-2 py-1 uppercase">{r.marca}</td>
                         <td className="px-2 py-1 text-right tabular-nums">{r.padrao}</td>
                         <td className="px-2 py-1 text-right tabular-nums">{r.atual}</td>
-                        <td className="px-2 py-1 text-right tabular-nums text-red-700 font-medium">{r.delta}</td>
+                        <td className="px-2 py-1 text-right tabular-nums text-red-700 font-medium">
+                          {r.delta}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -341,7 +447,9 @@ function RelatorioPage() {
                         <td className="px-2 py-1">{t.bar}</td>
                         <td className="px-2 py-1">{t.horario}</td>
                         <td className="px-2 py-1 text-right tabular-nums">{t.temp}</td>
-                        <td className="px-2 py-1 text-right tabular-nums whitespace-nowrap">{new Date(t.at).toLocaleString("pt-BR")}</td>
+                        <td className="px-2 py-1 text-right tabular-nums whitespace-nowrap">
+                          {new Date(t.at).toLocaleString("pt-BR")}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -355,16 +463,35 @@ function RelatorioPage() {
   );
 }
 
-function Kpi({ icon, label, value, suffix, tone }: { icon: React.ReactNode; label: string; value: number | string; suffix?: string; tone?: "brand" | "gold" | "danger" | "warn" }) {
+function Kpi({
+  icon,
+  label,
+  value,
+  suffix,
+  tone,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number | string;
+  suffix?: string;
+  tone?: "brand" | "gold" | "danger" | "warn";
+}) {
   const toneCls =
-    tone === "brand" ? "bg-primary/10 text-primary" :
-    tone === "gold" ? "bg-accent/20 text-accent" :
-    tone === "danger" ? "bg-red-100 text-red-800" :
-    tone === "warn" ? "bg-orange-100 text-orange-800" :
-    "bg-muted text-foreground";
+    tone === "brand"
+      ? "bg-primary/10 text-primary"
+      : tone === "gold"
+        ? "bg-accent/20 text-accent"
+        : tone === "danger"
+          ? "bg-red-100 text-red-800"
+          : tone === "warn"
+            ? "bg-orange-100 text-orange-800"
+            : "bg-muted text-foreground";
   return (
     <Card className={`p-4 ${toneCls}`}>
-      <div className="flex items-center gap-2 opacity-80">{icon}<span className="text-[10px] font-display tracking-widest">{label}</span></div>
+      <div className="flex items-center gap-2 opacity-80">
+        {icon}
+        <span className="text-[10px] font-display tracking-widest">{label}</span>
+      </div>
       <div className="mt-1 text-2xl font-brand tabular-nums">{value}</div>
       {suffix && <div className="text-[11px] opacity-70">{suffix}</div>}
     </Card>

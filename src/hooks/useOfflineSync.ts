@@ -125,11 +125,19 @@ async function processEmpties(op: OfflineOp) {
 async function processTemperature(op: OfflineOp) {
   const { barId, userId, slot, temperatura, photoBase64 } = op.payload;
   const { data: existing } = await (supabase as any)
-    .from("bar_temperature_checks").select("id").eq("client_op_id", op.id).maybeSingle();
+    .from("bar_temperature_checks")
+    .select("id")
+    .eq("client_op_id", op.id)
+    .maybeSingle();
   if (existing) return;
   const photo = await uploadPhoto(barId, "temperatura", photoBase64);
   const { error } = await (supabase as any).from("bar_temperature_checks").insert({
-    bar_id: barId, slot, temperatura, photo_url: photo, performed_by: userId, client_op_id: op.id,
+    bar_id: barId,
+    slot,
+    temperatura,
+    photo_url: photo,
+    performed_by: userId,
+    client_op_id: op.id,
   });
   if (error) throw error;
 }
@@ -137,43 +145,78 @@ async function processTemperature(op: OfflineOp) {
 async function processOrganization(op: OfflineOp) {
   const { barId, userId, state } = op.payload;
   const { data: existing } = await (supabase as any)
-    .from("bar_organization_checks").select("id").eq("client_op_id", op.id).maybeSingle();
+    .from("bar_organization_checks")
+    .select("id")
+    .eq("client_op_id", op.id)
+    .maybeSingle();
   if (existing) return;
   const { error } = await (supabase as any).from("bar_organization_checks").insert({
-    bar_id: barId, ...state, performed_by: userId, client_op_id: op.id,
+    bar_id: barId,
+    ...state,
+    performed_by: userId,
+    client_op_id: op.id,
   });
   if (error) throw error;
 }
 
 async function processCarga(op: OfflineOp) {
-  const { userId, received_at, heineken_barris, amstel_barris, barris_comodato, vasilhames_recolhidos, invoice_number, notes, photoBase64 } = op.payload;
+  const {
+    userId,
+    received_at,
+    heineken_barris,
+    amstel_barris,
+    barris_comodato,
+    vasilhames_recolhidos,
+    invoice_number,
+    notes,
+    photoBase64,
+  } = op.payload;
   const { data: existing } = await (supabase as any)
-    .from("heineken_cargas").select("id").eq("client_op_id", op.id).maybeSingle();
+    .from("heineken_cargas")
+    .select("id")
+    .eq("client_op_id", op.id)
+    .maybeSingle();
   if (existing) return;
   const path = `cargas/${Date.now()}_offline.jpg`;
   const blob = base64ToBlob(photoBase64);
-  const up = await supabase.storage.from("operacao-fotos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  const up = await supabase.storage
+    .from("operacao-fotos")
+    .upload(path, blob, { contentType: "image/jpeg", upsert: false });
   if (up.error) throw up.error;
-  const { data: signed } = await supabase.storage.from("operacao-fotos").createSignedUrl(path, 60 * 60 * 24 * 365);
+  const { data: signed } = await supabase.storage
+    .from("operacao-fotos")
+    .createSignedUrl(path, 60 * 60 * 24 * 365);
   const { error } = await (supabase as any).from("heineken_cargas").insert({
-    received_at, heineken_barris, amstel_barris, barris_comodato, vasilhames_recolhidos,
-    invoice_number: invoice_number ?? null, invoice_photo_url: signed?.signedUrl ?? null,
-    notes: notes ?? null, performed_by: userId, client_op_id: op.id,
+    received_at,
+    heineken_barris,
+    amstel_barris,
+    barris_comodato,
+    vasilhames_recolhidos,
+    invoice_number: invoice_number ?? null,
+    invoice_photo_url: signed?.signedUrl ?? null,
+    notes: notes ?? null,
+    performed_by: userId,
+    client_op_id: op.id,
   });
   if (error) throw error;
 }
 
 async function processOne(op: OfflineOp) {
   switch (op.type) {
-    case "inventory.submit": return processInventory(op);
-    case "refill.submit": return processRefill(op);
-    case "empties.remove": return processEmpties(op);
-    case "temperature.submit": return processTemperature(op);
-    case "organization.submit": return processOrganization(op);
-    case "carga.submit": return processCarga(op);
+    case "inventory.submit":
+      return processInventory(op);
+    case "refill.submit":
+      return processRefill(op);
+    case "empties.remove":
+      return processEmpties(op);
+    case "temperature.submit":
+      return processTemperature(op);
+    case "organization.submit":
+      return processOrganization(op);
+    case "carga.submit":
+      return processCarga(op);
   }
 }
-
 
 export function useOfflineSync() {
   const [pending, setPending] = useState(0);

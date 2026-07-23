@@ -6,10 +6,27 @@ import { useSession, usePermissions } from "@/hooks/useSession";
 import { useMaintenanceAlerts } from "@/hooks/useMaintenanceAlerts";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  MapPin, Beer, LogOut, LayoutDashboard, Wrench, BarChart3, CreditCard, Package, PlusCircle, ClipboardCheck, Truck, AlertTriangle, X, Archive, CloudOff, Upload, FileText, ShieldCheck, User as UserIcon,
+  MapPin,
+  Beer,
+  LogOut,
+  LayoutDashboard,
+  Wrench,
+  BarChart3,
+  CreditCard,
+  Package,
+  PlusCircle,
+  ClipboardCheck,
+  Truck,
+  AlertTriangle,
+  X,
+  Archive,
+  CloudOff,
+  Upload,
+  FileText,
+  ShieldCheck,
+  User as UserIcon,
 } from "lucide-react";
 import { useOfflineSync } from "@/hooks/useOfflineSync";
-
 
 import { DispelIcon } from "@/components/DispelLogo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -29,8 +46,28 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-type NavKey = "dashboard" | "map" | "equipe" | "consumo" | "manutencao" | "estoque" | "notas" | "inventarios" | "cargas" | "backups" | "importar" | "relatorio" | "governanca" | "perfil";
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; key: NavKey };
+type NavKey =
+  | "dashboard"
+  | "map"
+  | "equipe"
+  | "consumo"
+  | "manutencao"
+  | "estoque"
+  | "notas"
+  | "inventarios"
+  | "cargas"
+  | "backups"
+  | "importar"
+  | "relatorio"
+  | "governanca"
+  | "perfil";
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+  key: NavKey;
+};
 
 const NAV: NavItem[] = [
   { key: "dashboard", to: "/app", label: "DASHBOARD", icon: LayoutDashboard, exact: true },
@@ -49,7 +86,6 @@ const NAV: NavItem[] = [
   { key: "perfil", to: "/app/perfil", label: "MEU PERFIL", icon: UserIcon },
 ];
 
-
 export function AppShell({ children }: { children: React.ReactNode }) {
   const nav = useNavigate();
   const { user } = useSession();
@@ -60,22 +96,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const canSee = (key: NavKey) => {
     if (perms.loading) return true;
     switch (key) {
-      case "dashboard": return perms.canAccessDashboard;
-      case "map": return perms.canAccessMap;
-      case "inventarios": return perms.canAccessDashboard;
-      case "estoque": return perms.isGestor || perms.isManutencao;
-      case "notas": return perms.isGestor || perms.isAdmin || perms.isManutencao;
-      case "cargas": return perms.isGestor || perms.isManutencao;
-      case "equipe": return perms.canAccessEquipeBar;
-      case "consumo": return perms.canAccessConsumo;
-      case "manutencao": return perms.canAccessManutencao;
-      case "backups": return perms.isGestor;
-      case "importar": return perms.isGestor;
-      case "relatorio": return perms.isGestor || perms.isManutencao;
-      case "governanca": return perms.isAdmin;
-      case "perfil": return !!user;
+      case "dashboard":
+        return perms.canAccessDashboard;
+      case "map":
+        return perms.canAccessMap;
+      case "inventarios":
+        return perms.canAccessDashboard;
+      case "estoque":
+        return perms.isGestor || perms.isManutencao;
+      case "notas":
+        return perms.isGestor || perms.isAdmin || perms.isManutencao;
+      case "cargas":
+        return perms.isGestor || perms.isManutencao;
+      case "equipe":
+        return perms.canAccessEquipeBar;
+      case "consumo":
+        return perms.canAccessConsumo;
+      case "manutencao":
+        return perms.canAccessManutencao;
+      case "backups":
+        return perms.isGestor;
+      case "importar":
+        return perms.isGestor;
+      case "relatorio":
+        return perms.isGestor || perms.isManutencao;
+      case "governanca":
+        return perms.isAdmin;
+      case "perfil":
+        return !!user;
     }
-
   };
   const visibleNav = NAV.filter((n) => canSee(n.key));
 
@@ -85,14 +134,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [barName, setBarName] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!latestAlert?.bar_id) { setBarName(null); return; }
+    if (!latestAlert?.bar_id) {
+      setBarName(null);
+      return;
+    }
     let cancelled = false;
-    supabase.from("bars").select("name").eq("id", latestAlert.bar_id).maybeSingle().then(({ data }) => {
-      if (!cancelled) setBarName((data as any)?.name ?? null);
-    });
-    return () => { cancelled = true; };
+    supabase
+      .from("bars")
+      .select("name")
+      .eq("id", latestAlert.bar_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setBarName((data as any)?.name ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [latestAlert?.bar_id]);
-
 
   useEffect(() => {
     if (perms.loading || !user) return;
@@ -119,7 +177,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </span>
               <div className="leading-tight">
                 <div className="font-brand text-xl text-sidebar-foreground">Dispel</div>
-                <div className="text-[10px] tracking-[0.35em] text-accent font-display">OPERAÇÃO</div>
+                <div className="text-[10px] tracking-[0.35em] text-accent font-display">
+                  OPERAÇÃO
+                </div>
               </div>
             </Link>
           </SidebarHeader>
@@ -131,7 +191,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {visibleNav.map(({ to, label, icon: Icon, exact, key }) => (
                     <SidebarMenuItem key={to}>
                       <SidebarMenuButton asChild isActive={isActive(to, exact)}>
-                        <Link to={to} className="font-display text-[11px] tracking-[0.15em] relative">
+                        <Link
+                          to={to}
+                          className="font-display text-[11px] tracking-[0.15em] relative"
+                        >
                           <Icon className="h-4 w-4" />
                           <span>{label}</span>
                           {key === "manutencao" && unread > 0 && (
@@ -171,12 +234,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarFooter className="border-t border-sidebar-border">
             <div className="flex items-center justify-between gap-2 px-2 py-1.5">
               <div className="min-w-0 leading-tight">
-                <div className="truncate text-xs text-sidebar-foreground">{user?.email?.split("@")[0]}</div>
+                <div className="truncate text-xs text-sidebar-foreground">
+                  {user?.email?.split("@")[0]}
+                </div>
                 {isGestor && (
                   <div className="text-[9px] font-display tracking-[0.3em] text-accent">GESTOR</div>
                 )}
                 {perms.isManutencao && !isGestor && (
-                  <div className="text-[9px] font-display tracking-[0.3em] text-accent">MANUTENÇÃO</div>
+                  <div className="text-[9px] font-display tracking-[0.3em] text-accent">
+                    MANUTENÇÃO
+                  </div>
                 )}
                 {perms.onlyEquipeBar && (
                   <div className="text-[9px] font-display tracking-[0.3em] text-accent">EQUIPE</div>
@@ -186,7 +253,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 size="sm"
                 variant="ghost"
                 className="shrink-0 text-sidebar-foreground/80 hover:bg-sidebar-accent"
-                onClick={async () => { await signOut(); nav({ to: "/auth" }); }}
+                onClick={async () => {
+                  await signOut();
+                  nav({ to: "/auth" });
+                }}
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -202,7 +272,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DispelIcon className="h-7 w-7 shrink-0" />
                 <div className="leading-tight min-w-0">
                   <div className="font-brand text-lg truncate">Dispel</div>
-                  <div className="text-[9px] tracking-[0.3em] text-accent font-display">OPERAÇÃO</div>
+                  <div className="text-[9px] tracking-[0.3em] text-accent font-display">
+                    OPERAÇÃO
+                  </div>
                 </div>
               </Link>
               <div className="ml-auto flex items-center gap-2">
@@ -212,7 +284,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     title={offlineSyncing ? "Sincronizando…" : "Aguardando rede para sincronizar"}
                   >
                     <CloudOff className="h-3 w-3" />
-                    {offlineSyncing ? "SINCRONIZANDO" : `${offlinePending} PENDENTE${offlinePending > 1 ? "S" : ""}`}
+                    {offlineSyncing
+                      ? "SINCRONIZANDO"
+                      : `${offlinePending} PENDENTE${offlinePending > 1 ? "S" : ""}`}
                   </span>
                 )}
                 {alertsEnabled && (
@@ -243,7 +317,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {children}
             </ErrorBoundary>
           </main>
-
         </div>
       </div>
 
@@ -280,7 +353,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Button
               size="lg"
               className="bg-white text-red-700 hover:bg-white/90 font-display tracking-widest text-base h-14 px-8"
-              onClick={() => { dismissAlert(); nav({ to: "/app/manutencao" }); }}
+              onClick={() => {
+                dismissAlert();
+                nav({ to: "/app/manutencao" });
+              }}
             >
               VER MANUTENÇÃO
             </Button>
@@ -298,4 +374,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-

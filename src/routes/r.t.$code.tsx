@@ -7,10 +7,7 @@ import { Loader2, QrCode, AlertTriangle } from "lucide-react";
 export const Route = createFileRoute("/r/t/$code")({
   component: QrTokenResolver,
   head: () => ({
-    meta: [
-      { title: "Atendimento Dispel" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Atendimento Dispel" }, { name: "robots", content: "noindex" }],
   }),
 });
 

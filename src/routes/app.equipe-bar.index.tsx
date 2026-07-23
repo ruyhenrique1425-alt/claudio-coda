@@ -37,12 +37,25 @@ function EquipeBarIndex() {
 
   async function load() {
     setLoading(true);
-    const [{ data: bars }, { data: readers }, { data: sessions }, { data: shifts }, { data: checks }] = await Promise.all([
-      supabase.from("bars").select("id,name,bar_type,apoio_responsavel").in("bar_type", ["bar_venda", "bar_parceiro"]).order("name"),
+    const [
+      { data: bars },
+      { data: readers },
+      { data: sessions },
+      { data: shifts },
+      { data: checks },
+    ] = await Promise.all([
+      supabase
+        .from("bars")
+        .select("id,name,bar_type,apoio_responsavel")
+        .in("bar_type", ["bar_venda", "bar_parceiro"])
+        .order("name"),
       supabase.from("bar_card_readers").select("*"),
       supabase.from("bar_card_machine_sessions").select("*").eq("event_date", todayISO()),
       supabase.from("bar_shifts").select("bar_id,shift,meninas_qtd"),
-      supabase.from("bar_staff_checks").select("bar_id,checkpoint,meninas_count,performed_at").gte("performed_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
+      supabase
+        .from("bar_staff_checks")
+        .select("bar_id,checkpoint,meninas_count,performed_at")
+        .gte("performed_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
     ]);
     const readerMap: Record<string, number> = {};
     (readers ?? []).forEach((r: any) => (readerMap[r.bar_id] = r.quantidade ?? 0));
@@ -107,7 +120,9 @@ function EquipeBarIndex() {
           <h1 className="font-display text-2xl tracking-wider">EQUIPE DE BAR</h1>
           <p className="text-xs text-muted-foreground">
             Agora {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} ·{" "}
-            {active.length === 0 ? "Fora de turno" : `Turnos: ${active.map((s) => s.label).join(" + ")}`}
+            {active.length === 0
+              ? "Fora de turno"
+              : `Turnos: ${active.map((s) => s.label).join(" + ")}`}
           </p>
         </div>
       </div>
@@ -116,7 +131,9 @@ function EquipeBarIndex() {
       <Card className="p-4 mb-3 border-accent/40">
         <div className="flex items-center gap-2 mb-3">
           <Users className="w-4 h-4 text-accent" />
-          <h2 className="font-display text-sm tracking-widest text-muted-foreground">PROMOTORAS EM CAMPO</h2>
+          <h2 className="font-display text-sm tracking-widest text-muted-foreground">
+            PROMOTORAS EM CAMPO
+          </h2>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded border border-border p-3">
@@ -125,12 +142,18 @@ function EquipeBarIndex() {
             <div className="text-[10px] text-muted-foreground">soma dos turnos ativos</div>
           </div>
           <div className="rounded border border-border p-3">
-            <div className="text-[10px] uppercase text-muted-foreground">Registradas (último check)</div>
-            <div className={`font-display text-3xl ${totalMeninasEmCampo >= totalExpectedMeninas ? "text-primary" : "text-destructive"}`}>
+            <div className="text-[10px] uppercase text-muted-foreground">
+              Registradas (último check)
+            </div>
+            <div
+              className={`font-display text-3xl ${totalMeninasEmCampo >= totalExpectedMeninas ? "text-primary" : "text-destructive"}`}
+            >
               {totalMeninasEmCampo}
             </div>
             <div className="text-[10px] text-muted-foreground">
-              {totalMeninasEmCampo >= totalExpectedMeninas ? "★ padrão ok" : `faltam ${Math.max(0, totalExpectedMeninas - totalMeninasEmCampo)}`}
+              {totalMeninasEmCampo >= totalExpectedMeninas
+                ? "★ padrão ok"
+                : `faltam ${Math.max(0, totalExpectedMeninas - totalMeninasEmCampo)}`}
             </div>
           </div>
         </div>
@@ -140,7 +163,9 @@ function EquipeBarIndex() {
       <Card className="p-4 mb-4 border-accent/40">
         <div className="flex items-center gap-2 mb-3">
           <CreditCard className="w-4 h-4 text-accent" />
-          <h2 className="font-display text-sm tracking-widest text-muted-foreground">MAQUININHAS EM CAMPO</h2>
+          <h2 className="font-display text-sm tracking-widest text-muted-foreground">
+            MAQUININHAS EM CAMPO
+          </h2>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded border border-border p-3">
@@ -153,14 +178,20 @@ function EquipeBarIndex() {
           </div>
           <div className="rounded border border-border p-3">
             <div className="text-[10px] uppercase text-muted-foreground">Falta retirar</div>
-            <div className={`font-display text-2xl ${totalPendentesRetirada > 0 ? "text-destructive" : "text-primary"}`}>{totalPendentesRetirada}</div>
+            <div
+              className={`font-display text-2xl ${totalPendentesRetirada > 0 ? "text-destructive" : "text-primary"}`}
+            >
+              {totalPendentesRetirada}
+            </div>
           </div>
         </div>
       </Card>
 
       {loading && <div className="text-sm text-muted-foreground">Carregando…</div>}
       {!loading && rows.length === 0 && (
-        <Card className="p-6 text-center text-sm text-muted-foreground">Nenhum bar de venda cadastrado.</Card>
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          Nenhum bar de venda cadastrado.
+        </Card>
       )}
 
       <div className="space-y-2">
@@ -186,15 +217,28 @@ function EquipeBarIndex() {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 items-end">
-                    {r.expectedMeninas > 0 && (
-                      okProm
-                        ? <Badge className="bg-primary text-primary-foreground text-[9px]"><CheckCircle2 className="w-3 h-3 mr-1" />Prom.</Badge>
-                        : <Badge variant="destructive" className="text-[9px]"><AlertTriangle className="w-3 h-3 mr-1" />Prom.</Badge>
-                    )}
+                    {r.expectedMeninas > 0 &&
+                      (okProm ? (
+                        <Badge className="bg-primary text-primary-foreground text-[9px]">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Prom.
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="text-[9px]">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          Prom.
+                        </Badge>
+                      ))}
                     {faltaRetirar > 0 ? (
-                      <Badge variant="destructive" className="text-[9px]"><AlertTriangle className="w-3 h-3 mr-1" />Maq. -{faltaRetirar}</Badge>
+                      <Badge variant="destructive" className="text-[9px]">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        Maq. -{faltaRetirar}
+                      </Badge>
                     ) : okMaq ? (
-                      <Badge className="bg-primary text-primary-foreground text-[9px]"><CheckCircle2 className="w-3 h-3 mr-1" />Maq.</Badge>
+                      <Badge className="bg-primary text-primary-foreground text-[9px]">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        Maq.
+                      </Badge>
                     ) : null}
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />

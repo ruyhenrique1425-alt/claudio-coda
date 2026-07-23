@@ -30,14 +30,20 @@ type Inv = {
 };
 
 const BRAND_LABEL: Record<Brand, string> = { heineken: "Heineken", amstel: "Amstel" };
-const STATUS_LABEL: Record<Status, string> = { plugado: "Plugado", fechado: "Fechado", vazio: "Vazio" };
+const STATUS_LABEL: Record<Status, string> = {
+  plugado: "Plugado",
+  fechado: "Fechado",
+  vazio: "Vazio",
+};
 
 function totals(items: Item[]) {
   const t: Record<Brand, Record<Status, number>> = {
     heineken: { plugado: 0, fechado: 0, vazio: 0 },
     amstel: { plugado: 0, fechado: 0, vazio: 0 },
   };
-  items.forEach((i) => { t[i.brand][i.status] += i.quantidade; });
+  items.forEach((i) => {
+    t[i.brand][i.status] += i.quantidade;
+  });
   return t;
 }
 
@@ -54,14 +60,22 @@ const HOUR_OPTIONS: { v: HourFilter; label: string }[] = [
 ];
 function inHour(h: number, f: HourFilter) {
   switch (f) {
-    case "all": return true;
-    case "madrugada": return h >= 0 && h < 6;
-    case "manha": return h >= 6 && h < 12;
-    case "tarde": return h >= 12 && h < 18;
-    case "noite": return h >= 18 && h < 24;
-    case "t1": return h >= 7 && h < 19;
-    case "t2": return h >= 10 && h < 22;
-    case "t3": return h >= 13 || h < 1;
+    case "all":
+      return true;
+    case "madrugada":
+      return h >= 0 && h < 6;
+    case "manha":
+      return h >= 6 && h < 12;
+    case "tarde":
+      return h >= 12 && h < 18;
+    case "noite":
+      return h >= 18 && h < 24;
+    case "t1":
+      return h >= 7 && h < 19;
+    case "t2":
+      return h >= 10 && h < 22;
+    case "t3":
+      return h >= 13 || h < 1;
   }
 }
 
@@ -87,7 +101,9 @@ function InventariosHistorico() {
     queryFn: async (): Promise<Inv[]> => {
       let q = supabase
         .from("inventories")
-        .select("id,bar_id,performed_at,photo_url,notes,performed_by,bars(name),inventory_items(brand,status,quantidade)")
+        .select(
+          "id,bar_id,performed_at,photo_url,notes,performed_by,bars(name),inventory_items(brand,status,quantidade)",
+        )
         .order("performed_at", { ascending: false })
         .limit(200);
       if (barFilter !== "all") q = q.eq("bar_id", barFilter);
@@ -102,8 +118,13 @@ function InventariosHistorico() {
       const userIds = Array.from(new Set(rows.map((r: any) => r.performed_by).filter(Boolean)));
       let profMap: Record<string, string> = {};
       if (userIds.length > 0) {
-        const { data: profs } = await supabase.from("profiles").select("id,display_name,username").in("id", userIds);
-        (profs ?? []).forEach((p: any) => { profMap[p.id] = p.display_name ?? p.username ?? null; });
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id,display_name,username")
+          .in("id", userIds);
+        (profs ?? []).forEach((p: any) => {
+          profMap[p.id] = p.display_name ?? p.username ?? null;
+        });
       }
       return rows.map((r: any) => ({
         id: r.id,
@@ -130,7 +151,7 @@ function InventariosHistorico() {
     const news = invs.filter((i) => !knownIdsRef.current!.has(i.id));
     if (news.length > 0) {
       try {
-        const AC = (window.AudioContext || (window as any).webkitAudioContext);
+        const AC = window.AudioContext || (window as any).webkitAudioContext;
         if (AC) {
           const ctx = new AC();
           const now = ctx.currentTime;
@@ -151,13 +172,15 @@ function InventariosHistorico() {
         }
       } catch {}
       toast.success(`📋 ${news.length} novo(s) inventário(s)`, {
-        description: news.slice(0, 3).map((n) => n.bar_name).join(", "),
+        description: news
+          .slice(0, 3)
+          .map((n) => n.bar_name)
+          .join(", "),
         duration: 8000,
       });
       knownIdsRef.current = ids;
     }
   }, [invs]);
-
 
   const filteredInvs = useMemo(() => {
     return invs.filter((inv) => {
@@ -173,14 +196,21 @@ function InventariosHistorico() {
     });
   }, [invs, dayFilter, hourFilter]);
 
-  const photoPaths = useMemo(() => Array.from(new Set(filteredInvs.map((i) => i.photo_url).filter(Boolean))), [filteredInvs]);
+  const photoPaths = useMemo(
+    () => Array.from(new Set(filteredInvs.map((i) => i.photo_url).filter(Boolean))),
+    [filteredInvs],
+  );
   const { data: signedMap = {} } = useQuery({
     queryKey: ["inv-hist-signed", photoPaths],
     enabled: photoPaths.length > 0,
     queryFn: async () => {
-      const { data } = await supabase.storage.from("operacao-fotos").createSignedUrls(photoPaths, 60 * 60);
+      const { data } = await supabase.storage
+        .from("operacao-fotos")
+        .createSignedUrls(photoPaths, 60 * 60);
       const map: Record<string, string> = {};
-      (data ?? []).forEach((d: any) => { if (d.path && d.signedUrl) map[d.path] = d.signedUrl; });
+      (data ?? []).forEach((d: any) => {
+        if (d.path && d.signedUrl) map[d.path] = d.signedUrl;
+      });
       return map;
     },
   });
@@ -197,24 +227,34 @@ function InventariosHistorico() {
         </div>
       </header>
 
-      {invs.length > 0 && (() => {
-        const last = invs[0];
-        const dt = new Date(last.performed_at);
-        return (
-          <Card className="p-3 border-l-4 border-l-primary bg-primary/5">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Último inventário registrado</div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="font-display text-lg">{dt.toLocaleDateString("pt-BR")} · {dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
-              <span className="text-sm text-muted-foreground">por <b className="text-foreground">{last.operator ?? "—"}</b></span>
-            </div>
-          </Card>
-        );
-      })()}
+      {invs.length > 0 &&
+        (() => {
+          const last = invs[0];
+          const dt = new Date(last.performed_at);
+          return (
+            <Card className="p-3 border-l-4 border-l-primary bg-primary/5">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Último inventário registrado
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="font-display text-lg">
+                  {dt.toLocaleDateString("pt-BR")} ·{" "}
+                  {dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  por <b className="text-foreground">{last.operator ?? "—"}</b>
+                </span>
+              </div>
+            </Card>
+          );
+        })()}
 
       <Card className="p-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
-          <span className="text-[11px] font-display tracking-widest text-muted-foreground">FILTROS</span>
+          <span className="text-[11px] font-display tracking-widest text-muted-foreground">
+            FILTROS
+          </span>
         </div>
         <select
           className="border rounded px-2 py-1.5 text-sm bg-background"
@@ -223,12 +263,19 @@ function InventariosHistorico() {
         >
           <option value="all">Todos os bares</option>
           {bars.map((b: any) => (
-            <option key={b.id} value={b.id}>{b.name}</option>
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
           ))}
         </select>
         <div className="flex gap-1">
           {(["7", "30", "all"] as const).map((r) => (
-            <Button key={r} size="sm" variant={range === r ? "default" : "outline"} onClick={() => setRange(r)}>
+            <Button
+              key={r}
+              size="sm"
+              variant={range === r ? "default" : "outline"}
+              onClick={() => setRange(r)}
+            >
               {r === "all" ? "Tudo" : `${r} dias`}
             </Button>
           ))}
@@ -240,7 +287,9 @@ function InventariosHistorico() {
           onChange={(e) => setDayFilter(e.target.value)}
         />
         {dayFilter && (
-          <Button size="sm" variant="ghost" onClick={() => setDayFilter("")}>Limpar dia</Button>
+          <Button size="sm" variant="ghost" onClick={() => setDayFilter("")}>
+            Limpar dia
+          </Button>
         )}
         <select
           className="border rounded px-2 py-1.5 text-sm bg-background"
@@ -248,10 +297,14 @@ function InventariosHistorico() {
           onChange={(e) => setHourFilter(e.target.value as HourFilter)}
         >
           {HOUR_OPTIONS.map((o) => (
-            <option key={o.v} value={o.v}>{o.label}</option>
+            <option key={o.v} value={o.v}>
+              {o.label}
+            </option>
           ))}
         </select>
-        <span className="ml-auto text-xs text-muted-foreground">{filteredInvs.length} registro(s)</span>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {filteredInvs.length} registro(s)
+        </span>
         <Button
           size="sm"
           variant="outline"
@@ -269,7 +322,7 @@ function InventariosHistorico() {
                   status: STATUS_LABEL[st],
                   quantidade: t[br][st],
                   observacoes: inv.notes ?? "",
-                }))
+                })),
               );
             });
             downloadCsv(`inventarios-${timestampSlug()}.csv`, rows);
@@ -311,11 +364,19 @@ function InventariosHistorico() {
           const dt = new Date(inv.performed_at);
           const vazioTotal = t.heineken.vazio + t.amstel.vazio;
           return (
-            <Card key={inv.id} className="overflow-hidden hover:shadow-md transition cursor-pointer" onClick={() => setDetailOpen(inv)}>
+            <Card
+              key={inv.id}
+              className="overflow-hidden hover:shadow-md transition cursor-pointer"
+              onClick={() => setDetailOpen(inv)}
+            >
               <div className="flex">
                 <div className="relative w-32 h-32 shrink-0 bg-muted overflow-hidden">
                   {signed ? (
-                    <img src={signed} alt="Foto inventário" className="w-full h-full object-cover" />
+                    <img
+                      src={signed}
+                      alt="Foto inventário"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full grid place-items-center text-muted-foreground">
                       <ImageIcon className="w-6 h-6" />
@@ -329,12 +390,16 @@ function InventariosHistorico() {
                         {inv.bar_name}
                       </div>
                       <div className="text-[10px] text-muted-foreground">
-                        {dt.toLocaleDateString("pt-BR")} · {dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        {dt.toLocaleDateString("pt-BR")} ·{" "}
+                        {dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                         {inv.operator && <> · {inv.operator}</>}
                       </div>
                     </div>
                     {vazioTotal > 0 && (
-                      <Badge variant="outline" className="text-[9px] border-orange-400 text-orange-700 bg-orange-50 shrink-0">
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] border-orange-400 text-orange-700 bg-orange-50 shrink-0"
+                      >
                         {vazioTotal} vazio(s)
                       </Badge>
                     )}
@@ -342,7 +407,9 @@ function InventariosHistorico() {
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {(["heineken", "amstel"] as Brand[]).map((br) => (
                       <div key={br} className="rounded border p-1.5">
-                        <div className="text-[10px] font-display tracking-widest text-muted-foreground">{BRAND_LABEL[br]}</div>
+                        <div className="text-[10px] font-display tracking-widest text-muted-foreground">
+                          {BRAND_LABEL[br]}
+                        </div>
                         <div className="flex gap-2 text-[11px] mt-0.5">
                           <StatusNum label="Plug" v={t[br].plugado} color="text-primary" />
                           <StatusNum label="Fech" v={t[br].fechado} color="text-accent" />
@@ -360,84 +427,114 @@ function InventariosHistorico() {
 
       <Dialog open={!!detailOpen} onOpenChange={(o) => !o && setDetailOpen(null)}>
         <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0">
-          {detailOpen && (() => {
-            const inv = detailOpen;
-            const t = totals(inv.items);
-            const signed = signedMap[inv.photo_url];
-            const dt = new Date(inv.performed_at);
-            const grand = {
-              plugado: t.heineken.plugado + t.amstel.plugado,
-              fechado: t.heineken.fechado + t.amstel.fechado,
-              vazio: t.heineken.vazio + t.amstel.vazio,
-            };
-            return (
-              <>
-                <DialogHeader className="p-4 pb-2 border-b">
-                  <DialogTitle className="font-display tracking-wider text-lg">{inv.bar_name}</DialogTitle>
-                  <div className="text-xs text-muted-foreground">
-                    {dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })} · {dt.toLocaleTimeString("pt-BR")}
-                    {inv.operator && <> · Operador: <b>{inv.operator}</b></>}
-                  </div>
-                </DialogHeader>
-                <div className="grid md:grid-cols-2 gap-0">
-                  <div className="bg-muted/30 p-3 flex items-center justify-center min-h-[280px]">
-                    {signed ? (
-                      <a href={signed} target="_blank" rel="noopener noreferrer">
-                        <img src={signed} alt="Inventário" className="max-h-[70vh] w-auto rounded shadow" />
-                      </a>
-                    ) : (
-                      <div className="text-muted-foreground text-sm flex flex-col items-center gap-2">
-                        <ImageIcon className="w-10 h-10" />
-                        Sem foto registrada
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-4 space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
-                      <SummaryTile label="Plugado" value={grand.plugado} color="text-primary" />
-                      <SummaryTile label="Fechado" value={grand.fechado} color="text-accent" />
-                      <SummaryTile label="Vazio" value={grand.vazio} color="text-orange-600" />
+          {detailOpen &&
+            (() => {
+              const inv = detailOpen;
+              const t = totals(inv.items);
+              const signed = signedMap[inv.photo_url];
+              const dt = new Date(inv.performed_at);
+              const grand = {
+                plugado: t.heineken.plugado + t.amstel.plugado,
+                fechado: t.heineken.fechado + t.amstel.fechado,
+                vazio: t.heineken.vazio + t.amstel.vazio,
+              };
+              return (
+                <>
+                  <DialogHeader className="p-4 pb-2 border-b">
+                    <DialogTitle className="font-display tracking-wider text-lg">
+                      {inv.bar_name}
+                    </DialogTitle>
+                    <div className="text-xs text-muted-foreground">
+                      {dt.toLocaleDateString("pt-BR", {
+                        weekday: "long",
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}{" "}
+                      · {dt.toLocaleTimeString("pt-BR")}
+                      {inv.operator && (
+                        <>
+                          {" "}
+                          · Operador: <b>{inv.operator}</b>
+                        </>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                      {(["heineken", "amstel"] as Brand[]).map((br) => {
-                        const brandTotal = t[br].plugado + t[br].fechado + t[br].vazio;
-                        return (
-                          <div key={br} className="rounded-lg border p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="font-display tracking-widest text-sm">{BRAND_LABEL[br]}</div>
-                              <div className="text-[10px] text-muted-foreground">Total: <b>{brandTotal}</b></div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 text-center">
-                              {(["plugado", "fechado", "vazio"] as Status[]).map((st) => (
-                                <div key={st} className="rounded bg-muted/40 py-2">
-                                  <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{STATUS_LABEL[st]}</div>
-                                  <div className={`font-display text-xl ${t[br][st] > 0 ? (st === "plugado" ? "text-primary" : st === "fechado" ? "text-accent" : "text-orange-600") : "text-muted-foreground"}`}>{t[br][st]}</div>
+                  </DialogHeader>
+                  <div className="grid md:grid-cols-2 gap-0">
+                    <div className="bg-muted/30 p-3 flex items-center justify-center min-h-[280px]">
+                      {signed ? (
+                        <a href={signed} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={signed}
+                            alt="Inventário"
+                            className="max-h-[70vh] w-auto rounded shadow"
+                          />
+                        </a>
+                      ) : (
+                        <div className="text-muted-foreground text-sm flex flex-col items-center gap-2">
+                          <ImageIcon className="w-10 h-10" />
+                          Sem foto registrada
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4 space-y-4">
+                      <div className="grid grid-cols-3 gap-2">
+                        <SummaryTile label="Plugado" value={grand.plugado} color="text-primary" />
+                        <SummaryTile label="Fechado" value={grand.fechado} color="text-accent" />
+                        <SummaryTile label="Vazio" value={grand.vazio} color="text-orange-600" />
+                      </div>
+                      <div className="space-y-2">
+                        {(["heineken", "amstel"] as Brand[]).map((br) => {
+                          const brandTotal = t[br].plugado + t[br].fechado + t[br].vazio;
+                          return (
+                            <div key={br} className="rounded-lg border p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="font-display tracking-widest text-sm">
+                                  {BRAND_LABEL[br]}
                                 </div>
-                              ))}
+                                <div className="text-[10px] text-muted-foreground">
+                                  Total: <b>{brandTotal}</b>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 text-center">
+                                {(["plugado", "fechado", "vazio"] as Status[]).map((st) => (
+                                  <div key={st} className="rounded bg-muted/40 py-2">
+                                    <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
+                                      {STATUS_LABEL[st]}
+                                    </div>
+                                    <div
+                                      className={`font-display text-xl ${t[br][st] > 0 ? (st === "plugado" ? "text-primary" : st === "fechado" ? "text-accent" : "text-orange-600") : "text-muted-foreground"}`}
+                                    >
+                                      {t[br][st]}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {inv.notes && (
-                      <div className="rounded-lg border bg-muted/20 p-3">
-                        <div className="text-[10px] font-display tracking-widest text-muted-foreground mb-1">OBSERVAÇÕES</div>
-                        <p className="text-sm whitespace-pre-wrap">{inv.notes}</p>
+                          );
+                        })}
                       </div>
-                    )}
-                    <Link
-                      to="/app/bars/$barId"
-                      params={{ barId: inv.bar_id }}
-                      search={{ tab: "inventario" }}
-                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                    >
-                      Abrir bar <ChevronRight className="w-4 h-4" />
-                    </Link>
+                      {inv.notes && (
+                        <div className="rounded-lg border bg-muted/20 p-3">
+                          <div className="text-[10px] font-display tracking-widest text-muted-foreground mb-1">
+                            OBSERVAÇÕES
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{inv.notes}</p>
+                        </div>
+                      )}
+                      <Link
+                        to="/app/bars/$barId"
+                        params={{ barId: inv.bar_id }}
+                        search={{ tab: "inventario" }}
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                      >
+                        Abrir bar <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </>
-            );
-          })()}
+                </>
+              );
+            })()}
         </DialogContent>
       </Dialog>
     </div>
@@ -448,7 +545,9 @@ function SummaryTile({ label, value, color }: { label: string; value: number; co
   return (
     <div className="rounded-lg border p-2 text-center">
       <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`font-display text-2xl ${value > 0 ? color : "text-muted-foreground"}`}>{value}</div>
+      <div className={`font-display text-2xl ${value > 0 ? color : "text-muted-foreground"}`}>
+        {value}
+      </div>
     </div>
   );
 }

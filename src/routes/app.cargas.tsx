@@ -6,9 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Truck, Camera, Beer, Package, RotateCcw, Image as ImageIcon, Plus, Download } from "lucide-react";
+import {
+  Truck,
+  Camera,
+  Beer,
+  Package,
+  RotateCcw,
+  Image as ImageIcon,
+  Plus,
+  Download,
+} from "lucide-react";
 import { downloadCsv, timestampSlug } from "@/lib/exportCsv";
 import { enqueue } from "@/lib/offlineQueue";
 
@@ -52,13 +67,18 @@ function CargasHeinekenPage() {
       supabase.from("empties_removed").select("quantidade"),
     ]);
     setItems((c.data ?? []) as Carga[]);
-    setEmptiesCollected(((e.data ?? []) as { quantidade: number }[]).reduce((s, r) => s + (r.quantidade || 0), 0));
+    setEmptiesCollected(
+      ((e.data ?? []) as { quantidade: number }[]).reduce((s, r) => s + (r.quantidade || 0), 0),
+    );
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
-  if (!perms.loading && perms.roles.length > 0 && !perms.isGestor && !perms.isManutencao) return <Navigate to="/app" />;
+  if (!perms.loading && perms.roles.length > 0 && !perms.isGestor && !perms.isManutencao)
+    return <Navigate to="/app" />;
 
   const totals = items.reduce(
     (acc, i) => ({
@@ -78,7 +98,9 @@ function CargasHeinekenPage() {
           <Truck className="w-6 h-6 text-primary" />
           <div>
             <h1 className="font-display text-2xl tracking-widest">CARGAS HEINEKEN</h1>
-            <p className="text-xs text-muted-foreground">Recebimento de mercadorias e controle de comodato</p>
+            <p className="text-xs text-muted-foreground">
+              Recebimento de mercadorias e controle de comodato
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -102,9 +124,18 @@ function CargasHeinekenPage() {
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="w-4 h-4 mr-2" /> NOVA CARGA</Button>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" /> NOVA CARGA
+              </Button>
             </DialogTrigger>
-            <NovaCargaDialog onSaved={() => { setOpen(false); load(); }} userId={user?.id ?? null} emptiesAvailable={emptiesAvailable} />
+            <NovaCargaDialog
+              onSaved={() => {
+                setOpen(false);
+                load();
+              }}
+              userId={user?.id ?? null}
+              emptiesAvailable={emptiesAvailable}
+            />
           </Dialog>
         </div>
       </header>
@@ -112,21 +143,48 @@ function CargasHeinekenPage() {
       <Card className="p-4 border-primary/40 bg-primary/5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <div className="text-[10px] tracking-widest font-display text-muted-foreground">VAZIOS NO ESTOQUE DISPEL</div>
-            <div className="text-3xl font-display">{emptiesAvailable} <span className="text-xs text-muted-foreground">barris</span></div>
+            <div className="text-[10px] tracking-widest font-display text-muted-foreground">
+              VAZIOS NO ESTOQUE DISPEL
+            </div>
+            <div className="text-3xl font-display">
+              {emptiesAvailable} <span className="text-xs text-muted-foreground">barris</span>
+            </div>
           </div>
           <div className="text-xs text-muted-foreground text-right">
-            Recolhidos nos bares: <b>{emptiesCollected}</b><br />
+            Recolhidos nos bares: <b>{emptiesCollected}</b>
+            <br />
             Devolvidos à Heineken: <b>{totals.vas}</b>
           </div>
         </div>
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <SummaryCard icon={<Beer className="w-5 h-5" />} label="HEINEKEN RECEBIDOS" value={totals.hei} suffix="barris" tone="primary" />
-        <SummaryCard icon={<Beer className="w-5 h-5" />} label="AMSTEL RECEBIDOS" value={totals.ams} suffix="barris" tone="accent" />
-        <SummaryCard icon={<Package className="w-5 h-5" />} label="BARRIS EM COMODATO" value={totals.com} suffix="barris" />
-        <SummaryCard icon={<RotateCcw className="w-5 h-5" />} label="VASILHAMES DEVOLVIDOS" value={totals.vas} suffix="unid." />
+        <SummaryCard
+          icon={<Beer className="w-5 h-5" />}
+          label="HEINEKEN RECEBIDOS"
+          value={totals.hei}
+          suffix="barris"
+          tone="primary"
+        />
+        <SummaryCard
+          icon={<Beer className="w-5 h-5" />}
+          label="AMSTEL RECEBIDOS"
+          value={totals.ams}
+          suffix="barris"
+          tone="accent"
+        />
+        <SummaryCard
+          icon={<Package className="w-5 h-5" />}
+          label="BARRIS EM COMODATO"
+          value={totals.com}
+          suffix="barris"
+        />
+        <SummaryCard
+          icon={<RotateCcw className="w-5 h-5" />}
+          label="VASILHAMES DEVOLVIDOS"
+          value={totals.vas}
+          suffix="unid."
+        />
       </div>
 
       <div className="space-y-3">
@@ -134,7 +192,9 @@ function CargasHeinekenPage() {
         {loading ? (
           <div className="text-muted-foreground">Carregando...</div>
         ) : items.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">Nenhuma carga registrada ainda.</Card>
+          <Card className="p-8 text-center text-muted-foreground">
+            Nenhuma carga registrada ainda.
+          </Card>
         ) : (
           items.map((c) => (
             <Card key={c.id} className="p-4">
@@ -148,7 +208,11 @@ function CargasHeinekenPage() {
                   )}
                 </div>
                 {c.invoice_photo_url && (
-                  <Button variant="outline" size="sm" onClick={() => setPhotoPreview(c.invoice_photo_url!)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPhotoPreview(c.invoice_photo_url!)}
+                  >
                     <ImageIcon className="w-4 h-4 mr-1" /> Nota fiscal
                   </Button>
                 )}
@@ -159,7 +223,11 @@ function CargasHeinekenPage() {
                 <Metric label="Comodato" value={c.barris_comodato} />
                 <Metric label="Vasilhames" value={c.vasilhames_recolhidos} />
               </div>
-              {c.notes && <div className="mt-3 text-xs text-muted-foreground whitespace-pre-wrap">{c.notes}</div>}
+              {c.notes && (
+                <div className="mt-3 text-xs text-muted-foreground whitespace-pre-wrap">
+                  {c.notes}
+                </div>
+              )}
             </Card>
           ))
         )}
@@ -167,16 +235,37 @@ function CargasHeinekenPage() {
 
       <Dialog open={!!photoPreview} onOpenChange={(o) => !o && setPhotoPreview(null)}>
         <DialogContent className="max-w-3xl">
-          <DialogHeader><DialogTitle>Nota fiscal</DialogTitle></DialogHeader>
-          {photoPreview && <img src={photoPreview} alt="Nota fiscal" className="w-full h-auto rounded" />}
+          <DialogHeader>
+            <DialogTitle>Nota fiscal</DialogTitle>
+          </DialogHeader>
+          {photoPreview && (
+            <img src={photoPreview} alt="Nota fiscal" className="w-full h-auto rounded" />
+          )}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-function SummaryCard({ icon, label, value, suffix, tone }: { icon: React.ReactNode; label: string; value: number; suffix: string; tone?: "primary" | "accent" }) {
-  const toneCls = tone === "primary" ? "bg-primary/5 border-primary/30" : tone === "accent" ? "bg-accent/5 border-accent/30" : "";
+function SummaryCard({
+  icon,
+  label,
+  value,
+  suffix,
+  tone,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  suffix: string;
+  tone?: "primary" | "accent";
+}) {
+  const toneCls =
+    tone === "primary"
+      ? "bg-primary/5 border-primary/30"
+      : tone === "accent"
+        ? "bg-accent/5 border-accent/30"
+        : "";
   return (
     <Card className={`p-4 ${toneCls}`}>
       <div className="flex items-center gap-2 text-muted-foreground text-[10px] tracking-widest font-display">
@@ -199,7 +288,15 @@ function Metric({ label, value }: { label: string; value: number }) {
   );
 }
 
-function NovaCargaDialog({ onSaved, userId, emptiesAvailable }: { onSaved: () => void; userId: string | null; emptiesAvailable: number }) {
+function NovaCargaDialog({
+  onSaved,
+  userId,
+  emptiesAvailable,
+}: {
+  onSaved: () => void;
+  userId: string | null;
+  emptiesAvailable: number;
+}) {
   const [receivedAt, setReceivedAt] = useState(() => {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -247,9 +344,13 @@ function NovaCargaDialog({ onSaved, userId, emptiesAvailable }: { onSaved: () =>
       }
 
       const path = `cargas/${Date.now()}-${photo.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const up = await supabase.storage.from("operacao-fotos").upload(path, photo, { upsert: false });
+      const up = await supabase.storage
+        .from("operacao-fotos")
+        .upload(path, photo, { upsert: false });
       if (up.error) throw up.error;
-      const { data: signed } = await supabase.storage.from("operacao-fotos").createSignedUrl(path, 60 * 60 * 24 * 365);
+      const { data: signed } = await supabase.storage
+        .from("operacao-fotos")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
       const photo_url = signed?.signedUrl ?? null;
 
       const { error } = await supabase.from("heineken_cargas").insert({
@@ -273,9 +374,14 @@ function NovaCargaDialog({ onSaved, userId, emptiesAvailable }: { onSaved: () =>
           const photoBase64 = await fileToBase64(photo);
           await enqueue("carga.submit", {
             received_at: new Date(receivedAt).toISOString(),
-            heineken_barris: n(hei), amstel_barris: n(ams),
-            barris_comodato: n(com), vasilhames_recolhidos: n(vas),
-            invoice_number: invoice || null, notes: notes || null, userId, photoBase64,
+            heineken_barris: n(hei),
+            amstel_barris: n(ams),
+            barris_comodato: n(com),
+            vasilhames_recolhidos: n(vas),
+            invoice_number: invoice || null,
+            notes: notes || null,
+            userId,
+            photoBase64,
           });
           toast.success("💾 Salvo offline — sincroniza ao voltar rede");
           onSaved();
@@ -291,37 +397,74 @@ function NovaCargaDialog({ onSaved, userId, emptiesAvailable }: { onSaved: () =>
 
   return (
     <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>Nova carga Heineken</DialogTitle></DialogHeader>
+      <DialogHeader>
+        <DialogTitle>Nova carga Heineken</DialogTitle>
+      </DialogHeader>
       <div className="space-y-3">
         <div>
           <label className="text-xs text-muted-foreground">Data/hora do recebimento</label>
-          <Input type="datetime-local" value={receivedAt} onChange={(e) => setReceivedAt(e.target.value)} />
+          <Input
+            type="datetime-local"
+            value={receivedAt}
+            onChange={(e) => setReceivedAt(e.target.value)}
+          />
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-muted-foreground">Heineken (barris)</label>
-            <Input inputMode="numeric" placeholder="0" value={hei} onChange={(e) => setHei(e.target.value)} />
+            <Input
+              inputMode="numeric"
+              placeholder="0"
+              value={hei}
+              onChange={(e) => setHei(e.target.value)}
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Amstel (barris)</label>
-            <Input inputMode="numeric" placeholder="0" value={ams} onChange={(e) => setAms(e.target.value)} />
+            <Input
+              inputMode="numeric"
+              placeholder="0"
+              value={ams}
+              onChange={(e) => setAms(e.target.value)}
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Barris em comodato</label>
-            <Input inputMode="numeric" placeholder="0" value={com} onChange={(e) => setCom(e.target.value)} />
+            <Input
+              inputMode="numeric"
+              placeholder="0"
+              value={com}
+              onChange={(e) => setCom(e.target.value)}
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Vasilhames recolhidos</label>
-            <Input inputMode="numeric" placeholder="0" value={vas} onChange={(e) => setVas(e.target.value)} />
+            <Input
+              inputMode="numeric"
+              placeholder="0"
+              value={vas}
+              onChange={(e) => setVas(e.target.value)}
+            />
           </div>
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Número da nota fiscal</label>
-          <Input placeholder="NF-e nº" value={invoice} onChange={(e) => setInvoice(e.target.value)} />
+          <Input
+            placeholder="NF-e nº"
+            value={invoice}
+            onChange={(e) => setInvoice(e.target.value)}
+          />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground flex items-center gap-1"><Camera className="w-3 h-3" /> Foto da nota fiscal (obrigatório)</label>
-          <Input type="file" accept="image/*" capture="environment" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
+          <label className="text-xs text-muted-foreground flex items-center gap-1">
+            <Camera className="w-3 h-3" /> Foto da nota fiscal (obrigatório)
+          </label>
+          <Input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+          />
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Observações</label>

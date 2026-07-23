@@ -33,15 +33,26 @@ function PerfilPage() {
   const [saving, setSaving] = useState(false);
 
   const changePassword = async () => {
-    if (pwd.length < 6) { toast.error("Senha deve ter ao menos 6 caracteres"); return; }
-    if (pwd !== pwd2) { toast.error("As senhas não conferem"); return; }
+    if (pwd.length < 6) {
+      toast.error("Senha deve ter ao menos 6 caracteres");
+      return;
+    }
+    if (pwd !== pwd2) {
+      toast.error("As senhas não conferem");
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: pwd });
       if (error) throw error;
-      await logAudit({ acao: "change_password", tabela: "auth.users", registroId: user?.id ?? null });
+      await logAudit({
+        acao: "change_password",
+        tabela: "auth.users",
+        registroId: user?.id ?? null,
+      });
       toast.success("Senha alterada com sucesso");
-      setPwd(""); setPwd2("");
+      setPwd("");
+      setPwd2("");
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao alterar senha");
     } finally {
@@ -64,20 +75,74 @@ function PerfilPage() {
     queryFn: async () => {
       const uid = user!.id;
       const [inv, ref, temp, org, cargas, transf] = await Promise.all([
-        supabase.from("inventories").select("id,performed_at,bar_id,bars(name)").eq("performed_by", uid).order("performed_at", { ascending: false }).limit(20),
-        supabase.from("refills").select("id,performed_at,bar_id,bars(name)").eq("performed_by", uid).order("performed_at", { ascending: false }).limit(20),
-        supabase.from("bar_temperature_checks").select("id,performed_at,bar_id,horario,temperatura,bars(name)").eq("performed_by", uid).order("performed_at", { ascending: false }).limit(20),
-        supabase.from("bar_organization_checks").select("id,performed_at,bar_id,bars(name)").eq("performed_by", uid).order("performed_at", { ascending: false }).limit(20),
-        supabase.from("heineken_cargas").select("id,performed_at,heineken_barris,amstel_barris").eq("performed_by", uid).order("performed_at", { ascending: false }).limit(20),
-        supabase.from("bar_transfers").select("id,performed_at,origem_bar_id,destino_bar_id").eq("performed_by", uid).order("performed_at", { ascending: false }).limit(20),
+        supabase
+          .from("inventories")
+          .select("id,performed_at,bar_id,bars(name)")
+          .eq("performed_by", uid)
+          .order("performed_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("refills")
+          .select("id,performed_at,bar_id,bars(name)")
+          .eq("performed_by", uid)
+          .order("performed_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("bar_temperature_checks")
+          .select("id,performed_at,bar_id,horario,temperatura,bars(name)")
+          .eq("performed_by", uid)
+          .order("performed_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("bar_organization_checks")
+          .select("id,performed_at,bar_id,bars(name)")
+          .eq("performed_by", uid)
+          .order("performed_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("heineken_cargas")
+          .select("id,performed_at,heineken_barris,amstel_barris")
+          .eq("performed_by", uid)
+          .order("performed_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("bar_transfers")
+          .select("id,performed_at,origem_bar_id,destino_bar_id")
+          .eq("performed_by", uid)
+          .order("performed_at", { ascending: false })
+          .limit(20),
       ]);
       const events: { at: string; label: string; detail: string }[] = [];
-      (inv.data ?? []).forEach((r: any) => events.push({ at: r.performed_at, label: "Inventário", detail: r.bars?.name ?? r.bar_id }));
-      (ref.data ?? []).forEach((r: any) => events.push({ at: r.performed_at, label: "Reposição", detail: r.bars?.name ?? r.bar_id }));
-      (temp.data ?? []).forEach((r: any) => events.push({ at: r.performed_at, label: `Temperatura ${r.horario}`, detail: `${r.bars?.name ?? r.bar_id} · ${r.temperatura}°C` }));
-      (org.data ?? []).forEach((r: any) => events.push({ at: r.performed_at, label: "Organização", detail: r.bars?.name ?? r.bar_id }));
-      (cargas.data ?? []).forEach((r: any) => events.push({ at: r.performed_at, label: "Carga Heineken", detail: `H:${r.heineken_barris} A:${r.amstel_barris}` }));
-      (transf.data ?? []).forEach((r: any) => events.push({ at: r.performed_at, label: "Transferência", detail: `${r.origem_bar_id?.slice(0,6)} → ${r.destino_bar_id?.slice(0,6)}` }));
+      (inv.data ?? []).forEach((r: any) =>
+        events.push({ at: r.performed_at, label: "Inventário", detail: r.bars?.name ?? r.bar_id }),
+      );
+      (ref.data ?? []).forEach((r: any) =>
+        events.push({ at: r.performed_at, label: "Reposição", detail: r.bars?.name ?? r.bar_id }),
+      );
+      (temp.data ?? []).forEach((r: any) =>
+        events.push({
+          at: r.performed_at,
+          label: `Temperatura ${r.horario}`,
+          detail: `${r.bars?.name ?? r.bar_id} · ${r.temperatura}°C`,
+        }),
+      );
+      (org.data ?? []).forEach((r: any) =>
+        events.push({ at: r.performed_at, label: "Organização", detail: r.bars?.name ?? r.bar_id }),
+      );
+      (cargas.data ?? []).forEach((r: any) =>
+        events.push({
+          at: r.performed_at,
+          label: "Carga Heineken",
+          detail: `H:${r.heineken_barris} A:${r.amstel_barris}`,
+        }),
+      );
+      (transf.data ?? []).forEach((r: any) =>
+        events.push({
+          at: r.performed_at,
+          label: "Transferência",
+          detail: `${r.origem_bar_id?.slice(0, 6)} → ${r.destino_bar_id?.slice(0, 6)}`,
+        }),
+      );
       return events.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 40);
     },
   });
@@ -86,7 +151,9 @@ function PerfilPage() {
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
       <div>
         <h1 className="font-display text-2xl tracking-wider">MEU PERFIL</h1>
-        <p className="text-xs text-muted-foreground">Dados operacionais e histórico das últimas atividades.</p>
+        <p className="text-xs text-muted-foreground">
+          Dados operacionais e histórico das últimas atividades.
+        </p>
       </div>
 
       <Card className="p-4">
@@ -98,11 +165,16 @@ function PerfilPage() {
               <User className="h-8 w-8" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-display text-lg truncate">{profile?.display_name ?? profile?.username ?? user?.email}</div>
+              <div className="font-display text-lg truncate">
+                {profile?.display_name ?? profile?.username ?? user?.email}
+              </div>
               <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
               <div className="flex flex-wrap gap-2 mt-2">
                 {(perms.roles ?? []).map((r) => (
-                  <span key={r} className={`text-[10px] font-display tracking-widest px-2 py-0.5 rounded-full ring-1 ${badgeForRole(r)}`}>
+                  <span
+                    key={r}
+                    className={`text-[10px] font-display tracking-widest px-2 py-0.5 rounded-full ring-1 ${badgeForRole(r)}`}
+                  >
                     {r.toUpperCase()}
                   </span>
                 ))}
@@ -123,11 +195,24 @@ function PerfilPage() {
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="pwd">Nova senha</Label>
-            <Input id="pwd" type="password" autoComplete="new-password" value={pwd} onChange={(e) => setPwd(e.target.value)} placeholder="Mínimo 6 caracteres" />
+            <Input
+              id="pwd"
+              type="password"
+              autoComplete="new-password"
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              placeholder="Mínimo 6 caracteres"
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="pwd2">Confirmar nova senha</Label>
-            <Input id="pwd2" type="password" autoComplete="new-password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} />
+            <Input
+              id="pwd2"
+              type="password"
+              autoComplete="new-password"
+              value={pwd2}
+              onChange={(e) => setPwd2(e.target.value)}
+            />
           </div>
         </div>
         <div>
@@ -137,15 +222,17 @@ function PerfilPage() {
         </div>
       </Card>
 
-
-
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <ClipboardList className="h-4 w-4 text-primary" />
           <h2 className="font-display text-sm tracking-widest">HISTÓRICO DE ATIVIDADES</h2>
         </div>
         {al ? (
-          <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}</div>
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
         ) : (activity ?? []).length === 0 ? (
           <div className="text-xs text-muted-foreground">Nenhuma atividade registrada.</div>
         ) : (

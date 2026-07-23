@@ -13,10 +13,7 @@ import { Wrench, ShoppingCart, MapPin, Camera, Loader2, CheckCircle2 } from "luc
 export const Route = createFileRoute("/r/$barId")({
   component: PublicPanel,
   head: () => ({
-    meta: [
-      { title: "Atendimento Dispel" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Atendimento Dispel" }, { name: "robots", content: "noindex" }],
   }),
 });
 
@@ -39,10 +36,15 @@ function PublicPanel() {
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    supabase.from("bars").select("id,name,bar_type").eq("id", barId).maybeSingle().then(({ data }) => {
-      setBar(data);
-      setLoading(false);
-    });
+    supabase
+      .from("bars")
+      .select("id,name,bar_type")
+      .eq("id", barId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setBar(data);
+        setLoading(false);
+      });
     if (typeof navigator !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (p) => setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
@@ -54,7 +56,9 @@ function PublicPanel() {
 
   async function uploadPublicPhoto(f: File): Promise<string | null> {
     const path = `public-reports/${barId}/${Date.now()}_${f.name.replace(/[^\w.-]/g, "_")}`;
-    const { error } = await supabase.storage.from("operacao-fotos").upload(path, f, { upsert: false });
+    const { error } = await supabase.storage
+      .from("operacao-fotos")
+      .upload(path, f, { upsert: false });
     if (error) {
       toast.error("Erro ao enviar foto: " + error.message);
       return null;
@@ -68,7 +72,10 @@ function PublicPanel() {
     let photo: string | null = null;
     if (file) {
       photo = await uploadPublicPhoto(file);
-      if (!photo) { setSending(false); return; }
+      if (!photo) {
+        setSending(false);
+        return;
+      }
     }
     const { error } = await supabase.from("public_maintenance_requests").insert({
       bar_id: barId,
@@ -133,7 +140,12 @@ function PublicPanel() {
           <MapPin className={`w-4 h-4 ${coords ? "text-primary" : "text-muted-foreground"}`} />
           <div className="text-xs flex-1">
             {coords ? (
-              <>Localização captada <span className="text-muted-foreground">({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})</span></>
+              <>
+                Localização captada{" "}
+                <span className="text-muted-foreground">
+                  ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})
+                </span>
+              </>
             ) : geoErr ? (
               <span className="text-destructive">Não foi possível obter localização: {geoErr}</span>
             ) : (
@@ -147,8 +159,8 @@ function PublicPanel() {
             <CheckCircle2 className="w-10 h-10 text-primary mx-auto" />
             <div className="font-display tracking-wider">CHAMADO ENVIADO</div>
             <p className="text-sm text-muted-foreground">
-              A equipe Dispel já foi notificada no WhatsApp. Se a mensagem não abriu automaticamente,
-              toque no botão abaixo.
+              A equipe Dispel já foi notificada no WhatsApp. Se a mensagem não abriu
+              automaticamente, toque no botão abaixo.
             </p>
             <Button onClick={submitMaintenance} variant="outline" className="w-full">
               Reabrir WhatsApp
@@ -160,7 +172,9 @@ function PublicPanel() {
               <div className="flex items-center gap-2">
                 <Wrench className="w-4 h-4 text-accent" />
                 <div className="font-display tracking-wider text-sm">PEDIR MANUTENÇÃO</div>
-                <Badge variant="outline" className="text-[9px] ml-auto">{JESSICA_LABEL}</Badge>
+                <Badge variant="outline" className="text-[9px] ml-auto">
+                  {JESSICA_LABEL}
+                </Badge>
               </div>
               <div>
                 <Label className="text-xs">Seu nome (opcional)</Label>
@@ -178,10 +192,22 @@ function PublicPanel() {
               </div>
               <div>
                 <Label className="text-xs">Foto da máquina (opcional)</Label>
-                <Input type="file" accept="image/*" capture="environment" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                <Input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                />
               </div>
               <Button onClick={submitMaintenance} disabled={sending} className="w-full">
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Wrench className="w-4 h-4 mr-2" />Chamar manutenção (WhatsApp)</>}
+                {sending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Wrench className="w-4 h-4 mr-2" />
+                    Chamar manutenção (WhatsApp)
+                  </>
+                )}
               </Button>
             </Card>
 
@@ -191,13 +217,21 @@ function PublicPanel() {
               <div className="flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4 text-primary" />
                 <div className="font-display tracking-wider text-sm">PEDIR MAIS PRODUTOS</div>
-                <Badge variant="outline" className="text-[9px] ml-auto">{ALLSTAR_LABEL}</Badge>
+                <Badge variant="outline" className="text-[9px] ml-auto">
+                  {ALLSTAR_LABEL}
+                </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Envia diretamente para o WhatsApp da All Star com a mensagem "Olá, gostaria de fazer um pedido de bebidas".
+                Envia diretamente para o WhatsApp da All Star com a mensagem "Olá, gostaria de fazer
+                um pedido de bebidas".
               </p>
-              <Button onClick={askProducts} variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                <ShoppingCart className="w-4 h-4 mr-2" />Pedir bebidas
+              <Button
+                onClick={askProducts}
+                variant="outline"
+                className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Pedir bebidas
               </Button>
             </Card>
           </>

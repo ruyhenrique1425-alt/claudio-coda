@@ -41,19 +41,22 @@ function AuthPage() {
       nav({ to: "/app" });
     } catch (e) {
       toast.error((e as Error).message);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-background">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          
           <DispelLogo className="h-24 w-auto mx-auto" />
           <p className="mt-2 text-primary tracking-[0.3em] text-xs font-display">OPERAÇÃO</p>
         </div>
         <Card>
-          <CardHeader><CardTitle className="text-center">Acesso à operação</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-center">Acesso à operação</CardTitle>
+          </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
               <TabsList className="grid grid-cols-2 w-full">
@@ -61,16 +64,59 @@ function AuthPage() {
                 <TabsTrigger value="signup">Criar conta</TabsTrigger>
               </TabsList>
               <TabsContent value="login" className="space-y-3 mt-4">
-                <div><Label>Usuário</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" /></div>
-                <div><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></div>
-                <Button className="w-full" disabled={loading} onClick={() => submit("login")}>Entrar</Button>
+                <div>
+                  <Label>Usuário</Label>
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                  />
+                </div>
+                <div>
+                  <Label>Senha</Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </div>
+                <Button className="w-full" disabled={loading} onClick={() => submit("login")}>
+                  Entrar
+                </Button>
               </TabsContent>
               <TabsContent value="signup" className="space-y-3 mt-4">
-                <div><Label>Nome</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Como te chamamos" /></div>
-                <div><Label>Usuário</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" /></div>
-                <div><Label>Senha</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></div>
-                <Button className="w-full" disabled={loading} onClick={() => submit("signup")}>Criar conta</Button>
-                <p className="text-xs text-muted-foreground">O primeiro usuário criado precisa ser promovido a gestor manualmente no backend.</p>
+                <div>
+                  <Label>Nome</Label>
+                  <Input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Como te chamamos"
+                  />
+                </div>
+                <div>
+                  <Label>Usuário</Label>
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="username"
+                  />
+                </div>
+                <div>
+                  <Label>Senha</Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                  />
+                </div>
+                <Button className="w-full" disabled={loading} onClick={() => submit("signup")}>
+                  Criar conta
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  O primeiro usuário criado precisa ser promovido a gestor manualmente no backend.
+                </p>
               </TabsContent>
             </Tabs>
           </CardContent>

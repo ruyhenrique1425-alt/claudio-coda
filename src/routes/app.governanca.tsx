@@ -81,14 +81,30 @@ function GovernancaPage() {
   const toggleRole = async (userId: string, role: Role, has: boolean) => {
     try {
       if (has) {
-        const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role);
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", userId)
+          .eq("role", role);
         if (error) throw error;
-        await logAudit({ acao: "remove_role", tabela: "user_roles", registroId: userId, detalhe: { role } });
+        await logAudit({
+          acao: "remove_role",
+          tabela: "user_roles",
+          registroId: userId,
+          detalhe: { role },
+        });
         toast.success(`Papel ${role} removido`);
       } else {
-        const { error } = await supabase.from("user_roles").insert({ user_id: userId, role } as any);
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role } as any);
         if (error) throw error;
-        await logAudit({ acao: "grant_role", tabela: "user_roles", registroId: userId, detalhe: { role } });
+        await logAudit({
+          acao: "grant_role",
+          tabela: "user_roles",
+          registroId: userId,
+          detalhe: { role },
+        });
         toast.success(`Papel ${role} concedido`);
       }
       await qc.invalidateQueries({ queryKey: ["gov-users"] });
@@ -100,7 +116,12 @@ function GovernancaPage() {
   const handleDelete = async (userId: string, label: string) => {
     try {
       await deleteUserCall({ data: { userId } });
-      await logAudit({ acao: "delete_user", tabela: "auth.users", registroId: userId, detalhe: { label } });
+      await logAudit({
+        acao: "delete_user",
+        tabela: "auth.users",
+        registroId: userId,
+        detalhe: { label },
+      });
       toast.success(`Usuário ${label} excluído`);
       await qc.invalidateQueries({ queryKey: ["gov-users"] });
     } catch (e: any) {
@@ -109,7 +130,9 @@ function GovernancaPage() {
   };
 
   const filtered = (users ?? []).filter((u) =>
-    !q.trim() ? true : (u.display + " " + (u.username ?? "")).toLowerCase().includes(q.toLowerCase())
+    !q.trim()
+      ? true
+      : (u.display + " " + (u.username ?? "")).toLowerCase().includes(q.toLowerCase()),
   );
 
   if (!perms.isAdmin) {
@@ -126,14 +149,24 @@ function GovernancaPage() {
         <h1 className="font-display text-2xl tracking-wider flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-primary" /> GOVERNANÇA
         </h1>
-        <p className="text-xs text-muted-foreground">Gestão de usuários, papéis e trilha de auditoria.</p>
+        <p className="text-xs text-muted-foreground">
+          Gestão de usuários, papéis e trilha de auditoria.
+        </p>
       </div>
 
       <div className="flex gap-2">
-        <Button variant={tab === "users" ? "default" : "outline"} size="sm" onClick={() => setTab("users")}>
+        <Button
+          variant={tab === "users" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setTab("users")}
+        >
           <Users className="w-4 h-4 mr-1" /> Usuários
         </Button>
-        <Button variant={tab === "audit" ? "default" : "outline"} size="sm" onClick={() => setTab("audit")}>
+        <Button
+          variant={tab === "audit" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setTab("audit")}
+        >
           <ClipboardList className="w-4 h-4 mr-1" /> Auditoria
         </Button>
       </div>
@@ -142,19 +175,35 @@ function GovernancaPage() {
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Search className="w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Buscar usuário…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
+            <Input
+              placeholder="Buscar usuário…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="max-w-xs"
+            />
           </div>
           {ul ? (
-            <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
-            <div className="text-xs text-muted-foreground py-6 text-center">Nenhum usuário encontrado.</div>
+            <div className="text-xs text-muted-foreground py-6 text-center">
+              Nenhum usuário encontrado.
+            </div>
           ) : (
             <div className="space-y-2">
               {filtered.map((u) => (
-                <div key={u.id} className="border rounded p-3 flex flex-col md:flex-row md:items-center gap-3">
+                <div
+                  key={u.id}
+                  className="border rounded p-3 flex flex-col md:flex-row md:items-center gap-3"
+                >
                   <div className="min-w-0 md:w-56">
                     <div className="font-medium truncate">{u.display}</div>
-                    <div className="text-[11px] text-muted-foreground truncate">{u.username ?? u.id.slice(0, 8)}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {u.username ?? u.id.slice(0, 8)}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 flex-1">
                     {ALL_ROLES.map((r) => {
@@ -169,7 +218,11 @@ function GovernancaPage() {
                               : "bg-background text-muted-foreground ring-border hover:bg-muted"
                           }`}
                         >
-                          {has ? <Check className="inline w-3 h-3 mr-1" /> : <X className="inline w-3 h-3 mr-1 opacity-40" />}
+                          {has ? (
+                            <Check className="inline w-3 h-3 mr-1" />
+                          ) : (
+                            <X className="inline w-3 h-3 mr-1 opacity-40" />
+                          )}
                           {r.toUpperCase()}
                         </button>
                       );
@@ -178,7 +231,11 @@ function GovernancaPage() {
                   {u.id !== user?.id && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive shrink-0"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -186,7 +243,8 @@ function GovernancaPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Excluir {u.display}?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Esta ação é permanente. O usuário e seu acesso serão removidos. Registros históricos (inventários, reposições etc.) permanecem no banco.
+                            Esta ação é permanente. O usuário e seu acesso serão removidos.
+                            Registros históricos (inventários, reposições etc.) permanecem no banco.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -211,9 +269,15 @@ function GovernancaPage() {
       {tab === "audit" && (
         <Card className="p-4 space-y-2">
           {aloading ? (
-            <div className="space-y-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}</div>
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </div>
           ) : (audit ?? []).length === 0 ? (
-            <div className="text-xs text-muted-foreground py-6 text-center">Sem registros de auditoria.</div>
+            <div className="text-xs text-muted-foreground py-6 text-center">
+              Sem registros de auditoria.
+            </div>
           ) : (
             <div className="max-h-[70vh] overflow-auto text-xs">
               <table className="w-full">
@@ -229,10 +293,14 @@ function GovernancaPage() {
                 <tbody>
                   {(audit ?? []).map((r) => (
                     <tr key={r.id} className="border-t align-top">
-                      <td className="px-2 py-1 tabular-nums whitespace-nowrap">{new Date(r.created_at).toLocaleString("pt-BR")}</td>
+                      <td className="px-2 py-1 tabular-nums whitespace-nowrap">
+                        {new Date(r.created_at).toLocaleString("pt-BR")}
+                      </td>
                       <td className="px-2 py-1 font-medium">{r.acao}</td>
                       <td className="px-2 py-1">{r.tabela_afetada}</td>
-                      <td className="px-2 py-1 text-muted-foreground">{r.registro_id?.slice(0, 8) ?? "—"}</td>
+                      <td className="px-2 py-1 text-muted-foreground">
+                        {r.registro_id?.slice(0, 8) ?? "—"}
+                      </td>
                       <td className="px-2 py-1 max-w-md truncate text-muted-foreground">
                         {r.detalhe_json ? JSON.stringify(r.detalhe_json) : ""}
                       </td>

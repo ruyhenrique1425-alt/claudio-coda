@@ -141,10 +141,10 @@ async function handle(triggeredBy: string) {
         triggered_by: triggeredBy,
       });
     } catch {}
-    return new Response(
-      JSON.stringify({ ok: false, error: e?.message ?? "unknown" }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ ok: false, error: e?.message ?? "unknown" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 

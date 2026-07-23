@@ -4,10 +4,12 @@ const PRIMARY_DOMAIN = "dispel.operacao";
 const FALLBACK_DOMAINS = ["dispel.local"];
 
 const normalize = (username: string) =>
-  username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, "");
+  username
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, "");
 
-export const usernameToEmail = (username: string) =>
-  `${normalize(username)}@${PRIMARY_DOMAIN}`;
+export const usernameToEmail = (username: string) => `${normalize(username)}@${PRIMARY_DOMAIN}`;
 
 export async function signInWithUsername(username: string, password: string) {
   const user = normalize(username);
@@ -24,11 +26,7 @@ export async function signInWithUsername(username: string, password: string) {
   return lastResult!;
 }
 
-export async function signUpWithUsername(
-  username: string,
-  password: string,
-  displayName?: string,
-) {
+export async function signUpWithUsername(username: string, password: string, displayName?: string) {
   return supabase.auth.signUp({
     email: usernameToEmail(username),
     password,

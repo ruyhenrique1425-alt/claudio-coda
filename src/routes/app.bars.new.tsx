@@ -69,7 +69,7 @@ function NewBarPage() {
           }
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }
 
@@ -79,13 +79,17 @@ function NewBarPage() {
     captureLocation(true);
   }, []);
 
-  if (loadingSession || loadingRole || !user) return <div className="p-6 text-sm text-muted-foreground">Carregando…</div>;
-  if (!canManage) return (
-    <div className="p-6 space-y-3">
-      <p className="text-sm text-destructive">Apenas gestores podem cadastrar bares.</p>
-      <Button variant="outline" onClick={() => nav({ to: "/app" })}>Voltar</Button>
-    </div>
-  );
+  if (loadingSession || loadingRole || !user)
+    return <div className="p-6 text-sm text-muted-foreground">Carregando…</div>;
+  if (!canManage)
+    return (
+      <div className="p-6 space-y-3">
+        <p className="text-sm text-destructive">Apenas gestores podem cadastrar bares.</p>
+        <Button variant="outline" onClick={() => nav({ to: "/app" })}>
+          Voltar
+        </Button>
+      </div>
+    );
 
   const latN = parseFloat(lat);
   const lngN = parseFloat(lng);
@@ -126,7 +130,11 @@ function NewBarPage() {
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Nome</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Bar Central" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Bar Central"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Tipo</Label>
@@ -151,7 +159,8 @@ function NewBarPage() {
             {locationBlocked && !validCoords && (
               <Alert className="border-accent/40 bg-accent/10">
                 <AlertDescription className="text-xs">
-                  Se o celular bloquear a localização, preencha latitude/longitude manualmente ou toque no mapa.
+                  Se o celular bloquear a localização, preencha latitude/longitude manualmente ou
+                  toque no mapa.
                 </AlertDescription>
               </Alert>
             )}
@@ -163,9 +172,13 @@ function NewBarPage() {
               disabled={locating}
             >
               {locating ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Obtendo localização…</>
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Obtendo localização…
+                </>
               ) : (
-                <><MapPin className="w-4 h-4 mr-2" /> Usar minha localização atual</>
+                <>
+                  <MapPin className="w-4 h-4 mr-2" /> Usar minha localização atual
+                </>
               )}
             </Button>
             {validCoords && (
@@ -179,11 +192,21 @@ function NewBarPage() {
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Latitude</Label>
-                  <Input value={lat} onChange={(e) => setLat(e.target.value)} placeholder="-23.5" inputMode="decimal" />
+                  <Input
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
+                    placeholder="-23.5"
+                    inputMode="decimal"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Longitude</Label>
-                  <Input value={lng} onChange={(e) => setLng(e.target.value)} placeholder="-46.6" inputMode="decimal" />
+                  <Input
+                    value={lng}
+                    onChange={(e) => setLng(e.target.value)}
+                    placeholder="-46.6"
+                    inputMode="decimal"
+                  />
                 </div>
               </div>
               <p className="mt-1">Ou toque no mapa para escolher outro ponto.</p>
@@ -191,7 +214,11 @@ function NewBarPage() {
           </div>
           <div className="space-y-1.5">
             <Label>Apoio responsável</Label>
-            <Input value={apoio} onChange={(e) => setApoio(e.target.value)} placeholder="Nome do apoio" />
+            <Input
+              value={apoio}
+              onChange={(e) => setApoio(e.target.value)}
+              placeholder="Nome do apoio"
+            />
           </div>
           <div className="flex gap-2 pt-2">
             <Button type="submit" disabled={saving} className="flex-1">
@@ -246,7 +273,8 @@ class SafeBarsMap extends React.Component<
     if (this.state.crashed) {
       return (
         <div className="w-full h-full min-h-[400px] rounded-lg border border-border bg-muted/40 p-4 flex items-center justify-center text-center text-sm text-muted-foreground">
-          O mapa não abriu neste aparelho. Use “Ajustar manualmente” para informar as coordenadas e salvar o bar.
+          O mapa não abriu neste aparelho. Use “Ajustar manualmente” para informar as coordenadas e
+          salvar o bar.
         </div>
       );
     }

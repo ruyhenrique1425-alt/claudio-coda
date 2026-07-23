@@ -6,7 +6,7 @@ const LS_KEY = "dispel:manutencao:lastSeen";
 
 function playBeep() {
   try {
-    const AC = (window.AudioContext || (window as any).webkitAudioContext);
+    const AC = window.AudioContext || (window as any).webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();
     const now = ctx.currentTime;
@@ -36,12 +36,13 @@ export type MaintenanceAlertPayload = {
   created_at: string;
 };
 
-
 export function useMaintenanceAlerts(enabled: boolean) {
   const [unread, setUnread] = useState(0);
   const [latestAlert, setLatestAlert] = useState<MaintenanceAlertPayload | null>(null);
   const lastSeenRef = useRef<string>(
-    typeof window !== "undefined" ? localStorage.getItem(LS_KEY) || new Date(0).toISOString() : new Date(0).toISOString()
+    typeof window !== "undefined"
+      ? localStorage.getItem(LS_KEY) || new Date(0).toISOString()
+      : new Date(0).toISOString(),
   );
 
   // Initial unread count based on lastSeen
@@ -55,7 +56,9 @@ export function useMaintenanceAlerts(enabled: boolean) {
         .gt("created_at", lastSeenRef.current);
       if (!cancelled && typeof count === "number") setUnread(count);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [enabled]);
 
   // Realtime subscription
@@ -85,16 +88,20 @@ export function useMaintenanceAlerts(enabled: boolean) {
               : "Verifique o painel de MANUTENÇÃO",
             duration: 10000,
           });
-        }
+        },
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [enabled]);
 
   const clear = useCallback(() => {
     const now = new Date().toISOString();
     lastSeenRef.current = now;
-    try { localStorage.setItem(LS_KEY, now); } catch {}
+    try {
+      localStorage.setItem(LS_KEY, now);
+    } catch {}
     setUnread(0);
   }, []);
 
@@ -102,4 +109,3 @@ export function useMaintenanceAlerts(enabled: boolean) {
 
   return { unread, clear, latestAlert, dismissAlert };
 }
-

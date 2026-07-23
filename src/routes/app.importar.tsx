@@ -62,20 +62,42 @@ function ImportarPage() {
       downloadCsv(`template-bares-${timestampSlug()}.csv`, [
         { code: "BAR-001", name: "Bar Praça", type: "bar_venda", lat: -19.9, lng: -43.9 },
       ]);
-      } else if (mode === "abastecimento") {
-        downloadCsv(`template-abastecimento-${timestampSlug()}.csv`, [
-          { bar_code: "BAR-001", heineken_barris: 4, amstel_barris: 2, observacoes: "Reposição manhã" },
-          { bar_code: "BAR-002", heineken_barris: 3, amstel_barris: 1, observacoes: "" },
-        ]);
-      } else {
-        downloadCsv(`template-estoque-${timestampSlug()}.csv`, [
-          { warehouse_code: "dispel", brand: "heineken", quantidade: 20, direction: 1, observacoes: "Entrada NF 001043514" },
-          { warehouse_code: "dispel", brand: "amstel", quantidade: 10, direction: 1, observacoes: "Entrada NF 001043514" },
-          { warehouse_code: "allstar", brand: "heineken", quantidade: 5, direction: -1, observacoes: "Ajuste de inventário" },
-        ]);
-      }
+    } else if (mode === "abastecimento") {
+      downloadCsv(`template-abastecimento-${timestampSlug()}.csv`, [
+        {
+          bar_code: "BAR-001",
+          heineken_barris: 4,
+          amstel_barris: 2,
+          observacoes: "Reposição manhã",
+        },
+        { bar_code: "BAR-002", heineken_barris: 3, amstel_barris: 1, observacoes: "" },
+      ]);
+    } else {
+      downloadCsv(`template-estoque-${timestampSlug()}.csv`, [
+        {
+          warehouse_code: "dispel",
+          brand: "heineken",
+          quantidade: 20,
+          direction: 1,
+          observacoes: "Entrada NF 001043514",
+        },
+        {
+          warehouse_code: "dispel",
+          brand: "amstel",
+          quantidade: 10,
+          direction: 1,
+          observacoes: "Entrada NF 001043514",
+        },
+        {
+          warehouse_code: "allstar",
+          brand: "heineken",
+          quantidade: 5,
+          direction: -1,
+          observacoes: "Ajuste de inventário",
+        },
+      ]);
+    }
   };
-
 
   const runImport = async () => {
     if (!rows.length) return toast.error("Nenhuma linha para importar");
@@ -88,16 +110,26 @@ function ImportarPage() {
         const byCode = new Map((bars ?? []).map((b: any) => [String(b.code).trim(), b.id]));
         for (const r of rows) {
           const code = String(r.bar_code ?? r.code ?? "").trim();
-          const brand = String(r.brand ?? "").trim().toLowerCase();
+          const brand = String(r.brand ?? "")
+            .trim()
+            .toLowerCase();
           const padrao = Number(r.barris_padrao ?? r.padrao ?? 0);
           const barId = byCode.get(code);
-          if (!barId) { errors.push(`Bar não encontrado: ${code}`); continue; }
-          if (!["heineken", "amstel"].includes(brand)) { errors.push(`Marca inválida: ${brand} (${code})`); continue; }
-          const { error } = await supabase.from("bar_stock_standard").upsert(
-            { bar_id: barId, brand, barris_padrao: padrao } as any,
-            { onConflict: "bar_id,brand" }
-          );
-          if (error) errors.push(`${code}/${brand}: ${error.message}`); else ok++;
+          if (!barId) {
+            errors.push(`Bar não encontrado: ${code}`);
+            continue;
+          }
+          if (!["heineken", "amstel"].includes(brand)) {
+            errors.push(`Marca inválida: ${brand} (${code})`);
+            continue;
+          }
+          const { error } = await supabase
+            .from("bar_stock_standard")
+            .upsert({ bar_id: barId, brand, barris_padrao: padrao } as any, {
+              onConflict: "bar_id,brand",
+            });
+          if (error) errors.push(`${code}/${brand}: ${error.message}`);
+          else ok++;
         }
       } else if (mode === "bares") {
         for (const r of rows) {
@@ -108,9 +140,15 @@ function ImportarPage() {
             lat: r.lat != null ? Number(r.lat) : null,
             lng: r.lng != null ? Number(r.lng) : null,
           };
-          if (!payload.code || !payload.name) { errors.push(`Linha inválida: ${JSON.stringify(r)}`); continue; }
-          const { error } = await supabase.from("bars").upsert(payload as any, { onConflict: "code" });
-          if (error) errors.push(`${payload.code}: ${error.message}`); else ok++;
+          if (!payload.code || !payload.name) {
+            errors.push(`Linha inválida: ${JSON.stringify(r)}`);
+            continue;
+          }
+          const { error } = await supabase
+            .from("bars")
+            .upsert(payload as any, { onConflict: "code" });
+          if (error) errors.push(`${payload.code}: ${error.message}`);
+          else ok++;
         }
       } else if (mode === "abastecimento") {
         // ABASTECIMENTO EM LOTE — cria um refill por linha com heineken/amstel
@@ -123,48 +161,92 @@ function ImportarPage() {
           const a = Number(r.amstel_barris ?? r.amstel ?? 0);
           const obs = r.observacoes ?? r.notes ?? null;
           const barId = byCode.get(code);
-          if (!barId) { errors.push(`Bar não encontrado: ${code}`); continue; }
-          if (h <= 0 && a <= 0) { errors.push(`${code}: nenhum barril informado`); continue; }
+          if (!barId) {
+            errors.push(`Bar não encontrado: ${code}`);
+            continue;
+          }
+          if (h <= 0 && a <= 0) {
+            errors.push(`${code}: nenhum barril informado`);
+            continue;
+          }
 
           const { data: refill, error: rerr } = await supabase
             .from("refills")
-            .insert({ bar_id: barId, performed_by: uid, notes: obs ?? `Importação em lote ${new Date().toLocaleString("pt-BR")}` } as any)
+            .insert({
+              bar_id: barId,
+              performed_by: uid,
+              notes: obs ?? `Importação em lote ${new Date().toLocaleString("pt-BR")}`,
+            } as any)
             .select("id")
             .single();
-          if (rerr || !refill) { errors.push(`${code}: ${rerr?.message ?? "falha ao criar reposição"}`); continue; }
+          if (rerr || !refill) {
+            errors.push(`${code}: ${rerr?.message ?? "falha ao criar reposição"}`);
+            continue;
+          }
 
           const items: any[] = [];
           if (h > 0) items.push({ refill_id: refill.id, brand: "heineken", quantidade: h });
           if (a > 0) items.push({ refill_id: refill.id, brand: "amstel", quantidade: a });
           const { error: ierr } = await supabase.from("refill_items").insert(items);
-          if (ierr) { errors.push(`${code}: ${ierr.message}`); continue; }
+          if (ierr) {
+            errors.push(`${code}: ${ierr.message}`);
+            continue;
+          }
           ok++;
         }
-        await logAudit({ acao: "import_abastecimento", tabela: "refills", detalhe: { linhas: rows.length, ok, fail: errors.length } });
+        await logAudit({
+          acao: "import_abastecimento",
+          tabela: "refills",
+          detalhe: { linhas: rows.length, ok, fail: errors.length },
+        });
       } else {
         // ESTOQUE — entradas/saídas em warehouses via warehouse_movements
         const { data: whs } = await supabase.from("warehouses").select("id, code");
-        const byCode = new Map((whs ?? []).map((w: any) => [String(w.code).trim().toLowerCase(), w.id]));
+        const byCode = new Map(
+          (whs ?? []).map((w: any) => [String(w.code).trim().toLowerCase(), w.id]),
+        );
         const uid = user?.id ?? null;
         for (const r of rows) {
-          const code = String(r.warehouse_code ?? r.code ?? "").trim().toLowerCase();
-          const brand = String(r.brand ?? "").trim().toLowerCase();
+          const code = String(r.warehouse_code ?? r.code ?? "")
+            .trim()
+            .toLowerCase();
+          const brand = String(r.brand ?? "")
+            .trim()
+            .toLowerCase();
           const qtd = Number(r.quantidade ?? r.qtd ?? 0);
           const dir = Number(r.direction ?? r.direcao ?? 1) === -1 ? -1 : 1;
           const obs = r.observacoes ?? r.notes ?? null;
           const whId = byCode.get(code);
-          if (!whId) { errors.push(`Estoque não encontrado: ${code}`); continue; }
-          if (!["heineken", "amstel"].includes(brand)) { errors.push(`Marca inválida: ${brand}`); continue; }
-          if (!qtd || qtd <= 0) { errors.push(`${code}/${brand}: quantidade inválida`); continue; }
+          if (!whId) {
+            errors.push(`Estoque não encontrado: ${code}`);
+            continue;
+          }
+          if (!["heineken", "amstel"].includes(brand)) {
+            errors.push(`Marca inválida: ${brand}`);
+            continue;
+          }
+          if (!qtd || qtd <= 0) {
+            errors.push(`${code}/${brand}: quantidade inválida`);
+            continue;
+          }
           const move_type = dir === 1 ? "recebimento_heineken" : "ajuste";
           const { error } = await supabase.from("warehouse_movements").insert({
-            warehouse_id: whId, brand, quantidade: qtd, direction: dir,
-            move_type, performed_by: uid,
+            warehouse_id: whId,
+            brand,
+            quantidade: qtd,
+            direction: dir,
+            move_type,
+            performed_by: uid,
             notes: obs ?? `Importação em lote ${new Date().toLocaleString("pt-BR")}`,
           } as any);
-          if (error) errors.push(`${code}/${brand}: ${error.message}`); else ok++;
+          if (error) errors.push(`${code}/${brand}: ${error.message}`);
+          else ok++;
         }
-        await logAudit({ acao: "import_estoque", tabela: "warehouse_movements", detalhe: { linhas: rows.length, ok, fail: errors.length } });
+        await logAudit({
+          acao: "import_estoque",
+          tabela: "warehouse_movements",
+          detalhe: { linhas: rows.length, ok, fail: errors.length },
+        });
       }
       setResult({ ok, fail: errors.length, errors });
       if (errors.length === 0) toast.success(`${ok} registros importados`);
@@ -183,18 +265,29 @@ function ImportarPage() {
     estoque: "Entradas/saídas de estoque",
   };
 
-
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
       <div>
         <h1 className="font-display text-2xl tracking-wider">IMPORTAR PLANILHA</h1>
-        <p className="text-xs text-muted-foreground">Excel (.xlsx) ou CSV. Pré-visualize antes de confirmar.</p>
+        <p className="text-xs text-muted-foreground">
+          Excel (.xlsx) ou CSV. Pré-visualize antes de confirmar.
+        </p>
       </div>
 
       <Card className="p-4 space-y-3">
         <div className="flex flex-wrap gap-2">
           {(Object.keys(modeLabels) as Mode[]).map((m) => (
-            <Button key={m} variant={mode === m ? "default" : "outline"} size="sm" onClick={() => { setMode(m); setRows([]); setResult(null); setFileName(""); }}>
+            <Button
+              key={m}
+              variant={mode === m ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setMode(m);
+                setRows([]);
+                setResult(null);
+                setFileName("");
+              }}
+            >
               {modeLabels[m]}
             </Button>
           ))}
@@ -206,8 +299,16 @@ function ImportarPage() {
 
         <div className="border-2 border-dashed rounded p-4 text-center">
           <FileSpreadsheet className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-          <Input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
-          {fileName && <p className="text-xs mt-2 text-muted-foreground">{fileName} · {rows.length} linhas detectadas</p>}
+          <Input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+          />
+          {fileName && (
+            <p className="text-xs mt-2 text-muted-foreground">
+              {fileName} · {rows.length} linhas detectadas
+            </p>
+          )}
         </div>
 
         {rows.length > 0 && (
@@ -215,17 +316,31 @@ function ImportarPage() {
             <div className="max-h-60 overflow-auto text-[11px] border rounded">
               <table className="w-full">
                 <thead className="bg-muted sticky top-0">
-                  <tr>{Object.keys(rows[0]).map((k) => <th key={k} className="text-left px-2 py-1">{k}</th>)}</tr>
+                  <tr>
+                    {Object.keys(rows[0]).map((k) => (
+                      <th key={k} className="text-left px-2 py-1">
+                        {k}
+                      </th>
+                    ))}
+                  </tr>
                 </thead>
                 <tbody>
                   {rows.slice(0, 20).map((r, i) => (
                     <tr key={i} className="border-t">
-                      {Object.keys(rows[0]).map((k) => <td key={k} className="px-2 py-1">{String(r[k] ?? "")}</td>)}
+                      {Object.keys(rows[0]).map((k) => (
+                        <td key={k} className="px-2 py-1">
+                          {String(r[k] ?? "")}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {rows.length > 20 && <div className="p-2 text-center text-muted-foreground">… +{rows.length - 20} linhas</div>}
+              {rows.length > 20 && (
+                <div className="p-2 text-center text-muted-foreground">
+                  … +{rows.length - 20} linhas
+                </div>
+              )}
             </div>
             <Button onClick={runImport} disabled={importing} className="w-full min-h-[48px]">
               <Upload className="w-4 h-4 mr-2" />
@@ -239,11 +354,15 @@ function ImportarPage() {
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle2 className="w-4 h-4 text-primary" />
               <b>{result.ok}</b> registros importados
-              {result.fail > 0 && <span className="text-destructive">· {result.fail} com erro</span>}
+              {result.fail > 0 && (
+                <span className="text-destructive">· {result.fail} com erro</span>
+              )}
             </div>
             {result.errors.length > 0 && (
               <ul className="text-[11px] text-destructive max-h-40 overflow-auto space-y-1">
-                {result.errors.slice(0, 50).map((e, i) => <li key={i}>• {e}</li>)}
+                {result.errors.slice(0, 50).map((e, i) => (
+                  <li key={i}>• {e}</li>
+                ))}
               </ul>
             )}
           </Card>
