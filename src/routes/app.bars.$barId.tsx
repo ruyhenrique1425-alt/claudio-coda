@@ -287,6 +287,11 @@ function BarDetail() {
         </TabsContent>
 
         <TabsContent value="reposicao" className="mt-3 space-y-3">
+          <div className="text-[11px] text-muted-foreground rounded bg-muted/40 px-3 py-2">
+            Use <b>Reposição</b> no dia a dia — ela já registra os vazios retirados junto (no
+            padrão, reposição = vazios). A <b>recolha de vazios</b> abaixo é só para retirar vazios
+            sem repor.
+          </div>
           <RefillSection
             barId={barId}
             refills={refills}
@@ -806,13 +811,22 @@ function InventorySection({ barId, stockStd, inventories, lastCounts, onDone }: 
     }
   }
 
+  // Plugado é fixo (quase nunca muda) → já sugere o valor do último inventário.
+  function openInventoryForm() {
+    setCounts({
+      heineken: { plugado: lastCounts?.heineken?.plugado ?? 0, fechado: 0, vazio: 0 },
+      amstel: { plugado: lastCounts?.amstel?.plugado ?? 0, fechado: 0, vazio: 0 },
+    });
+    setOpen(true);
+  }
+
   return (
     <Card className="p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm tracking-widest text-muted-foreground">
           INVENTÁRIO (3× AO DIA)
         </h2>
-        <Button size="sm" onClick={() => setOpen((o) => !o)}>
+        <Button size="sm" onClick={() => (open ? setOpen(false) : openInventoryForm())}>
           <Plus className="w-4 h-4 mr-1" />
           Novo inventário
         </Button>
@@ -852,6 +866,9 @@ function InventorySection({ barId, stockStd, inventories, lastCounts, onDone }: 
 
       {open && (
         <div className="border border-border rounded p-3 space-y-3">
+          <div className="text-[11px] text-muted-foreground rounded bg-muted/40 px-2 py-1">
+            💡 <b>Plugado</b> já vem preenchido com o último valor (é fixo). Ajuste só se mudou.
+          </div>
           {BRANDS.map((b) => (
             <div key={b}>
               <div className="uppercase text-xs mb-1">{b}</div>
@@ -1078,13 +1095,32 @@ function RefillSection({ barId, refills, onDone, stockStd, lastCounts }: any) {
     }
   }
 
+  // Sugestão automática: no padrão, REPOSIÇÃO = VAZIOS (repõe o que foi consumido).
+  // Vazios sugeridos = vazios do último inventário; reposição = mesmo valor.
+  const suggestion = BRANDS.reduce(
+    (acc, b) => {
+      const vazios = lastCounts?.[b]?.vazio ?? 0;
+      const cheios = (lastCounts?.[b]?.plugado ?? 0) + (lastCounts?.[b]?.fechado ?? 0);
+      const padrao = stockStd?.[b] ?? 0;
+      acc[b] = { vazios, refill: vazios, gap: Math.max(0, padrao - cheios), padrao };
+      return acc;
+    },
+    {} as Record<Brand, { vazios: number; refill: number; gap: number; padrao: number }>,
+  );
+
+  function openRefillForm() {
+    setQty({ heineken: suggestion.heineken.refill, amstel: suggestion.amstel.refill });
+    setEmpt({ heineken: suggestion.heineken.vazios, amstel: suggestion.amstel.vazios });
+    setOpen(true);
+  }
+
   return (
     <Card className="p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-sm tracking-widest text-muted-foreground">
           REPOSIÇÃO / ABASTECIMENTO
         </h2>
-        <Button size="sm" onClick={() => setOpen((o) => !o)}>
+        <Button size="sm" onClick={() => (open ? setOpen(false) : openRefillForm())}>
           <Plus className="w-4 h-4 mr-1" />
           Nova reposição
         </Button>
@@ -1097,34 +1133,56 @@ function RefillSection({ barId, refills, onDone, stockStd, lastCounts }: any) {
 
       {open && (
         <div className="border border-border rounded p-3 space-y-3">
+          <div className="text-[11px] text-muted-foreground rounded bg-muted/40 px-2 py-1">
+            💡 Sugestão automática: no padrão, <b>reposição = vazios</b>. Os campos já vêm
+            preenchidos com os vazios do último inventário — ajuste se precisar.
+          </div>
           <div className="grid grid-cols-2 gap-3">
-            {BRANDS.map((b) => (
-              <div key={b} className="space-y-2">
-                <div className="uppercase text-xs">{b}</div>
-                <div>
-                  <Label className="text-[11px]">Barris repostos (cheios)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={qty[b] === 0 ? "" : String(qty[b])}
-                    onChange={(e) => setQty((p) => ({ ...p, [b]: +e.target.value }))}
-                  />
+            {BRANDS.map((b) => {
+              const s = suggestion[b];
+              return (
+                <div key={b} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="uppercase text-xs">{b}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      padrão {s.padrao}
+                      {s.gap > 0 ? ` · falta ${s.gap}` : " · ok"}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Barris repostos (cheios)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={qty[b] === 0 ? "" : String(qty[b])}
+                      onChange={(e) => setQty((p) => ({ ...p, [b]: +e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Vazios retirados</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={empt[b] === 0 ? "" : String(empt[b])}
+                      onChange={(e) => setEmpt((p) => ({ ...p, [b]: +e.target.value }))}
+                    />
+                  </div>
+                  {qty[b] !== empt[b] && (
+                    <button
+                      type="button"
+                      onClick={() => setQty((p) => ({ ...p, [b]: empt[b] }))}
+                      className="text-[10px] text-primary underline underline-offset-2"
+                    >
+                      Igualar reposição aos vazios ({empt[b]})
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <Label className="text-[11px]">Vazios retirados</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={empt[b] === 0 ? "" : String(empt[b])}
-                    onChange={(e) => setEmpt((p) => ({ ...p, [b]: +e.target.value }))}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div>
             <Label>Foto da reposição *</Label>
