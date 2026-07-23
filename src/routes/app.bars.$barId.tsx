@@ -46,30 +46,32 @@ export const Route = createFileRoute("/app/bars/$barId")({
       Carregando bar…
     </div>
   ),
-  errorComponent: ({ error, reset }) => {
-    const router = useRouter();
-    return (
-      <div className="mx-auto max-w-md p-6 text-center space-y-3">
-        <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
-        <h2 className="font-display text-lg tracking-wider">NÃO FOI POSSÍVEL ABRIR O BAR</h2>
-        <p className="text-sm text-muted-foreground">{error?.message ?? "Erro inesperado"}</p>
-        <div className="flex justify-center gap-2">
-          <Button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-          >
-            <RotateCw className="w-4 h-4 mr-1" /> Tentar novamente
-          </Button>
-          <Button variant="outline" asChild>
-            <Link to="/app">Voltar</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  },
+  errorComponent: BarRouteError,
 });
+
+function BarRouteError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="mx-auto max-w-md p-6 text-center space-y-3">
+      <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
+      <h2 className="font-display text-lg tracking-wider">NÃO FOI POSSÍVEL ABRIR O BAR</h2>
+      <p className="text-sm text-muted-foreground">{error?.message ?? "Erro inesperado"}</p>
+      <div className="flex justify-center gap-2">
+        <Button
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
+        >
+          <RotateCw className="w-4 h-4 mr-1" /> Tentar novamente
+        </Button>
+        <Button variant="outline" asChild>
+          <Link to="/app">Voltar</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const TYPE_LABEL: Record<string, string> = {
   bar_venda: "Bar venda",
