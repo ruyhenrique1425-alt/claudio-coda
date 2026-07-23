@@ -14,6 +14,7 @@ import {
   BarChart3,
   CreditCard,
   Package,
+  Warehouse,
   PlusCircle,
   ClipboardCheck,
   Truck,
@@ -49,6 +50,7 @@ import {
 type NavKey =
   | "dashboard"
   | "bi"
+  | "central"
   | "map"
   | "equipe"
   | "consumo"
@@ -75,6 +77,7 @@ const NAV: NavItem[] = [
   { key: "bi", to: "/app/bi", label: "BI BARRIS", icon: BarChart3 },
   { key: "map", to: "/app/map", label: "MAPA", icon: MapPin },
   { key: "inventarios", to: "/app/inventarios", label: "INVENTÁRIOS", icon: ClipboardCheck },
+  { key: "central", to: "/app/central", label: "CENTRAL DE ESTOQUE", icon: Warehouse },
   { key: "estoque", to: "/app/estoque", label: "ESTOQUE", icon: Package },
   { key: "notas", to: "/app/notas", label: "NOTAS FISCAIS", icon: FileText },
   { key: "cargas", to: "/app/cargas", label: "CARGAS HEINEKEN", icon: Truck },
@@ -101,6 +104,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       case "dashboard":
         return perms.canAccessDashboard;
       case "bi":
+        return perms.isGestor || perms.isManutencao;
+      case "central":
         return perms.isGestor || perms.isManutencao;
       case "map":
         return perms.canAccessMap;
