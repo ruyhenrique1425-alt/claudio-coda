@@ -65,15 +65,15 @@ BEGIN
       ('Meio',         'Rota 1',   6,  6),
       ('Entrada',      'Rota 2',  10, 10),
       ('Nova',         'Rota 2',   6,  6),
-      ('Vila 1',       'Rota 3',  16, 16),
+      ('Vila 1',       'Rota 3',  20, 20),
       ('Choperia 1',   'Rota 3',   6,  6),
       ('Choperia 2',   'Rota 3',   6,  6),
-      ('Vila 2 ma',    'Rota 4',  10, 10),
+      ('Vila 2 ma',    'Rota 4',  20, 20),
       ('Vila 2 me',    'Rota 4',   6,  6),
       ('Vila 3 ma',    'Rota 4',  10, 10),
       ('Vila 3 me',    'Rota 4',   6,  6),
       ('Núcleos',      'Rota 5',  10, 10),
-      ('Chopperia',    'Rota 5',   6,  6)
+      ('Churrascaria', 'Rota 5',   6,  6)
     ) AS t(nome, rota, ph, pa)
   LOOP
     -- resolve o bar por match EXATO (sem caixa/espaços). Sem fuzzy, para
