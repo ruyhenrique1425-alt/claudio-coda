@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BarsMap } from "@/components/BarsMap";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
 
 export const Route = createFileRoute("/app/map")({
   component: MapView,
@@ -19,6 +22,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 function MapView() {
   const nav = useNavigate();
+  const [q, setQ] = useState("");
   const { data: bars = [], isLoading } = useQuery({
     queryKey: ["bars"],
     queryFn: async () => {
@@ -31,11 +35,24 @@ function MapView() {
     },
   });
 
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return bars as any[];
+    return (bars as any[]).filter((b) => {
+      const type = TYPE_LABEL[b.bar_type] ?? b.bar_type ?? "";
+      return (
+        (b.name ?? "").toLowerCase().includes(term) ||
+        (b.apoio_responsavel ?? "").toLowerCase().includes(term) ||
+        type.toLowerCase().includes(term)
+      );
+    });
+  }, [bars, q]);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 grid gap-4 lg:grid-cols-[1fr_320px]">
       <div className="h-[calc(100vh-140px)]">
         <BarsMap
-          bars={bars as any}
+          bars={filtered as any}
           onSelectBar={(id) => {
             const b = (bars as any[]).find((x) => x.id === id);
             if (b && b.bar_type !== "bar_venda" && b.bar_type !== "bar_parceiro") {
@@ -49,14 +66,40 @@ function MapView() {
       <div className="space-y-2 overflow-auto max-h-[calc(100vh-140px)] pr-1">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-sm tracking-widest text-muted-foreground">
-            BARES ({bars.length})
+            BARES ({filtered.length}
+            {q.trim() ? `/${bars.length}` : ""})
           </h2>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar bar, apoio ou tipo…"
+            className="pl-8 pr-8 h-9"
+            aria-label="Buscar bar"
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => setQ("")}
+              aria-label="Limpar busca"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
         {!isLoading && bars.length === 0 && (
           <Card className="p-4 text-sm text-muted-foreground">Nenhum bar cadastrado.</Card>
         )}
-        {(bars as any[]).map((b) => (
+        {!isLoading && bars.length > 0 && filtered.length === 0 && (
+          <Card className="p-4 text-sm text-muted-foreground">
+            Nenhum bar encontrado para “{q}”.
+          </Card>
+        )}
+        {(filtered as any[]).map((b) => (
           <Card
             key={b.id}
             onClick={() =>
