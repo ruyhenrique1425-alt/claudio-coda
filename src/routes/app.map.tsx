@@ -41,7 +41,7 @@ function MapView() {
             if (b && b.bar_type !== "bar_venda" && b.bar_type !== "bar_parceiro") {
               nav({ to: "/app/manutencao/$barId", params: { barId: id } });
             } else {
-              nav({ to: "/app/bars/$barId", params: { barId: id } });
+              nav({ to: "/app/bars/$barId", params: { barId: id }, search: { tab: "inventario" } });
             }
           }}
         />
@@ -55,7 +55,7 @@ function MapView() {
           <Card className="p-4 text-sm text-muted-foreground">Nenhum bar cadastrado.</Card>
         )}
         {(bars as any[]).map((b) => (
-          <Card key={b.id} onClick={() => nav({ to: "/app/bars/$barId", params: { barId: b.id } })}
+          <Card key={b.id} onClick={() => nav({ to: "/app/bars/$barId", params: { barId: b.id }, search: { tab: "inventario" } })}
             className="p-3 cursor-pointer hover:border-primary transition">
             <div className="flex items-center justify-between gap-2">
               <div className="font-display text-sm">{b.name}</div>
