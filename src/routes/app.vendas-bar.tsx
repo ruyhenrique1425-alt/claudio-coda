@@ -1,11 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Beer, CreditCard, Info } from "lucide-react";
+import { toast } from "sonner";
+import { Beer, CreditCard, Info, Link2, ChevronDown, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/app/vendas-bar")({ component: VendasBarPage });
 
@@ -98,6 +102,8 @@ function VendasBarPage() {
           Consumo por bar a partir do relatório de vendas da MEEP — apenas produtos de chopp.
         </p>
       </div>
+
+      <CartaoMapping canEdit={perms.isGestor} />
 
       {isLoading && <Skeleton className="h-40" />}
 
@@ -200,5 +206,114 @@ function VendasBarPage() {
         </>
       )}
     </div>
+  );
+}
+
+function CartaoMapping({ canEdit }: { canEdit: boolean }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  const { data: bars, error } = useQuery({
+    queryKey: ["bars-cartao"],
+    queryFn: async () => {
+      const res = await (supabase as any)
+        .from("bars")
+        .select("id,name,cartao_meep")
+        .in("bar_type", ["bar_venda", "bar_parceiro"])
+        .order("name");
+      if (res.error) throw res.error;
+      return (res.data ?? []) as { id: string; name: string; cartao_meep: string | null }[];
+    },
+    retry: false,
+  });
+
+  // Coluna cartao_meep ainda não existe (migration não aplicada): não mostra nada.
+  if (error) return null;
+
+  const changed = Object.keys(edits).length > 0;
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      for (const [id, val] of Object.entries(edits)) {
+        const { error: e } = await (supabase as any)
+          .from("bars")
+          .update({ cartao_meep: val.trim() || null })
+          .eq("id", id);
+        if (e) throw e;
+      }
+      toast.success("Cartões vinculados aos bares");
+      setEdits({});
+      qc.invalidateQueries({ queryKey: ["vendas-bar-meep"] });
+      qc.invalidateQueries({ queryKey: ["bars-cartao"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao salvar vínculos");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="p-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-2 text-left"
+      >
+        <Link2 className="h-4 w-4 text-primary" />
+        <span className="font-display text-sm tracking-widest text-muted-foreground">
+          VINCULAR CARTÕES AOS BARES
+        </span>
+        <ChevronDown
+          className={`ml-auto h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-3 space-y-2">
+          <p className="text-[11px] text-muted-foreground">
+            Informe o identificador do cartão MEEP de cada bar (ex.: <code>ARQ_01</code>). É o que
+            liga as vendas importadas ao bar certo.
+          </p>
+          {!bars && <Skeleton className="h-24" />}
+          {bars && (
+            <div className="max-h-72 overflow-auto rounded border border-border/60">
+              <table className="w-full text-sm">
+                <tbody>
+                  {bars.map((b) => {
+                    const val = edits[b.id] ?? b.cartao_meep ?? "";
+                    return (
+                      <tr key={b.id} className="border-b border-border/40">
+                        <td className="py-1.5 px-2">{b.name}</td>
+                        <td className="py-1.5 px-2 w-40">
+                          <Input
+                            value={val}
+                            disabled={!canEdit}
+                            placeholder="cartão…"
+                            className="h-8"
+                            onChange={(e) => setEdits((p) => ({ ...p, [b.id]: e.target.value }))}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {canEdit && (
+            <Button size="sm" onClick={save} disabled={!changed || saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+              Salvar vínculos
+            </Button>
+          )}
+          {!canEdit && (
+            <p className="text-[11px] text-muted-foreground">Somente gestor pode editar.</p>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }

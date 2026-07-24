@@ -127,6 +127,12 @@ Dinheiro | Voucher | Divisão | Outros | Desconto | Valor` + linha "Total Geral"
   consumo/config). Reposição sugere plugado fixo e reposição = vazios.
 - `app.consumo` — ranking de consumo. `app.consumo-tempo` — **série temporal**
   de barris consumidos/dia por marca.
+- `app.vendas-bar` — **Vendas por bar (chopps)** a partir da MEEP (tabela
+  `meep_vendas_bar`), com painel "Vincular cartões aos bares" (edita
+  `bars.cartao_meep`). Import via Central → Importar, modo "Vendas MEEP
+  (chopps)" (resolve bar por `cartao_meep` ou nome, filtra só "CHOPP",
+  upsert idempotente em (cartao,data,produto)). Migration
+  `20260723130000_meep_vendas.sql`.
 - `app.map`, `app.inventarios`, `app.manutencao*`, `app.relatorio`,
   `app.backups`, `app.governanca`, `app.perfil`, rotas públicas `r.*`.
 
