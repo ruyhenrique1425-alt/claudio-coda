@@ -297,7 +297,8 @@ export function ImportarPage() {
           }
           const quantidade = Number(r.quantidade ?? r.qtd ?? r.unidade ?? 0) || 0;
           const valor = Number(r.valor ?? r.total ?? 0) || 0;
-          const barId = byCartao.get(cartao.toLowerCase()) ?? byName.get(cartao.toLowerCase()) ?? null;
+          const barId =
+            byCartao.get(cartao.toLowerCase()) ?? byName.get(cartao.toLowerCase()) ?? null;
           payload.push({
             bar_id: barId,
             cartao: cartao || null,

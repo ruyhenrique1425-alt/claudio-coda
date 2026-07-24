@@ -340,12 +340,10 @@ function NewNfDialog({
       let arquivo_url: string | null = null;
       if (file) {
         const path = `notas_fiscais/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-        const up = await supabase.storage
-          .from("operacao-fotos")
-          .upload(path, file, {
-            contentType: file.type || "application/octet-stream",
-            upsert: false,
-          });
+        const up = await supabase.storage.from("operacao-fotos").upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
         if (up.error) throw up.error;
         const { data: signed } = await supabase.storage
           .from("operacao-fotos")
