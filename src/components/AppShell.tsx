@@ -53,6 +53,7 @@ type NavKey =
   | "equipe"
   | "consumo"
   | "consumotempo"
+  | "vendas"
   | "manutencao"
   | "estoque"
   | "notas"
@@ -80,6 +81,7 @@ const NAV: NavItem[] = [
   { key: "equipe", to: "/app/equipe-bar", label: "EQUIPE DE BAR", icon: CreditCard },
   { key: "consumo", to: "/app/consumo", label: "CONSUMO", icon: BarChart3 },
   { key: "consumotempo", to: "/app/consumo-tempo", label: "CONSUMO × TEMPO", icon: TrendingUp },
+  { key: "vendas", to: "/app/vendas-bar", label: "VENDAS POR BAR", icon: CreditCard },
   { key: "manutencao", to: "/app/manutencao", label: "MANUTENÇÃO", icon: Wrench },
   { key: "relatorio", to: "/app/relatorio", label: "RELATÓRIO", icon: FileText },
   { key: "backups", to: "/app/backups", label: "BACKUPS", icon: Archive },
@@ -118,6 +120,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       case "consumo":
         return perms.canAccessConsumo;
       case "consumotempo":
+        return perms.isGestor || perms.isManutencao;
+      case "vendas":
         return perms.isGestor || perms.isManutencao;
       case "manutencao":
         return perms.canAccessManutencao;

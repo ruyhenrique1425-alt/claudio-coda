@@ -27,6 +27,7 @@ import { Route as AppMapRouteImport } from './routes/app.map'
 import { Route as AppNotasRouteImport } from './routes/app.notas'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppRelatorioRouteImport } from './routes/app.relatorio'
+import { Route as AppVendasBarRouteImport } from './routes/app.vendas-bar'
 import { Route as RBarIdRouteImport } from './routes/r.$barId'
 import { Route as AppBarsBarIdRouteImport } from './routes/app.bars.$barId'
 import { Route as AppBarsNewRouteImport } from './routes/app.bars.new'
@@ -127,6 +128,11 @@ const AppRelatorioRoute = AppRelatorioRouteImport.update({
   path: '/relatorio',
   getParentRoute: () => AppRoute,
 } as any)
+const AppVendasBarRoute = AppVendasBarRouteImport.update({
+  id: '/vendas-bar',
+  path: '/vendas-bar',
+  getParentRoute: () => AppRoute,
+} as any)
 const RBarIdRoute = RBarIdRouteImport.update({
   id: '/r/$barId',
   path: '/r/$barId',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/app/notas': typeof AppNotasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
+  '/app/vendas-bar': typeof AppVendasBarRoute
   '/r/$barId': typeof RBarIdRoute
   '/app/': typeof AppIndexRoute
   '/app/bars/$barId': typeof AppBarsBarIdRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/app/notas': typeof AppNotasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
+  '/app/vendas-bar': typeof AppVendasBarRoute
   '/r/$barId': typeof RBarIdRoute
   '/app': typeof AppIndexRoute
   '/app/bars/$barId': typeof AppBarsBarIdRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/app/notas': typeof AppNotasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
+  '/app/vendas-bar': typeof AppVendasBarRoute
   '/r/$barId': typeof RBarIdRoute
   '/app/': typeof AppIndexRoute
   '/app/bars/$barId': typeof AppBarsBarIdRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/app/notas'
     | '/app/perfil'
     | '/app/relatorio'
+    | '/app/vendas-bar'
     | '/r/$barId'
     | '/app/'
     | '/app/bars/$barId'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/app/notas'
     | '/app/perfil'
     | '/app/relatorio'
+    | '/app/vendas-bar'
     | '/r/$barId'
     | '/app'
     | '/app/bars/$barId'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/app/notas'
     | '/app/perfil'
     | '/app/relatorio'
+    | '/app/vendas-bar'
     | '/r/$barId'
     | '/app/'
     | '/app/bars/$barId'
@@ -486,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRelatorioRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/vendas-bar': {
+      id: '/app/vendas-bar'
+      path: '/vendas-bar'
+      fullPath: '/app/vendas-bar'
+      preLoaderRoute: typeof AppVendasBarRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/r/$barId': {
       id: '/r/$barId'
       path: '/r/$barId'
@@ -567,6 +586,7 @@ interface AppRouteChildren {
   AppNotasRoute: typeof AppNotasRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppRelatorioRoute: typeof AppRelatorioRoute
+  AppVendasBarRoute: typeof AppVendasBarRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBarsBarIdRoute: typeof AppBarsBarIdRoute
   AppBarsNewRoute: typeof AppBarsNewRoute
@@ -591,6 +611,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotasRoute: AppNotasRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppRelatorioRoute: AppRelatorioRoute,
+  AppVendasBarRoute: AppVendasBarRoute,
   AppIndexRoute: AppIndexRoute,
   AppBarsBarIdRoute: AppBarsBarIdRoute,
   AppBarsNewRoute: AppBarsNewRoute,

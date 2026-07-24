@@ -13,7 +13,7 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/app/importar")({ component: ImportarPage });
 
 type Row = Record<string, any>;
-type Mode = "padroes" | "bares" | "abastecimento" | "estoque";
+type Mode = "padroes" | "bares" | "abastecimento" | "estoque" | "meep";
 
 export function ImportarPage() {
   const { user } = useSession();
@@ -72,7 +72,7 @@ export function ImportarPage() {
         },
         { bar_code: "BAR-002", heineken_barris: 3, amstel_barris: 1, observacoes: "" },
       ]);
-    } else {
+    } else if (mode === "estoque") {
       downloadCsv(`template-estoque-${timestampSlug()}.csv`, [
         {
           warehouse_code: "dispel",
@@ -94,6 +94,25 @@ export function ImportarPage() {
           quantidade: 5,
           direction: -1,
           observacoes: "Ajuste de inventário",
+        },
+      ]);
+    } else if (mode === "meep") {
+      downloadCsv(`template-meep-${timestampSlug()}.csv`, [
+        {
+          cartao: "ARQ_01",
+          data: "2026-07-21",
+          categoria: "BEBIDAS BAR",
+          produto: "CHOPP HEINEKEN 400ML [BAR]",
+          quantidade: 42,
+          valor: 798,
+        },
+        {
+          cartao: "ARQ_01",
+          data: "2026-07-21",
+          categoria: "BEBIDAS BAR",
+          produto: "CHOPP AMSTEL 400ML [BAR]",
+          quantidade: 30,
+          valor: 540,
         },
       ]);
     }
@@ -199,7 +218,7 @@ export function ImportarPage() {
           tabela: "refills",
           detalhe: { linhas: rows.length, ok, fail: errors.length },
         });
-      } else {
+      } else if (mode === "estoque") {
         // ESTOQUE — entradas/saídas em warehouses via warehouse_movements
         const { data: whs } = await supabase.from("warehouses").select("id, code");
         const byCode = new Map(
@@ -247,6 +266,61 @@ export function ImportarPage() {
           tabela: "warehouse_movements",
           detalhe: { linhas: rows.length, ok, fail: errors.length },
         });
+      } else if (mode === "meep") {
+        // MEEP — vendas por bar (só chopps). Resolve bar por cartão ou nome.
+        const { data: bars } = await supabase.from("bars").select("id,name");
+        const byCartao = new Map<string, string>();
+        const byName = new Map<string, string>();
+        (bars ?? []).forEach((b: any) => {
+          const cm = (b as any).cartao_meep;
+          if (cm) byCartao.set(String(cm).trim().toLowerCase(), b.id);
+          byName.set(String(b.name).trim().toLowerCase(), b.id);
+        });
+        const parseDate = (v: any): string | null => {
+          const s = String(v ?? "").trim();
+          if (!s) return null;
+          if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+          const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+          if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+          const d = new Date(s);
+          return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+        };
+        const payload: any[] = [];
+        for (const r of rows) {
+          const produto = String(r.produto ?? r.product ?? "").trim();
+          if (!produto || !/chopp/i.test(produto)) continue; // só chopps
+          const cartao = String(r.cartao ?? r.card ?? r.bar ?? "").trim();
+          const data = parseDate(r.data ?? r.date ?? r.dia);
+          if (!data) {
+            errors.push(`Data inválida: ${JSON.stringify(r.data ?? r.date ?? "")}`);
+            continue;
+          }
+          const quantidade = Number(r.quantidade ?? r.qtd ?? r.unidade ?? 0) || 0;
+          const valor = Number(r.valor ?? r.total ?? 0) || 0;
+          const barId = byCartao.get(cartao.toLowerCase()) ?? byName.get(cartao.toLowerCase()) ?? null;
+          payload.push({
+            bar_id: barId,
+            cartao: cartao || null,
+            data,
+            categoria: r.categoria ?? r.category ?? null,
+            produto,
+            quantidade,
+            valor,
+            is_chopp: true,
+          });
+        }
+        if (payload.length) {
+          const { error } = await (supabase as any)
+            .from("meep_vendas_bar")
+            .upsert(payload, { onConflict: "cartao,data,produto" });
+          if (error) errors.push(error.message);
+          else ok = payload.length;
+        }
+        await logAudit({
+          acao: "import_meep",
+          tabela: "meep_vendas_bar",
+          detalhe: { linhas: rows.length, chopps: payload.length, ok, fail: errors.length },
+        });
       }
       setResult({ ok, fail: errors.length, errors });
       if (errors.length === 0) toast.success(`${ok} registros importados`);
@@ -263,6 +337,7 @@ export function ImportarPage() {
     bares: "Cadastro de bares",
     abastecimento: "Abastecimento em lote",
     estoque: "Entradas/saídas de estoque",
+    meep: "Vendas MEEP (chopps)",
   };
 
   return (
