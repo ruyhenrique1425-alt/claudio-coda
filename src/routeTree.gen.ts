@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppAbastecimentoMeepRouteImport } from './routes/app.abastecimento-meep'
 import { Route as AppBackupsRouteImport } from './routes/app.backups'
 import { Route as AppBiRouteImport } from './routes/app.bi'
 import { Route as AppCargasRouteImport } from './routes/app.cargas'
@@ -27,7 +28,6 @@ import { Route as AppMapRouteImport } from './routes/app.map'
 import { Route as AppNotasRouteImport } from './routes/app.notas'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppRelatorioRouteImport } from './routes/app.relatorio'
-import { Route as AppVendasBarRouteImport } from './routes/app.vendas-bar'
 import { Route as RBarIdRouteImport } from './routes/r.$barId'
 import { Route as AppBarsBarIdRouteImport } from './routes/app.bars.$barId'
 import { Route as AppBarsNewRouteImport } from './routes/app.bars.new'
@@ -56,6 +56,11 @@ const AuthRoute = AuthRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAbastecimentoMeepRoute = AppAbastecimentoMeepRouteImport.update({
+  id: '/abastecimento-meep',
+  path: '/abastecimento-meep',
   getParentRoute: () => AppRoute,
 } as any)
 const AppBackupsRoute = AppBackupsRouteImport.update({
@@ -128,11 +133,6 @@ const AppRelatorioRoute = AppRelatorioRouteImport.update({
   path: '/relatorio',
   getParentRoute: () => AppRoute,
 } as any)
-const AppVendasBarRoute = AppVendasBarRouteImport.update({
-  id: '/vendas-bar',
-  path: '/vendas-bar',
-  getParentRoute: () => AppRoute,
-} as any)
 const RBarIdRoute = RBarIdRouteImport.update({
   id: '/r/$barId',
   path: '/r/$barId',
@@ -183,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/abastecimento-meep': typeof AppAbastecimentoMeepRoute
   '/app/backups': typeof AppBackupsRoute
   '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
@@ -197,7 +198,6 @@ export interface FileRoutesByFullPath {
   '/app/notas': typeof AppNotasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
-  '/app/vendas-bar': typeof AppVendasBarRoute
   '/r/$barId': typeof RBarIdRoute
   '/app/': typeof AppIndexRoute
   '/app/bars/$barId': typeof AppBarsBarIdRoute
@@ -212,6 +212,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/app/abastecimento-meep': typeof AppAbastecimentoMeepRoute
   '/app/backups': typeof AppBackupsRoute
   '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
@@ -226,7 +227,6 @@ export interface FileRoutesByTo {
   '/app/notas': typeof AppNotasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
-  '/app/vendas-bar': typeof AppVendasBarRoute
   '/r/$barId': typeof RBarIdRoute
   '/app': typeof AppIndexRoute
   '/app/bars/$barId': typeof AppBarsBarIdRoute
@@ -243,6 +243,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/abastecimento-meep': typeof AppAbastecimentoMeepRoute
   '/app/backups': typeof AppBackupsRoute
   '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
@@ -257,7 +258,6 @@ export interface FileRoutesById {
   '/app/notas': typeof AppNotasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
-  '/app/vendas-bar': typeof AppVendasBarRoute
   '/r/$barId': typeof RBarIdRoute
   '/app/': typeof AppIndexRoute
   '/app/bars/$barId': typeof AppBarsBarIdRoute
@@ -275,6 +275,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/app/abastecimento-meep'
     | '/app/backups'
     | '/app/bi'
     | '/app/cargas'
@@ -289,7 +290,6 @@ export interface FileRouteTypes {
     | '/app/notas'
     | '/app/perfil'
     | '/app/relatorio'
-    | '/app/vendas-bar'
     | '/r/$barId'
     | '/app/'
     | '/app/bars/$barId'
@@ -304,6 +304,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/app/abastecimento-meep'
     | '/app/backups'
     | '/app/bi'
     | '/app/cargas'
@@ -318,7 +319,6 @@ export interface FileRouteTypes {
     | '/app/notas'
     | '/app/perfil'
     | '/app/relatorio'
-    | '/app/vendas-bar'
     | '/r/$barId'
     | '/app'
     | '/app/bars/$barId'
@@ -334,6 +334,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/app/abastecimento-meep'
     | '/app/backups'
     | '/app/bi'
     | '/app/cargas'
@@ -348,7 +349,6 @@ export interface FileRouteTypes {
     | '/app/notas'
     | '/app/perfil'
     | '/app/relatorio'
-    | '/app/vendas-bar'
     | '/r/$barId'
     | '/app/'
     | '/app/bars/$barId'
@@ -398,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/abastecimento-meep': {
+      id: '/app/abastecimento-meep'
+      path: '/abastecimento-meep'
+      fullPath: '/app/abastecimento-meep'
+      preLoaderRoute: typeof AppAbastecimentoMeepRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/backups': {
@@ -498,13 +505,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRelatorioRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/vendas-bar': {
-      id: '/app/vendas-bar'
-      path: '/vendas-bar'
-      fullPath: '/app/vendas-bar'
-      preLoaderRoute: typeof AppVendasBarRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/r/$barId': {
       id: '/r/$barId'
       path: '/r/$barId'
@@ -572,6 +572,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAbastecimentoMeepRoute: typeof AppAbastecimentoMeepRoute
   AppBackupsRoute: typeof AppBackupsRoute
   AppBiRoute: typeof AppBiRoute
   AppCargasRoute: typeof AppCargasRoute
@@ -586,7 +587,6 @@ interface AppRouteChildren {
   AppNotasRoute: typeof AppNotasRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppRelatorioRoute: typeof AppRelatorioRoute
-  AppVendasBarRoute: typeof AppVendasBarRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBarsBarIdRoute: typeof AppBarsBarIdRoute
   AppBarsNewRoute: typeof AppBarsNewRoute
@@ -597,6 +597,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAbastecimentoMeepRoute: AppAbastecimentoMeepRoute,
   AppBackupsRoute: AppBackupsRoute,
   AppBiRoute: AppBiRoute,
   AppCargasRoute: AppCargasRoute,
@@ -611,7 +612,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotasRoute: AppNotasRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppRelatorioRoute: AppRelatorioRoute,
-  AppVendasBarRoute: AppVendasBarRoute,
   AppIndexRoute: AppIndexRoute,
   AppBarsBarIdRoute: AppBarsBarIdRoute,
   AppBarsNewRoute: AppBarsNewRoute,

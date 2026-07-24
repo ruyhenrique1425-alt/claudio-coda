@@ -338,7 +338,7 @@ export function ImportarPage() {
     bares: "Cadastro de bares",
     abastecimento: "Abastecimento em lote",
     estoque: "Entradas/saídas de estoque",
-    meep: "Vendas MEEP (chopps)",
+    meep: "Abastecimento MEEP (chopps/bar)",
   };
 
   return (

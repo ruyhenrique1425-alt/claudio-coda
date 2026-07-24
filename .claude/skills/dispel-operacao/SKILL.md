@@ -77,6 +77,15 @@ MEEP = software das maquininhas. Esquema: cada bar tem um **cartão fixo**; o
 barril reposto é "vendido" a R$ 0,01 pro cartão do bar e cada unidade é bipada
 como venda ao ser entregue. O relatório de vendas = consumo do bar.
 
+**Dois eventos distintos na MEEP (importante):**
+- **Evento de vendas (real):** consumo dos clientes, cartões de consumo
+  tradicionais. É o **consumo** de verdade — vem em relatório à parte.
+- **Evento de estoque (à parte):** usa cartões próprios por bar (ex.: `ARQ_01`,
+  `AMSTEL`) para registrar os barris **entregues/repostos** a cada bar. Alimenta
+  a **reposição/abastecimento**, NÃO o consumo. É este que a tela
+  `app.abastecimento-meep` e o import "Abastecimento MEEP" tratam; o vínculo
+  bar↔cartão (`bars.cartao_meep`) é o desse evento de estoque.
+
 Formato do export (por **produto**), colunas:
 `Categoria | Produto | Quantidade | Unidade | Cashless | Débito | Crédito |
 Dinheiro | Voucher | Divisão | Outros | Desconto | Valor` + linha "Total Geral".
@@ -127,12 +136,13 @@ Dinheiro | Voucher | Divisão | Outros | Desconto | Valor` + linha "Total Geral"
   consumo/config). Reposição sugere plugado fixo e reposição = vazios.
 - `app.consumo` — ranking de consumo. `app.consumo-tempo` — **série temporal**
   de barris consumidos/dia por marca.
-- `app.vendas-bar` — **Vendas por bar (chopps)** a partir da MEEP (tabela
-  `meep_vendas_bar`), com painel "Vincular cartões aos bares" (edita
-  `bars.cartao_meep`). Import via Central → Importar, modo "Vendas MEEP
-  (chopps)" (resolve bar por `cartao_meep` ou nome, filtra só "CHOPP",
-  upsert idempotente em (cartao,data,produto)). Migration
-  `20260723130000_meep_vendas.sql`.
+- `app.abastecimento-meep` — **Abastecimento por bar (chopps)** = barris
+  ENTREGUES a cada bar via evento de estoque da MEEP (tabela `meep_vendas_bar`),
+  com painel "Vincular cartões aos bares" (edita `bars.cartao_meep`). Import via
+  Central → Importar, modo "Abastecimento MEEP" (resolve bar por `cartao_meep`
+  ou nome, filtra só "CHOPP", upsert idempotente em (cartao,data,produto)).
+  Migration `20260723130000_meep_vendas.sql`. **Não é consumo** — consumo real
+  vem do evento de vendas (à parte), ainda pendente.
 - `app.map`, `app.inventarios`, `app.manutencao*`, `app.relatorio`,
   `app.backups`, `app.governanca`, `app.perfil`, rotas públicas `r.*`.
 

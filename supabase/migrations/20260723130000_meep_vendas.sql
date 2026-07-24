@@ -1,7 +1,12 @@
 -- =====================================================================
--- MEEP: vendas por bar (consumo) + vínculo bar ↔ cartão
--- ADITIVO / NÃO DESTRUTIVO. Guarda o relatório de vendas da MEEP por bar/dia.
--- Regra do gestor: consumo é só para visualização (não conecta aos barris).
+-- MEEP: ABASTECIMENTO por bar + vínculo bar ↔ cartão
+-- ADITIVO / NÃO DESTRUTIVO.
+-- IMPORTANTE (semântica): estes cartões (ARQ_01, AMSTEL, ...) são do
+-- EVENTO DE ESTOQUE da MEEP e registram os barris de chopp ENTREGUES a cada
+-- bar (abastecimento/reposição) — NÃO o consumo. O consumo real vem do
+-- EVENTO DE VENDAS (cartões de consumo tradicionais), que é outro relatório.
+-- A tabela meep_vendas_bar guarda, por bar/dia/produto, a quantidade
+-- abastecida. (Nome mantido por compatibilidade da migration.)
 -- =====================================================================
 
 -- Vínculo bar ↔ número do cartão da maquininha (MEEP)

@@ -81,7 +81,7 @@ const NAV: NavItem[] = [
   { key: "equipe", to: "/app/equipe-bar", label: "EQUIPE DE BAR", icon: CreditCard },
   { key: "consumo", to: "/app/consumo", label: "CONSUMO", icon: BarChart3 },
   { key: "consumotempo", to: "/app/consumo-tempo", label: "CONSUMO × TEMPO", icon: TrendingUp },
-  { key: "vendas", to: "/app/vendas-bar", label: "VENDAS POR BAR", icon: CreditCard },
+  { key: "vendas", to: "/app/abastecimento-meep", label: "ABASTECIMENTO MEEP", icon: CreditCard },
   { key: "manutencao", to: "/app/manutencao", label: "MANUTENÇÃO", icon: Wrench },
   { key: "relatorio", to: "/app/relatorio", label: "RELATÓRIO", icon: FileText },
   { key: "backups", to: "/app/backups", label: "BACKUPS", icon: Archive },

@@ -11,7 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Beer, CreditCard, Info, Link2, ChevronDown, Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/app/vendas-bar")({ component: VendasBarPage });
+export const Route = createFileRoute("/app/abastecimento-meep")({
+  component: AbastecimentoMeepPage,
+});
 
 function brandOf(produto: string): "heineken" | "amstel" | null {
   const p = produto.toLowerCase();
@@ -29,13 +31,13 @@ type Row = {
   is_chopp: boolean;
 };
 
-function VendasBarPage() {
+function AbastecimentoMeepPage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const canView = perms.isGestor || perms.isManutencao;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["vendas-bar-meep"],
+    queryKey: ["abastecimento-meep"],
     enabled: canView,
     queryFn: async () => {
       const { data: bars } = await supabase.from("bars").select("id,name");
@@ -96,10 +98,11 @@ function VendasBarPage() {
     <div className="mx-auto max-w-5xl p-4 space-y-4">
       <div>
         <h1 className="font-display text-2xl tracking-wider flex items-center gap-2">
-          <CreditCard className="h-6 w-6 text-primary" /> VENDAS POR BAR (CHOPPS)
+          <CreditCard className="h-6 w-6 text-primary" /> ABASTECIMENTO POR BAR (MEEP)
         </h1>
         <p className="text-xs text-muted-foreground">
-          Consumo por bar a partir do relatório de vendas da MEEP — apenas produtos de chopp.
+          Barris de chopp <b>entregues</b> a cada bar, registrados via cartão no evento de estoque
+          da MEEP. Isso alimenta a reposição — o consumo real vem do evento de vendas (à parte).
         </p>
       </div>
 
@@ -111,7 +114,7 @@ function VendasBarPage() {
         <Card className="p-4 text-sm text-muted-foreground flex items-start gap-2">
           <Info className="h-4 w-4 mt-0.5 shrink-0" />
           <span>
-            A base de vendas ainda não foi criada. Aplique a migration{" "}
+            A base de abastecimento ainda não foi criada. Aplique a migration{" "}
             <code>20260723130000_meep_vendas.sql</code> e importe um relatório da MEEP em{" "}
             <Link to="/app/central" className="text-primary underline underline-offset-2">
               Central → Importar
@@ -125,7 +128,7 @@ function VendasBarPage() {
         <Card className="p-4 text-sm text-muted-foreground flex items-start gap-2">
           <Info className="h-4 w-4 mt-0.5 shrink-0" />
           <span>
-            Nenhuma venda de chopp importada ainda. Importe um relatório MEEP (CSV) em{" "}
+            Nenhum abastecimento de chopp importado ainda. Importe um relatório MEEP (CSV) em{" "}
             <Link to="/app/central" className="text-primary underline underline-offset-2">
               Central → Importar
             </Link>
@@ -139,7 +142,7 @@ function VendasBarPage() {
           <Card className="p-4">
             <div className="flex items-center gap-2">
               <Beer className="h-4 w-4 text-primary" />
-              <span className="font-display tracking-wider">TOTAL DE CHOPPS VENDIDOS</span>
+              <span className="font-display tracking-wider">TOTAL DE BARRIS ENTREGUES</span>
               <Badge variant="outline" className="ml-auto">
                 {data.totalGeral}
               </Badge>
@@ -246,7 +249,7 @@ function CartaoMapping({ canEdit }: { canEdit: boolean }) {
       }
       toast.success("Cartões vinculados aos bares");
       setEdits({});
-      qc.invalidateQueries({ queryKey: ["vendas-bar-meep"] });
+      qc.invalidateQueries({ queryKey: ["abastecimento-meep"] });
       qc.invalidateQueries({ queryKey: ["bars-cartao"] });
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao salvar vínculos");
@@ -274,8 +277,8 @@ function CartaoMapping({ canEdit }: { canEdit: boolean }) {
       {open && (
         <div className="mt-3 space-y-2">
           <p className="text-[11px] text-muted-foreground">
-            Informe o identificador do cartão MEEP de cada bar (ex.: <code>ARQ_01</code>). É o que
-            liga as vendas importadas ao bar certo.
+            Informe o identificador do cartão MEEP (evento de estoque) de cada bar (ex.:{" "}
+            <code>ARQ_01</code>). É o que liga o abastecimento importado ao bar certo.
           </p>
           {!bars && <Skeleton className="h-24" />}
           {bars && (
