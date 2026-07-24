@@ -277,7 +277,9 @@ function BIPage() {
               SUGESTÃO DE REPOSIÇÃO {data.hasRotas ? "POR ROTA" : ""}
             </h2>
             <p className="text-[11px] text-muted-foreground mb-3">
-              No padrão, reposição = vazios. Os números são os barris a levar para cada bar.
+              <b>Carregar</b> = barris a levar para voltar ao padrão (padrão − cheios). ·{" "}
+              <b>Vazios</b> = a recolher. No padrão, os dois são iguais. Use o total da rota para
+              montar o pallet.
             </p>
             {!data.hasRotas && (
               <p className="text-[11px] text-amber-600 mb-3">
@@ -288,14 +290,21 @@ function BIPage() {
               {Object.entries(data.groups)
                 .sort(([a], [b]) => a.localeCompare(b, "pt-BR"))
                 .map(([rota, list]) => {
-                  const totH = list.reduce((s, b) => s + b.counts.heineken.vazio, 0);
-                  const totA = list.reduce((s, b) => s + b.counts.amstel.vazio, 0);
+                  const gapOf = (b: BarBI, br: Brand) =>
+                    Math.max(0, b.padrao[br] - (b.counts[br].plugado + b.counts[br].fechado));
+                  const carH = list.reduce((s, b) => s + gapOf(b, "heineken"), 0);
+                  const carA = list.reduce((s, b) => s + gapOf(b, "amstel"), 0);
+                  const vazH = list.reduce((s, b) => s + b.counts.heineken.vazio, 0);
+                  const vazA = list.reduce((s, b) => s + b.counts.amstel.vazio, 0);
                   return (
                     <div key={rota}>
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="font-display text-sm tracking-wider">{rota}</span>
+                        <Badge className="text-[10px] bg-primary/15 text-primary hover:bg-primary/15">
+                          Carregar {carH}H · {carA}A
+                        </Badge>
                         <Badge variant="outline" className="text-[10px]">
-                          {totH} H · {totA} A
+                          Vazios {vazH}H · {vazA}A
                         </Badge>
                       </div>
                       <div className="overflow-x-auto">
@@ -303,8 +312,8 @@ function BIPage() {
                           <thead>
                             <tr className="text-left text-xs text-muted-foreground">
                               <th className="py-1 pr-2">Bar</th>
-                              <th className="py-1 px-2 text-right">Repor H</th>
-                              <th className="py-1 px-2 text-right">Repor A</th>
+                              <th className="py-1 px-2 text-right">Carregar</th>
+                              <th className="py-1 px-2 text-right">Vazios</th>
                               <th className="py-1 pl-2 text-right">Padrão</th>
                             </tr>
                           </thead>
@@ -319,11 +328,11 @@ function BIPage() {
                                     </span>
                                   )}
                                 </td>
-                                <td className="py-1.5 px-2 text-right font-medium">
-                                  {b.counts.heineken.vazio}
+                                <td className="py-1.5 px-2 text-right font-medium text-primary">
+                                  {gapOf(b, "heineken")}H · {gapOf(b, "amstel")}A
                                 </td>
-                                <td className="py-1.5 px-2 text-right font-medium">
-                                  {b.counts.amstel.vazio}
+                                <td className="py-1.5 px-2 text-right">
+                                  {b.counts.heineken.vazio}H · {b.counts.amstel.vazio}A
                                 </td>
                                 <td className="py-1.5 pl-2 text-right text-muted-foreground">
                                   {b.padrao.heineken}H · {b.padrao.amstel}A
