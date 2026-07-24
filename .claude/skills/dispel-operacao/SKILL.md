@@ -202,12 +202,21 @@ dedup, nomes) é feito fora e importado como CSV limpo.
 `gestor`, `manutencao`, `admin`, `operador`, `equipe_bar`. Telas de estoque/BI/
 consumo/central: gestor ou manutenção. `equipe_bar` só vê `/app/equipe-bar`.
 
+## Entrega / execução
+
+- Passo a passo para colocar em produção: **`LOVABLE_STEPS.md`** (raiz) — aplicar
+  migrations, conferir nomes, vincular cartões, importar, verificar cada tela.
+- Consumo de cada bar **até hoje** já vem via seed
+  `20260724130000_seed_consumo_meep.sql` (gerado da consolidação dos 18 `.xls`).
+  CSV de referência em `docs/consumo-meep-consolidado.csv` (bar,data,marca,barris).
+
 ## Pendências que dependem do gestor
 
-1. **Relatório de "barris levados por bar"** (ainda não recebido) → para o mapa
-   **bar ↔ cartão MEEP**.
-2. **Export MEEP em CSV/XLSX** (não PDF-imagem) → para importação automática e
-   confiável do consumo por bar.
-3. **Confirmar nomes reais dos bares** no banco (para a migration de rotas casar).
-4. **OK + backup** antes de qualquer passo destrutivo (zerar estoque / reiniciar
-   contagem mantendo config, mudando só barris).
+1. **Confirmar nomes reais dos bares** no banco (`bars.name`) → para as
+   migrations de rotas/padrões e o `bar_id` do consumo/abastecimento casarem.
+2. **Vínculo cartão→bar** do evento de estoque (feito no app, painel "Vincular
+   cartões").
+3. **Zel Café / Bar da Pista** (parceiros): entram em rota/padrão?
+4. **OK + backup** antes de qualquer passo destrutivo (Fase 5: zerar estoque /
+   reiniciar contagem mantendo config, mudando só barris).
+5. (Opcional) App ler o `.xls` bruto da MEEP direto (hoje: parse externo → CSV limpo).
