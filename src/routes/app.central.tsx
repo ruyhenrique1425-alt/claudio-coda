@@ -1,26 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Warehouse,
-  FileText,
-  Upload,
-  Truck,
-  Package,
-  ArrowRight,
-  ArrowRightLeft,
-  PackageOpen,
-} from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Warehouse, FileText, Package, ArrowRight, RefreshCcw, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/app/central")({ component: CentralPage });
+
+// Telas reais carregadas sob demanda (só quando a aba é aberta).
+const EstoquePanel = lazy(() => import("./app.estoque").then((m) => ({ default: m.EstoquePage })));
+const CargasPanel = lazy(() =>
+  import("./app.cargas").then((m) => ({ default: m.CargasHeinekenPage })),
+);
+const NotasPanel = lazy(() => import("./app.notas").then((m) => ({ default: m.NotasPage })));
+const ImportarPanel = lazy(() =>
+  import("./app.importar").then((m) => ({ default: m.ImportarPage })),
+);
 
 const BRANDS = ["heineken", "amstel"] as const;
 type Brand = (typeof BRANDS)[number];
 const BRAND_LABEL: Record<Brand, string> = { heineken: "Heineken", amstel: "Amstel" };
+
+function TabFallback() {
+  return (
+    <div className="p-8 text-center text-muted-foreground">
+      <Loader2 className="inline animate-spin mr-2" />
+      Carregando…
+    </div>
+  );
+}
 
 function CentralPage() {
   const { user } = useSession();
@@ -37,21 +49,29 @@ function CentralPage() {
         .in("bar_type", ["bar_venda", "bar_parceiro"]);
       const ids = (bars ?? []).map((b) => b.id);
 
-      const [{ data: stds }, { data: invs }, { data: stock }, { data: whs }, { data: nfs }] =
-        await Promise.all([
-          supabase
-            .from("bar_stock_standard")
-            .select("bar_id,brand,barris_padrao")
-            .in("bar_id", ids),
-          supabase
-            .from("inventories")
-            .select("bar_id,performed_at,inventory_items(brand,status,quantidade)")
-            .in("bar_id", ids)
-            .order("performed_at", { ascending: false }),
-          supabase.from("warehouse_stock").select("warehouse_id,brand,barrels"),
-          supabase.from("warehouses").select("id,code,name"),
-          supabase.from("notas_fiscais").select("id,status").eq("status", "pendente_revisao"),
-        ]);
+      const [
+        { data: stds },
+        { data: invs },
+        { data: stock },
+        { data: whs },
+        { data: nfs },
+        { data: comodato },
+      ] = await Promise.all([
+        supabase.from("bar_stock_standard").select("bar_id,brand,barris_padrao").in("bar_id", ids),
+        supabase
+          .from("inventories")
+          .select("bar_id,performed_at,inventory_items(brand,status,quantidade)")
+          .in("bar_id", ids)
+          .order("performed_at", { ascending: false }),
+        supabase.from("warehouse_stock").select("warehouse_id,brand,barrels"),
+        supabase.from("warehouses").select("id,code,name"),
+        supabase.from("notas_fiscais").select("id,status").eq("status", "pendente_revisao"),
+        supabase
+          .from("controle_comodato_global")
+          .select(
+            "marca,cheios_recebidos_acumulados,vazios_devolvidos_acumulados,vazios_disponiveis",
+          ),
+      ]);
 
       const lastInv = new Map<string, any>();
       (invs ?? []).forEach((i: any) => {
@@ -64,7 +84,6 @@ function CentralPage() {
         padraoBy[s.bar_id][s.brand as Brand] = s.barris_padrao ?? 0;
       });
 
-      // Necessidade para manter os bares no padrão + vazios a retornar
       const needed: Record<Brand, number> = { heineken: 0, amstel: 0 };
       const vaziosBares: Record<Brand, number> = { heineken: 0, amstel: 0 };
       (bars ?? []).forEach((b: any) => {
@@ -98,7 +117,27 @@ function CentralPage() {
         }))
         .sort((a, b) => (a.code === "dispel" ? -1 : b.code === "dispel" ? 1 : 0));
 
-      return { warehouses, needed, vaziosBares, nfsPendentes: (nfs ?? []).length };
+      // Comodato por marca: nunca devolver mais vazios do que os cheios recebidos.
+      const comodatoBy: Record<
+        Brand,
+        { recebidos: number; devolvidos: number; aDevolver: number }
+      > = {
+        heineken: { recebidos: 0, devolvidos: 0, aDevolver: 0 },
+        amstel: { recebidos: 0, devolvidos: 0, aDevolver: 0 },
+      };
+      (comodato ?? []).forEach((c: any) => {
+        const br = String(c.marca).toLowerCase() as Brand;
+        if (!comodatoBy[br]) return;
+        const recebidos = c.cheios_recebidos_acumulados ?? 0;
+        const devolvidos = c.vazios_devolvidos_acumulados ?? 0;
+        comodatoBy[br] = {
+          recebidos,
+          devolvidos,
+          aDevolver: Math.max(0, recebidos - devolvidos),
+        };
+      });
+
+      return { warehouses, needed, vaziosBares, nfsPendentes: (nfs ?? []).length, comodatoBy };
     },
   });
 
@@ -111,112 +150,173 @@ function CentralPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-4 space-y-4">
+    <div className="mx-auto max-w-6xl p-4 space-y-4">
       <div>
         <h1 className="font-display text-2xl tracking-wider flex items-center gap-2">
           <Warehouse className="h-6 w-6 text-primary" /> CENTRAL DE ESTOQUE
         </h1>
         <p className="text-xs text-muted-foreground">
-          Fluxo único: Nota Fiscal → Estoque DISPEL → Bar / Allstar → volta vazio pro estoque.
+          Estoque, entradas (cargas/NF), comodato e importação — tudo em um lugar. Fluxo: Nota
+          Fiscal → Estoque DISPEL → Bar / Allstar → volta vazio.
         </p>
       </div>
 
-      {/* Fluxo */}
-      <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-2 text-xs font-display tracking-wider">
-          <FlowStep icon={FileText} label="NOTA FISCAL" />
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          <FlowStep icon={Warehouse} label="ESTOQUE DISPEL" />
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          <FlowStep icon={Package} label="BAR / ALLSTAR" />
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          <FlowStep icon={PackageOpen} label="VAZIO → ESTOQUE" />
-        </div>
-      </Card>
+      <Tabs defaultValue="visao">
+        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-5">
+          <TabsTrigger value="visao" className="text-[11px] font-display tracking-wider">
+            VISÃO GERAL
+          </TabsTrigger>
+          <TabsTrigger value="estoque" className="text-[11px] font-display tracking-wider">
+            ESTOQUE
+          </TabsTrigger>
+          <TabsTrigger value="cargas" className="text-[11px] font-display tracking-wider">
+            ENTRADAS
+          </TabsTrigger>
+          <TabsTrigger value="notas" className="text-[11px] font-display tracking-wider">
+            NOTAS
+          </TabsTrigger>
+          <TabsTrigger value="importar" className="text-[11px] font-display tracking-wider">
+            IMPORTAR
+          </TabsTrigger>
+        </TabsList>
 
-      {isLoading && <Skeleton className="h-40" />}
-
-      {!isLoading && data && (
-        <>
-          {/* Estoques ao vivo */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {data.warehouses.map((w) => (
-              <Card key={w.code} className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="font-display tracking-wider">{w.name}</div>
-                  <Badge variant="outline" className="uppercase text-[10px]">
-                    {w.code}
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  {BRANDS.map((br) => (
-                    <div key={br} className="rounded bg-muted/40 py-2">
-                      <div className="font-display text-2xl">{w.stock[br]}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase">
-                        {BRAND_LABEL[br]}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Indicadores operacionais */}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Card className="p-4">
-              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                Falta p/ manter no padrão
-              </div>
-              <div className="font-display text-lg">
-                {data.needed.heineken}H · {data.needed.amstel}A
-              </div>
-              <div className="text-[11px] text-muted-foreground">
-                Barris a sair do estoque para os bares.
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                Vazios nos bares
-              </div>
-              <div className="font-display text-lg text-accent">
-                {data.vaziosBares.heineken}H · {data.vaziosBares.amstel}A
-              </div>
-              <div className="text-[11px] text-muted-foreground">
-                A recolher e retornar ao estoque.
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                Notas fiscais pendentes
-              </div>
-              <div className="font-display text-lg">{data.nfsPendentes}</div>
-              <div className="text-[11px] text-muted-foreground">Aguardando conciliação.</div>
-            </Card>
-          </div>
-
-          {/* Ações consolidadas */}
+        {/* ---------------- Visão geral ---------------- */}
+        <TabsContent value="visao" className="mt-4 space-y-4">
+          {/* Fluxo */}
           <Card className="p-4">
-            <h2 className="font-display text-sm tracking-widest text-muted-foreground mb-3">
-              AÇÕES
-            </h2>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <ActionLink to="/app/notas" icon={FileText} title="Entrada por Nota Fiscal">
-                Registrar NF (PDF/manual) e conciliar entrada no estoque.
-              </ActionLink>
-              <ActionLink to="/app/cargas" icon={Truck} title="Cargas Heineken">
-                Recebimento de cargas e vasilhames (comodato).
-              </ActionLink>
-              <ActionLink to="/app/estoque" icon={ArrowRightLeft} title="Estoque & Transferências">
-                Entradas/saídas e transferência DISPEL → Allstar.
-              </ActionLink>
-              <ActionLink to="/app/importar" icon={Upload} title="Importar em lote">
-                Planilha/CSV de entradas de estoque e padrões.
-              </ActionLink>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-display tracking-wider">
+              <FlowStep icon={FileText} label="NOTA FISCAL / CARGA" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <FlowStep icon={Warehouse} label="ESTOQUE DISPEL" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <FlowStep icon={Package} label="BAR / ALLSTAR" />
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              <FlowStep icon={RefreshCcw} label="VAZIO → HEINEKEN" />
             </div>
           </Card>
-        </>
-      )}
+
+          {isLoading && <Skeleton className="h-40" />}
+
+          {!isLoading && data && (
+            <>
+              {/* Estoques ao vivo */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.warehouses.map((w) => (
+                  <Card key={w.code} className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-display tracking-wider">{w.name}</div>
+                      <Badge variant="outline" className="uppercase text-[10px]">
+                        {w.code}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      {BRANDS.map((br) => (
+                        <div key={br} className="rounded bg-muted/40 py-2">
+                          <div className="font-display text-2xl">{w.stock[br]}</div>
+                          <div className="text-[10px] text-muted-foreground uppercase">
+                            {BRAND_LABEL[br]}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Indicadores */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Card className="p-4">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                    Falta p/ manter no padrão
+                  </div>
+                  <div className="font-display text-lg">
+                    {data.needed.heineken}H · {data.needed.amstel}A
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Barris a sair do estoque para os bares.
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                    Vazios nos bares
+                  </div>
+                  <div className="font-display text-lg text-accent">
+                    {data.vaziosBares.heineken}H · {data.vaziosBares.amstel}A
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    A recolher e retornar ao estoque.
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                    Notas fiscais pendentes
+                  </div>
+                  <div className="font-display text-lg">{data.nfsPendentes}</div>
+                  <div className="text-[11px] text-muted-foreground">Aguardando conciliação.</div>
+                </Card>
+              </div>
+
+              {/* Comodato */}
+              <Card className="p-4">
+                <h2 className="font-display text-sm tracking-widest text-muted-foreground mb-1">
+                  COMODATO HEINEKEN
+                </h2>
+                <p className="text-[11px] text-muted-foreground mb-3">
+                  Todo barril cheio que entra deve voltar vazio. Não se pode devolver mais vazios do
+                  que os cheios recebidos.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {BRANDS.map((br) => {
+                    const c = data.comodatoBy[br];
+                    return (
+                      <div key={br} className="rounded border border-border p-3">
+                        <div className="font-display text-sm tracking-wider uppercase mb-2">
+                          {BRAND_LABEL[br]}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <Metric label="Recebidos" value={c.recebidos} />
+                          <Metric label="Devolvidos" value={c.devolvidos} />
+                          <Metric label="A devolver" value={c.aDevolver} accent />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              <div className="text-[11px] text-muted-foreground">
+                Precisa da contagem por bar e estado?{" "}
+                <Link to="/app/bi" className="text-primary underline underline-offset-2">
+                  Abrir o BI de barris
+                </Link>
+                .
+              </div>
+            </>
+          )}
+        </TabsContent>
+
+        {/* ---------------- Telas reais ---------------- */}
+        <TabsContent value="estoque" className="mt-2">
+          <Suspense fallback={<TabFallback />}>
+            <EstoquePanel />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="cargas" className="mt-2">
+          <Suspense fallback={<TabFallback />}>
+            <CargasPanel />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="notas" className="mt-2">
+          <Suspense fallback={<TabFallback />}>
+            <NotasPanel />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="importar" className="mt-2">
+          <Suspense fallback={<TabFallback />}>
+            <ImportarPanel />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -230,27 +330,11 @@ function FlowStep({ icon: Icon, label }: { icon: any; label: string }) {
   );
 }
 
-function ActionLink({
-  to,
-  icon: Icon,
-  title,
-  children,
-}: {
-  to: string;
-  icon: any;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Metric({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
-    <Link
-      to={to}
-      className="flex items-start gap-3 rounded border border-border p-3 hover:border-primary transition"
-    >
-      <Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-      <div>
-        <div className="font-display text-sm tracking-wide">{title}</div>
-        <div className="text-[11px] text-muted-foreground">{children}</div>
-      </div>
-    </Link>
+    <div className="rounded bg-muted/40 py-2">
+      <div className={`font-display text-xl ${accent ? "text-accent" : ""}`}>{value}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
+    </div>
   );
 }

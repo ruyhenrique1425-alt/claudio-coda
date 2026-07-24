@@ -37,7 +37,7 @@ type Movement = {
   bar_id: string | null;
 };
 
-function EstoquePage() {
+export function EstoquePage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);

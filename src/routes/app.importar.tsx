@@ -15,7 +15,7 @@ export const Route = createFileRoute("/app/importar")({ component: ImportarPage 
 type Row = Record<string, any>;
 type Mode = "padroes" | "bares" | "abastecimento" | "estoque";
 
-function ImportarPage() {
+export function ImportarPage() {
   const { user } = useSession();
   const { isGestor } = usePermissions(user?.id);
   const isManager = isGestor;

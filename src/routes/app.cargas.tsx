@@ -51,7 +51,7 @@ type Carga = {
   performed_by: string | null;
 };
 
-function CargasHeinekenPage() {
+export function CargasHeinekenPage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const [items, setItems] = useState<Carga[]>([]);

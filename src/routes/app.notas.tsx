@@ -68,7 +68,7 @@ type NF = {
   conciliado_at: string | null;
 };
 
-function NotasPage() {
+export function NotasPage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const [notas, setNotas] = useState<NF[]>([]);
