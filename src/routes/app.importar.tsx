@@ -13,7 +13,7 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/app/importar")({ component: ImportarPage });
 
 type Row = Record<string, any>;
-type Mode = "padroes" | "bares" | "abastecimento" | "estoque" | "meep";
+type Mode = "padroes" | "bares" | "abastecimento" | "estoque" | "meep" | "consumo";
 
 export function ImportarPage() {
   const { user } = useSession();
@@ -114,6 +114,11 @@ export function ImportarPage() {
           quantidade: 30,
           valor: 540,
         },
+      ]);
+    } else if (mode === "consumo") {
+      downloadCsv(`template-consumo-${timestampSlug()}.csv`, [
+        { bar: "Vila 1", data: "2026-07-21", marca: "heineken", barris: 12 },
+        { bar: "Vila 1", data: "2026-07-21", marca: "amstel", barris: 14 },
       ]);
     }
   };
@@ -322,6 +327,56 @@ export function ImportarPage() {
           tabela: "meep_vendas_bar",
           detalhe: { linhas: rows.length, chopps: payload.length, ok, fail: errors.length },
         });
+      } else if (mode === "consumo") {
+        // CONSUMO MEEP — consumo real por bar/dia/marca (barris). Resolve bar por nome.
+        const { data: bars } = await supabase.from("bars").select("id,name");
+        const byName = new Map<string, string>();
+        (bars ?? []).forEach((b: any) => byName.set(String(b.name).trim().toLowerCase(), b.id));
+        const parseDate = (v: any): string | null => {
+          const s = String(v ?? "").trim();
+          if (!s) return null;
+          if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+          const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+          if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+          const d = new Date(s);
+          return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+        };
+        const payload: any[] = [];
+        for (const r of rows) {
+          const bar = String(r.bar ?? r.nome ?? "").trim();
+          const data = parseDate(r.data ?? r.date ?? r.dia);
+          const marca = String(r.marca ?? r.brand ?? "")
+            .trim()
+            .toLowerCase();
+          const barris = Number(r.barris ?? r.quantidade ?? r.qtd ?? 0) || 0;
+          if (!bar || !data) {
+            errors.push(`Linha inválida: ${JSON.stringify(r)}`);
+            continue;
+          }
+          if (!["heineken", "amstel"].includes(marca)) {
+            errors.push(`Marca inválida: ${marca} (${bar})`);
+            continue;
+          }
+          payload.push({
+            bar_id: byName.get(bar.toLowerCase()) ?? null,
+            bar_nome: bar,
+            data,
+            marca,
+            barris,
+          });
+        }
+        if (payload.length) {
+          const { error } = await (supabase as any)
+            .from("meep_consumo_bar")
+            .upsert(payload, { onConflict: "bar_nome,data,marca" });
+          if (error) errors.push(error.message);
+          else ok = payload.length;
+        }
+        await logAudit({
+          acao: "import_consumo",
+          tabela: "meep_consumo_bar",
+          detalhe: { linhas: rows.length, ok, fail: errors.length },
+        });
       }
       setResult({ ok, fail: errors.length, errors });
       if (errors.length === 0) toast.success(`${ok} registros importados`);
@@ -339,6 +394,7 @@ export function ImportarPage() {
     abastecimento: "Abastecimento em lote",
     estoque: "Entradas/saídas de estoque",
     meep: "Abastecimento MEEP (chopps/bar)",
+    consumo: "Consumo MEEP (real, por bar)",
   };
 
   return (

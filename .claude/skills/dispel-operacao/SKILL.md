@@ -101,6 +101,35 @@ Dinheiro | Voucher | Divisão | Outros | Desconto | Valor` + linha "Total Geral"
 - Regra do gestor: **NÃO conectar consumo aos barris** — o consumo por bar é só
   para visualização (quanto cada bar vendeu por dia, só chopps).
 
+## CONSUMO MEEP (evento de vendas) — .xls por bar
+
+Relatório de **consumo real** (evento de vendas), 1 arquivo `.xls` por bar
+(sheet "Consumos"). Legível com `xlrd`. Peculiaridades:
+- **Nome do bar** vem numa célula do cabeçalho (col 1, ~linha 7) — terminologia
+  MEEP, diferente do padrão.
+- Tabela começa na linha do header "Produto" (~linha 14). **A quantidade está
+  embutida no nome do produto**: `"21.00000x CHOPP AMSTEL 50L"` → 21 barris.
+  Há **estornos** (linhas negativas). Chopp = produtos com "CHOPP"; marca por
+  "HEINEKEN"/"AMSTEL". Data por transação em serial Excel (col "Data de
+  Realização", base 1899-12-30).
+- **Duplicação:** o mesmo bar é exportado em vários arquivos (o número no nome
+  do arquivo é só sequência). **Deduplicar** (um arquivo por bar).
+
+Mapa **nome MEEP → bar real** (confirmado pelo gestor):
+`Villa 2 Bar 1`=Vila 2 maior · `Villa 2 Bar 2`=Vila 2 menor ·
+`Villa 3 Bar 1`=Vila 3 maior · `Villa 3 Bar 2`=Vila 3 menor ·
+`Arquibancada 1`=Nova(arq) · `Arquibancada 2`=Entrada(arq) ·
+`Arquibancada 3`=Meio(arq) · `Arquibancada 4`=Fundo(arq) ·
+`Vila 1/VILLA 1`=Vila 1 · `Alameda dos núcleos`=Núcleos ·
+`Chopperia`=Choperia 1+2 (unir) · `Churrascaria`=Churrascaria ·
+`Zel cafe` e `Bar da pista`=parceiros.
+
+No app: tabela `meep_consumo_bar` (bar_nome/data/marca/barris, unique idempotente),
+tela `app.consumo-bar` (Consumo por Bar real), import via Central → Importar
+modo "Consumo MEEP" (CSV: bar,data,marca,barris). Migration
+`20260724120000_meep_consumo.sql`. O parse dos `.xls` brutos (qty no nome,
+dedup, nomes) é feito fora e importado como CSV limpo.
+
 ## Schema Supabase (tabelas-chave)
 
 - **Enums:** `chopp_brand` = heineken|amstel · `barrel_status` = plugado|fechado|vazio
