@@ -585,12 +585,23 @@ export function ImportarPage() {
             barris,
           });
         }
-        if (payload.length) {
+        // Agrega por (bar_nome, data, marca) SOMANDO — para dois arquivos que
+        // mapeiam ao mesmo bar (ex.: Chopperia 1+2) somarem em vez de um
+        // sobrescrever o outro, e para o upsert não receber chave duplicada.
+        const aggMap = new Map<string, any>();
+        for (const p of payload) {
+          const key = `${p.bar_nome.toLowerCase()}|${p.data}|${p.marca}`;
+          const cur = aggMap.get(key);
+          if (cur) cur.barris += p.barris;
+          else aggMap.set(key, { ...p });
+        }
+        const finalPayload = Array.from(aggMap.values());
+        if (finalPayload.length) {
           const { error } = await (supabase as any)
             .from("meep_consumo_bar")
-            .upsert(payload, { onConflict: "bar_nome,data,marca" });
+            .upsert(finalPayload, { onConflict: "bar_nome,data,marca" });
           if (error) errors.push(error.message);
-          else ok = payload.length;
+          else ok = finalPayload.length;
         }
         await logAudit({
           acao: "import_consumo",
