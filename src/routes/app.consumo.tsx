@@ -1,11 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  BAR_TYPES_OPERACAO,
+  recolhidosAposInventario,
+  vaziosARecolher,
+} from "@/lib/operacao";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -39,8 +45,61 @@ import {
 } from "recharts";
 
 export const Route = createFileRoute("/app/consumo")({
-  component: ConsumoDashboard,
+  component: ConsumoHub,
 });
+
+// As outras duas telas de consumo viram abas aqui (carregadas sob demanda).
+// Suas rotas continuam existindo, então links antigos seguem funcionando.
+const ConsumoBarPanel = lazy(() =>
+  import("./app.consumo-bar").then((m) => ({ default: m.ConsumoBarPage })),
+);
+const ConsumoTempoPanel = lazy(() =>
+  import("./app.consumo-tempo").then((m) => ({ default: m.ConsumoTempoPage })),
+);
+
+function ConsumoHub() {
+  return (
+    <div className="mx-auto max-w-6xl p-4">
+      <div className="mb-3">
+        <h1 className="font-display text-2xl tracking-wider">CONSUMO</h1>
+        <p className="text-xs text-muted-foreground">
+          Ranking de consumo (vazios recolhidos), barris entregues por bar (MEEP) e a evolução
+          no tempo. ⚠️ A aba MEEP é distribuição, não consumo.
+        </p>
+      </div>
+      <Tabs defaultValue="ranking">
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="ranking" className="text-[11px] font-display tracking-wider">
+            RANKING
+          </TabsTrigger>
+          <TabsTrigger value="porbar" className="text-[11px] font-display tracking-wider">
+            ENTREGUE (MEEP)
+          </TabsTrigger>
+          <TabsTrigger value="tempo" className="text-[11px] font-display tracking-wider">
+            AO LONGO DO TEMPO
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="ranking" className="mt-2">
+          <ConsumoDashboard />
+        </TabsContent>
+        <TabsContent value="porbar" className="mt-2">
+          <Suspense fallback={<ConsumoTabFallback />}>
+            <ConsumoBarPanel />
+          </Suspense>
+        </TabsContent>
+        <TabsContent value="tempo" className="mt-2">
+          <Suspense fallback={<ConsumoTabFallback />}>
+            <ConsumoTempoPanel />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function ConsumoTabFallback() {
+  return <div className="p-8 text-center text-muted-foreground">Carregando…</div>;
+}
 
 type Range = "today" | "7" | "all";
 
@@ -84,7 +143,7 @@ function ConsumoDashboard() {
       const [{ data: emps, error }, { data: bars }, { data: stds }, { data: invs }] =
         await Promise.all([
           q,
-          supabase.from("bars").select("id,name").in("bar_type", ["bar_venda", "bar_parceiro"]),
+          supabase.from("bars").select("id,name").in("bar_type", [...BAR_TYPES_OPERACAO]),
           supabase.from("bar_stock_standard").select("bar_id,brand,barris_padrao"),
           invQ,
         ]);
@@ -115,18 +174,25 @@ function ConsumoDashboard() {
       const nameById: Record<string, string> = {};
       (bars ?? []).forEach((b) => (nameById[b.id] = b.name));
 
+      // último inventário por bar
+      const lastInv = new Map<string, any>();
+      (invs ?? []).forEach((i: any) => {
+        if (!lastInv.has(i.bar_id)) lastInv.set(i.bar_id, i);
+      });
+
       // padrão por bar/marca (teto)
+      // "A recolher" precisa descontar o que já saiu depois da foto do
+      // inventário — recolher NÃO reescreve o inventário. Ver lib/operacao.
+      const invAtPorBar = new Map<string, string | null>();
+      lastInv.forEach((inv, barId) => invAtPorBar.set(barId, inv?.performed_at ?? null));
+      const recolhidosApos = recolhidosAposInventario((emps ?? []) as any, invAtPorBar);
+
       const stdBy: Record<string, { heineken: number; amstel: number }> = {};
       (stds ?? []).forEach((s: any) => {
         if (!stdBy[s.bar_id]) stdBy[s.bar_id] = { heineken: 0, amstel: 0 };
         stdBy[s.bar_id][s.brand as "heineken" | "amstel"] = s.barris_padrao || 0;
       });
 
-      // último inventário por bar
-      const lastInv = new Map<string, any>();
-      (invs ?? []).forEach((i: any) => {
-        if (!lastInv.has(i.bar_id)) lastInv.set(i.bar_id, i);
-      });
 
       const byBar: Record<
         string,
@@ -155,10 +221,13 @@ function ConsumoDashboard() {
       let totalFech = 0;
 
       (emps ?? []).forEach((e: any) => {
+        // Pontos fora da operação (camarote/stand/haras, abastecidos pela
+        // ALLSTAR) não entram na nossa contagem — confirmado pelo gestor.
+        if (!nameById[e.bar_id]) return;
         const qtd = e.quantidade || 0;
         total += qtd;
         byBrand[e.brand] = (byBrand[e.brand] ?? 0) + qtd;
-        const name = nameById[e.bar_id] ?? "Bar removido";
+        const name = nameById[e.bar_id];
         const std = stdBy[e.bar_id] ?? { heineken: 0, amstel: 0 };
         if (!byBar[e.bar_id])
           byBar[e.bar_id] = {
@@ -203,12 +272,10 @@ function ConsumoDashboard() {
             if (it.brand === "amstel") fa += q;
           }
         });
-        vh = Math.min(vh, std.heineken);
-        va = Math.min(va, std.amstel);
-        ph = Math.min(ph, std.heineken);
-        pa = Math.min(pa, std.amstel);
-        fh = Math.min(fh, std.heineken);
-        fa = Math.min(fa, std.amstel);
+        // Sem teto no padrão: capar em `std` escondia bares que passaram do
+        // padrão e fazia este número divergir da tela inicial. Ver
+        // docs/ORIGEM-CONSUMO.md.
+        void std;
         if (vh + va + ph + pa + fh + fa === 0) return;
         if (!byBar[b.id])
           byBar[b.id] = {
@@ -225,6 +292,8 @@ function ConsumoDashboard() {
             std_h: std.heineken,
             std_a: std.amstel,
           };
+        vh = vaziosARecolher(vh, b.id, "heineken", recolhidosApos);
+        va = vaziosARecolher(va, b.id, "amstel", recolhidosApos);
         byBar[b.id].vazios_h = vh;
         byBar[b.id].vazios_a = va;
         byBar[b.id].plug_h = ph;
@@ -244,7 +313,8 @@ function ConsumoDashboard() {
 
       const barsRanked = Object.entries(byBar)
         .map(([id, v]) => ({ id, ...v }))
-        .sort((a, b) => b.total + b.vazios_h + b.vazios_a - (a.total + a.vazios_h + a.vazios_a));
+        // Ordena pelo consumo real (vazios recolhidos), não pela soma com a foto.
+        .sort((a, b) => b.total - a.total);
       const brandsRanked = Object.entries(byBrand)
         .map(([brand, qty]) => ({
           brand,
@@ -261,7 +331,7 @@ function ConsumoDashboard() {
 
   const bars = data?.barsRanked ?? [];
   const brands = data?.brandsRanked ?? [];
-  const maxBar = Math.max(1, ...bars.map((b) => b.total + b.vazios_h + b.vazios_a));
+  const maxBar = Math.max(1, ...bars.map((b) => b.total));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 pb-16">
@@ -345,7 +415,15 @@ function ConsumoDashboard() {
             (a, b) => a + (brand === "heineken" ? b.heineken : b.amstel),
             0,
           );
-          const consumido = vaziosBar + recolhidos;
+          // "Consumidos" = SOMENTE vazios recolhidos (empties_removed), que é
+          // um fluxo e pode ser somado por período. Os vazios do último
+          // inventário são uma FOTO e viram um indicador separado abaixo —
+          // somar os dois contava o mesmo barril duas vezes.
+          const consumido = recolhidos;
+          // Só no período "Tudo" faz sentido somar recolhidos + a recolher:
+          // fora dele estaríamos misturando um fluxo de janela com uma foto
+          // do momento. Ver docs/ORIGEM-CONSUMO.md.
+          const totalEvento = range === "all";
           const plug = bars.reduce((a, b) => a + (brand === "heineken" ? b.plug_h : b.plug_a), 0);
           const fech = bars.reduce((a, b) => a + (brand === "heineken" ? b.fech_h : b.fech_a), 0);
           return (
@@ -359,14 +437,28 @@ function ConsumoDashboard() {
                 <span className="font-display uppercase tracking-widest text-sm">{brand}</span>
               </div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Consumidos (vazios)
+                {totalEvento ? "Consumidos no evento" : "Recolhidos no período"}
               </div>
               <div className="font-display text-4xl text-orange-600 leading-none mt-1">
-                {consumido}
+                {totalEvento ? consumido + vaziosBar : consumido}
               </div>
+              {totalEvento ? (
+                <div className="text-[10px] text-muted-foreground mt-1.5">
+                  <span className="font-mono">
+                    {consumido} recolhidos + {vaziosBar} ainda no bar
+                  </span>
+                </div>
+              ) : (
+                <div className="text-[10px] text-muted-foreground mt-1.5">
+                  <span
+                    className="text-accent"
+                    title="Foto atual, não do período. Por isso não é somada ao número acima."
+                  >
+                    {vaziosBar} a recolher agora
+                  </span>
+                </div>
+              )}
               <div className="text-[10px] text-muted-foreground mt-2 flex flex-wrap gap-x-3">
-                <span title="Vazios recolhidos dos bares (histórico)">recolhidos {recolhidos}</span>
-                <span title="Vazios ainda no bar (último inventário)">no bar {vaziosBar}</span>
                 <span className="text-primary">plug {plug}</span>
                 <span className="text-accent">fech {fech}</span>
               </div>
@@ -374,8 +466,27 @@ function ConsumoDashboard() {
           );
         })}
       </div>
-      <div className="text-[10px] text-muted-foreground mb-4">
-        Consumidos = vazios recolhidos + vazios ainda no bar (último inventário)
+      <div className="text-[10px] text-muted-foreground mb-4 space-y-1">
+        {range === "all" ? (
+          <>
+            <p>
+              <b>Consumidos no evento</b> = vazios já recolhidos (<code>empties_removed</code>) +
+              vazios ainda parados no bar. Não há dupla contagem: o "a recolher" já desconta tudo
+              que saiu depois do último inventário.
+            </p>
+            <p>
+              Fica de fora só o que foi consumido <b>depois</b> do último inventário e ainda não
+              foi recolhido — esse barril não existe em nenhum registro. Inventário em dia encurta
+              essa diferença.
+            </p>
+          </>
+        ) : (
+          <p>
+            No período, o número é só o <b>recolhido</b> (fluxo com data). O "a recolher" é a foto
+            de agora e não pertence a esta janela, por isso aparece separado. Para ver o consumo
+            completo do evento, selecione <b>Tudo</b>.
+          </p>
+        )}
       </div>
 
       {isLoading && (
@@ -422,7 +533,15 @@ function ConsumoDashboard() {
                       </span>
                       <span className="font-mono font-bold">
                         {b.total}
-                        {vazTotal > 0 && <span className="text-orange-600"> +{vazTotal}</span>}
+                        {vazTotal > 0 && (
+                          <span
+                            className="text-accent font-normal text-xs"
+                            title="vazios ainda no bar, a recolher (não somados)"
+                          >
+                            {" "}
+                            · {vazTotal} a recolher
+                          </span>
+                        )}
                       </span>
                     </div>
                     <div className="flex h-2 rounded overflow-hidden bg-muted">
@@ -439,14 +558,6 @@ function ConsumoDashboard() {
                           background: BRAND_COLORS.amstel,
                         }}
                         title={`Amstel retirados: ${b.amstel}`}
-                      />
-                      <div
-                        style={{
-                          width: `${(vazTotal / maxBar) * 100}%`,
-                          background: "#EA580C",
-                          opacity: 0.75,
-                        }}
-                        title={`Consumidos em bar: ${vazTotal}`}
                       />
                     </div>
                     <div className="text-[10px] text-muted-foreground flex flex-wrap gap-x-3">

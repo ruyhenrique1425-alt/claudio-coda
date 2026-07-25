@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS public.test_dispel (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), nome text NOT NULL); GRANT SELECT ON public.test_dispel TO authenticated; GRANT ALL ON public.test_dispel TO service_role; ALTER TABLE public.test_dispel ENABLE ROW LEVEL SECURITY; CREATE POLICY "Test readable" ON public.test_dispel FOR SELECT TO authenticated USING (true);

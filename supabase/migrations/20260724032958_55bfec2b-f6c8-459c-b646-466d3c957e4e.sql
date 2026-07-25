@@ -1,0 +1,22 @@
+INSERT INTO public.meep_consumo_bar (bar_id, bar_nome, data, marca, barris) VALUES
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Churrascaria liberdade') LIMIT 1), 'Churrascaria liberdade', '2026-07-21', 'amstel', 1),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Churrascaria liberdade') LIMIT 1), 'Churrascaria liberdade', '2026-07-21', 'heineken', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Churrascaria liberdade') LIMIT 1), 'Churrascaria liberdade', '2026-07-22', 'amstel', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Churrascaria liberdade') LIMIT 1), 'Churrascaria liberdade', '2026-07-22', 'heineken', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Churrascaria liberdade') LIMIT 1), 'Churrascaria liberdade', '2026-07-23', 'amstel', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Churrascaria liberdade') LIMIT 1), 'Churrascaria liberdade', '2026-07-23', 'heineken', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Entrada arquibancada') LIMIT 1), 'Entrada arquibancada', '2026-07-18', 'amstel', 16),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Entrada arquibancada') LIMIT 1), 'Entrada arquibancada', '2026-07-18', 'heineken', 16),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Entrada arquibancada') LIMIT 1), 'Entrada arquibancada', '2026-07-21', 'heineken', 1),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Entrada arquibancada') LIMIT 1), 'Entrada arquibancada', '2026-07-22', 'amstel', 3),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Entrada arquibancada') LIMIT 1), 'Entrada arquibancada', '2026-07-22', 'heineken', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Entrada arquibancada') LIMIT 1), 'Entrada arquibancada', '2026-07-23', 'amstel', 11),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Entrada arquibancada') LIMIT 1), 'Entrada arquibancada', '2026-07-23', 'heineken', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Fundo arquibancada') LIMIT 1), 'Fundo arquibancada', '2026-07-18', 'amstel', 8),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Fundo arquibancada') LIMIT 1), 'Fundo arquibancada', '2026-07-18', 'heineken', 8),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Fundo arquibancada') LIMIT 1), 'Fundo arquibancada', '2026-07-23', 'amstel', 8),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Fundo arquibancada') LIMIT 1), 'Fundo arquibancada', '2026-07-23', 'heineken', 7),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Meio arquibancada') LIMIT 1), 'Meio arquibancada', '2026-07-18', 'amstel', 8),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Meio arquibancada') LIMIT 1), 'Meio arquibancada', '2026-07-18', 'heineken', 8),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Meio arquibancada') LIMIT 1), 'Meio arquibancada', '2026-07-23', 'amstel', 8)
+ON CONFLICT (bar_nome, data, marca) DO UPDATE SET barris = EXCLUDED.barris, bar_id = COALESCE(public.meep_consumo_bar.bar_id, EXCLUDED.bar_id);

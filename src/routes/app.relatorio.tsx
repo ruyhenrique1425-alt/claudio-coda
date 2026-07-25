@@ -69,6 +69,9 @@ function RelatorioPage() {
       const byBrand: Record<Marca, number> = { heineken: 0, amstel: 0 };
       const byBar: Record<string, number> = {};
       (emps ?? []).forEach((e: any) => {
+        // Só pontos da operação DISPEL — mesma regra das telas de consumo,
+        // senão o total do relatório diverge do que aparece no app.
+        if (!vendaBars.has(e.bar_id)) return;
         byBrand[e.brand as Marca] = (byBrand[e.brand as Marca] ?? 0) + (e.quantidade ?? 0);
         byBar[e.bar_id] = (byBar[e.bar_id] ?? 0) + (e.quantidade ?? 0);
       });

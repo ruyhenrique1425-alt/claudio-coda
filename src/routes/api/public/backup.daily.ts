@@ -3,11 +3,19 @@ import JSZip from "jszip";
 
 // Tables to include in the daily backup. Order matters only for readability.
 const TABLES = [
+  // ⚠️ Esta lista é FIXA. Tabela nova que não entrar aqui NÃO é salva —
+  // e o backup é o que protege a Fase 5 (reset), que apaga várias delas.
+  // Ao criar tabela, acrescente aqui. Views são derivadas e ficam de fora.
+
+  // --- cadastro / configuração ---
   "bars",
   "bar_stock_standard",
-  "bar_machines",
-  "bar_installations",
-  "bar_maintenance_logs",
+  "rotas",
+  "warehouses",
+  "profiles",
+  "user_roles",
+
+  // --- contagem e movimentação de barris ---
   "inventories",
   "inventory_items",
   "refills",
@@ -15,18 +23,41 @@ const TABLES = [
   "empties_removed",
   "bar_transfers",
   "bar_transfer_items",
-  "heineken_cargas",
   "warehouse_movements",
   "warehouse_stock",
-  "warehouses",
+  "movimentacoes_barris",
+
+  // --- fluxo do barril vazio / vasilhames ---
+  "warehouse_empty_stock",
+  "warehouse_vasilhames",
+  "empty_movements",
+  "allstar_pontos_declaracao",
+
+  // --- entrada e comodato ---
+  "heineken_cargas",
+  "notas_fiscais",
+  "controle_comodato_global",
+
+  // --- MEEP ---
+  "meep_vendas_bar",
+  "meep_consumo_bar",
+
+  // --- equipamentos e qualidade ---
+  "bar_machines",
+  "bar_installations",
+  "bar_maintenance_logs",
+  "bar_card_readers",
+  "bar_machine_patrimonios",
   "bar_temperature_checks",
   "bar_organization_checks",
   "bar_staff_checks",
   "bar_card_machine_sessions",
   "bar_shifts",
   "public_maintenance_requests",
-  "profiles",
-  "user_roles",
+  "qr_tokens",
+
+  // --- auditoria ---
+  "logs_auditoria",
 ];
 
 function csvEscape(v: unknown): string {

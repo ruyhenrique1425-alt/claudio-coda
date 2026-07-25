@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  BAR_TYPES_OPERACAO,
+  recolhidosAposInventario,
+  vaziosARecolher,
+} from "@/lib/operacao";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +33,7 @@ const emptyCounts = (): Record<Brand, Record<State, number>> => ({
   amstel: { plugado: 0, fechado: 0, vazio: 0 },
 });
 
-function BIPage() {
+export function BIPage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const canView = perms.isGestor || perms.isManutencao;
@@ -40,12 +45,13 @@ function BIPage() {
       const { data: bars, error } = await supabase
         .from("bars")
         .select("id,name")
-        .in("bar_type", ["bar_venda", "bar_parceiro"])
+        .in("bar_type", [...BAR_TYPES_OPERACAO])
         .order("name");
       if (error) throw error;
       const ids = (bars ?? []).map((b) => b.id);
 
-      const [{ data: stds }, { data: invs }, { data: stock }, { data: whs }] = await Promise.all([
+      const [{ data: stds }, { data: invs }, { data: stock }, { data: whs }, { data: emps }] =
+        await Promise.all([
         supabase.from("bar_stock_standard").select("bar_id,brand,barris_padrao").in("bar_id", ids),
         supabase
           .from("inventories")
@@ -54,6 +60,10 @@ function BIPage() {
           .order("performed_at", { ascending: false }),
         supabase.from("warehouse_stock").select("warehouse_id,brand,barrels"),
         supabase.from("warehouses").select("id,code,name"),
+        supabase
+          .from("empties_removed")
+          .select("bar_id,brand,quantidade,performed_at")
+          .in("bar_id", ids),
       ]);
 
       // Rotas são opcionais: se a migration ainda não foi aplicada, ignoramos.
@@ -77,6 +87,12 @@ function BIPage() {
         if (!lastInv.has(i.bar_id)) lastInv.set(i.bar_id, i);
       });
 
+      // Vazios da foto do inventário, descontando o que já foi recolhido
+      // depois dela (recolher não reescreve o inventário). Ver lib/operacao.
+      const invAtPorBar = new Map<string, string | null>();
+      lastInv.forEach((inv, barId) => invAtPorBar.set(barId, inv?.performed_at ?? null));
+      const recolhidosApos = recolhidosAposInventario((emps ?? []) as any, invAtPorBar);
+
       const padraoBy: Record<string, Record<Brand, number>> = {};
       (stds ?? []).forEach((s: any) => {
         padraoBy[s.bar_id] ??= { heineken: 0, amstel: 0 };
@@ -91,6 +107,10 @@ function BIPage() {
             counts[it.brand as Brand][it.status as State] += it.quantidade ?? 0;
           }
         });
+        BRANDS.forEach((br) => {
+          counts[br].vazio = vaziosARecolher(counts[br].vazio, b.id, br, recolhidosApos);
+        });
+
         return {
           id: b.id,
           name: b.name,

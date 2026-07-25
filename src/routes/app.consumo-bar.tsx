@@ -11,7 +11,7 @@ export const Route = createFileRoute("/app/consumo-bar")({ component: ConsumoBar
 
 type Row = { bar_nome: string; data: string; marca: string; barris: number };
 
-function ConsumoBarPage() {
+export function ConsumoBarPage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const canView = perms.isGestor || perms.isManutencao;
@@ -69,11 +69,11 @@ function ConsumoBarPage() {
     <div className="mx-auto max-w-5xl p-4 space-y-4">
       <div>
         <h1 className="font-display text-2xl tracking-wider flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-primary" /> CONSUMO POR BAR (REAL)
+          <BarChart3 className="h-6 w-6 text-primary" /> ENTREGUE POR BAR (MEEP)
         </h1>
         <p className="text-xs text-muted-foreground">
-          Consumo real de chopp por bar (evento de vendas da MEEP). Diferente do abastecimento
-          (barris entregues).
+          Barris ENTREGUES a cada bar (estoque DISPEL → bar), bipados na MEEP a R$ 0,01 por
+          barril no momento da entrega. ⚠️ NÃO é consumo do cliente.
         </p>
       </div>
 
@@ -111,7 +111,7 @@ function ConsumoBarPage() {
           <Card className="p-4">
             <div className="flex items-center gap-2">
               <Beer className="h-4 w-4 text-primary" />
-              <span className="font-display tracking-wider">TOTAL DE CHOPPS CONSUMIDOS</span>
+              <span className="font-display tracking-wider">TOTAL DE BARRIS ENTREGUES</span>
               <Badge variant="outline" className="ml-auto">
                 {data.totalGeral}
               </Badge>

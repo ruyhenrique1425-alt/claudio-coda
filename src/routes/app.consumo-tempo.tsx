@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { BAR_TYPES_OPERACAO } from "@/lib/operacao";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ function dayLabel(key: string) {
   return `${d}/${m}`;
 }
 
-function ConsumoTempoPage() {
+export function ConsumoTempoPage() {
   const { user } = useSession();
   const perms = usePermissions(user?.id);
   const canView = perms.isGestor || perms.isManutencao;
@@ -54,12 +55,20 @@ function ConsumoTempoPage() {
       const since = new Date();
       since.setDate(since.getDate() - (days - 1));
       since.setHours(0, 0, 0, 0);
-      const { data: rows, error } = await supabase
-        .from("empties_removed")
-        .select("brand,quantidade,performed_at")
-        .gte("performed_at", since.toISOString())
-        .order("performed_at", { ascending: true });
+      const [{ data: rows, error }, { data: barsOp }] = await Promise.all([
+        supabase
+          .from("empties_removed")
+          .select("bar_id,brand,quantidade,performed_at")
+          .gte("performed_at", since.toISOString())
+          .order("performed_at", { ascending: true }),
+        supabase
+          .from("bars")
+          .select("id")
+          .in("bar_type", [...BAR_TYPES_OPERACAO]),
+      ]);
       if (error) throw error;
+      // Mesma regra das outras telas: só pontos da operação DISPEL.
+      const idsOp = new Set((barsOp ?? []).map((b: any) => b.id));
 
       // Bucket por dia (preenche dias sem consumo com zero)
       const byDay: Record<string, Record<Brand, number>> = {};
@@ -70,6 +79,7 @@ function ConsumoTempoPage() {
       }
       const totals: Record<Brand, number> = { heineken: 0, amstel: 0 };
       (rows ?? []).forEach((r: any) => {
+        if (!idsOp.has(r.bar_id)) return;
         const k = dayKey(r.performed_at);
         if (!byDay[k]) byDay[k] = { heineken: 0, amstel: 0 };
         const q = r.quantidade ?? 0;

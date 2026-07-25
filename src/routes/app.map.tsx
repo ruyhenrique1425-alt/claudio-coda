@@ -23,6 +23,7 @@ const TYPE_LABEL: Record<string, string> = {
 function MapView() {
   const nav = useNavigate();
   const [q, setQ] = useState("");
+  const [focusedBarId, setFocusedBarId] = useState<string | null>(null);
   const { data: bars = [], isLoading } = useQuery({
     queryKey: ["bars"],
     queryFn: async () => {
@@ -48,19 +49,26 @@ function MapView() {
     });
   }, [bars, q]);
 
+  const focusThenGo = (id: string) => {
+    const b = (bars as any[]).find((x) => x.id === id);
+    if (!b) return;
+    setFocusedBarId(id);
+    window.setTimeout(() => {
+      if (b.bar_type !== "bar_venda" && b.bar_type !== "bar_parceiro") {
+        nav({ to: "/app/manutencao/$barId", params: { barId: id } });
+      } else {
+        nav({ to: "/app/bars/$barId", params: { barId: id }, search: { tab: "inventario" } });
+      }
+    }, 1100);
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 grid gap-4 lg:grid-cols-[1fr_320px]">
       <div className="h-[calc(100vh-140px)]">
         <BarsMap
           bars={filtered as any}
-          onSelectBar={(id) => {
-            const b = (bars as any[]).find((x) => x.id === id);
-            if (b && b.bar_type !== "bar_venda" && b.bar_type !== "bar_parceiro") {
-              nav({ to: "/app/manutencao/$barId", params: { barId: id } });
-            } else {
-              nav({ to: "/app/bars/$barId", params: { barId: id }, search: { tab: "inventario" } });
-            }
-          }}
+          focusedBarId={focusedBarId}
+          onSelectBar={focusThenGo}
         />
       </div>
       <div className="space-y-2 overflow-auto max-h-[calc(100vh-140px)] pr-1">
@@ -102,14 +110,8 @@ function MapView() {
         {(filtered as any[]).map((b) => (
           <Card
             key={b.id}
-            onClick={() =>
-              nav({
-                to: "/app/bars/$barId",
-                params: { barId: b.id },
-                search: { tab: "inventario" },
-              })
-            }
-            className="p-3 cursor-pointer hover:border-primary transition"
+            onClick={() => focusThenGo(b.id)}
+            className={`p-3 cursor-pointer hover:border-primary transition ${focusedBarId === b.id ? "border-primary ring-1 ring-primary/40" : ""}`}
           >
             <div className="flex items-center justify-between gap-2">
               <div className="font-display text-sm">{b.name}</div>

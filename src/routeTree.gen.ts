@@ -9,39 +9,42 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as AppAbastecimentoMeepRouteImport } from './routes/app.abastecimento-meep'
-import { Route as AppBackupsRouteImport } from './routes/app.backups'
-import { Route as AppBiRouteImport } from './routes/app.bi'
-import { Route as AppCargasRouteImport } from './routes/app.cargas'
-import { Route as AppCentralRouteImport } from './routes/app.central'
-import { Route as AppConsumoRouteImport } from './routes/app.consumo'
-import { Route as AppConsumoBarRouteImport } from './routes/app.consumo-bar'
-import { Route as AppConsumoTempoRouteImport } from './routes/app.consumo-tempo'
-import { Route as AppEstoqueRouteImport } from './routes/app.estoque'
-import { Route as AppGovernancaRouteImport } from './routes/app.governanca'
-import { Route as AppImportarRouteImport } from './routes/app.importar'
-import { Route as AppInventariosRouteImport } from './routes/app.inventarios'
-import { Route as AppMapRouteImport } from './routes/app.map'
-import { Route as AppNotasRouteImport } from './routes/app.notas'
-import { Route as AppPerfilRouteImport } from './routes/app.perfil'
-import { Route as AppRelatorioRouteImport } from './routes/app.relatorio'
 import { Route as RBarIdRouteImport } from './routes/r.$barId'
-import { Route as AppBarsBarIdRouteImport } from './routes/app.bars.$barId'
-import { Route as AppBarsNewRouteImport } from './routes/app.bars.new'
-import { Route as AppEquipeBarIndexRouteImport } from './routes/app.equipe-bar.index'
-import { Route as AppEquipeBarBarIdRouteImport } from './routes/app.equipe-bar.$barId'
+import { Route as AppRelatorioRouteImport } from './routes/app.relatorio'
+import { Route as AppPerfilRouteImport } from './routes/app.perfil'
+import { Route as AppOperacaoRouteImport } from './routes/app.operacao'
+import { Route as AppNotasRouteImport } from './routes/app.notas'
+import { Route as AppMapRouteImport } from './routes/app.map'
+import { Route as AppInventariosRouteImport } from './routes/app.inventarios'
+import { Route as AppImportarRouteImport } from './routes/app.importar'
+import { Route as AppGovernancaRouteImport } from './routes/app.governanca'
+import { Route as AppEstoqueRouteImport } from './routes/app.estoque'
+import { Route as AppConsumoTempoRouteImport } from './routes/app.consumo-tempo'
+import { Route as AppConsumoBarRouteImport } from './routes/app.consumo-bar'
+import { Route as AppConsumoRouteImport } from './routes/app.consumo'
+import { Route as AppCentralRouteImport } from './routes/app.central'
+import { Route as AppCargasRouteImport } from './routes/app.cargas'
+import { Route as AppBiRouteImport } from './routes/app.bi'
+import { Route as AppBaresRouteImport } from './routes/app.bares'
+import { Route as AppBalancoRouteImport } from './routes/app.balanco'
+import { Route as AppBackupsRouteImport } from './routes/app.backups'
+import { Route as AppAbastecimentoMeepRouteImport } from './routes/app.abastecimento-meep'
 import { Route as AppManutencaoIndexRouteImport } from './routes/app.manutencao.index'
-import { Route as AppManutencaoBarIdRouteImport } from './routes/app.manutencao.$barId'
+import { Route as AppEquipeBarIndexRouteImport } from './routes/app.equipe-bar.index'
 import { Route as RTCodeRouteImport } from './routes/r.t.$code'
+import { Route as AppManutencaoBarIdRouteImport } from './routes/app.manutencao.$barId'
+import { Route as AppEquipeBarBarIdRouteImport } from './routes/app.equipe-bar.$barId'
+import { Route as AppBarsNewRouteImport } from './routes/app.bars.new'
+import { Route as AppBarsBarIdRouteImport } from './routes/app.bars.$barId'
 import { Route as ApiPublicBackupDailyRouteImport } from './routes/api/public/backup.daily'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -49,9 +52,9 @@ const AppRoute = AppRouteImport.update({
   path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -59,74 +62,14 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAbastecimentoMeepRoute = AppAbastecimentoMeepRouteImport.update({
-  id: '/abastecimento-meep',
-  path: '/abastecimento-meep',
-  getParentRoute: () => AppRoute,
+const RBarIdRoute = RBarIdRouteImport.update({
+  id: '/r/$barId',
+  path: '/r/$barId',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppBackupsRoute = AppBackupsRouteImport.update({
-  id: '/backups',
-  path: '/backups',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppBiRoute = AppBiRouteImport.update({
-  id: '/bi',
-  path: '/bi',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCargasRoute = AppCargasRouteImport.update({
-  id: '/cargas',
-  path: '/cargas',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCentralRoute = AppCentralRouteImport.update({
-  id: '/central',
-  path: '/central',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppConsumoRoute = AppConsumoRouteImport.update({
-  id: '/consumo',
-  path: '/consumo',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppConsumoBarRoute = AppConsumoBarRouteImport.update({
-  id: '/consumo-bar',
-  path: '/consumo-bar',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppConsumoTempoRoute = AppConsumoTempoRouteImport.update({
-  id: '/consumo-tempo',
-  path: '/consumo-tempo',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppEstoqueRoute = AppEstoqueRouteImport.update({
-  id: '/estoque',
-  path: '/estoque',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppGovernancaRoute = AppGovernancaRouteImport.update({
-  id: '/governanca',
-  path: '/governanca',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppImportarRoute = AppImportarRouteImport.update({
-  id: '/importar',
-  path: '/importar',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppInventariosRoute = AppInventariosRouteImport.update({
-  id: '/inventarios',
-  path: '/inventarios',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMapRoute = AppMapRouteImport.update({
-  id: '/map',
-  path: '/map',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotasRoute = AppNotasRouteImport.update({
-  id: '/notas',
-  path: '/notas',
+const AppRelatorioRoute = AppRelatorioRouteImport.update({
+  id: '/relatorio',
+  path: '/relatorio',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
@@ -134,34 +77,89 @@ const AppPerfilRoute = AppPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AppRoute,
 } as any)
-const AppRelatorioRoute = AppRelatorioRouteImport.update({
-  id: '/relatorio',
-  path: '/relatorio',
+const AppOperacaoRoute = AppOperacaoRouteImport.update({
+  id: '/operacao',
+  path: '/operacao',
   getParentRoute: () => AppRoute,
 } as any)
-const RBarIdRoute = RBarIdRouteImport.update({
-  id: '/r/$barId',
-  path: '/r/$barId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppBarsBarIdRoute = AppBarsBarIdRouteImport.update({
-  id: '/bars/$barId',
-  path: '/bars/$barId',
+const AppNotasRoute = AppNotasRouteImport.update({
+  id: '/notas',
+  path: '/notas',
   getParentRoute: () => AppRoute,
 } as any)
-const AppBarsNewRoute = AppBarsNewRouteImport.update({
-  id: '/bars/new',
-  path: '/bars/new',
+const AppMapRoute = AppMapRouteImport.update({
+  id: '/map',
+  path: '/map',
   getParentRoute: () => AppRoute,
 } as any)
-const AppEquipeBarIndexRoute = AppEquipeBarIndexRouteImport.update({
-  id: '/equipe-bar/',
-  path: '/equipe-bar/',
+const AppInventariosRoute = AppInventariosRouteImport.update({
+  id: '/inventarios',
+  path: '/inventarios',
   getParentRoute: () => AppRoute,
 } as any)
-const AppEquipeBarBarIdRoute = AppEquipeBarBarIdRouteImport.update({
-  id: '/equipe-bar/$barId',
-  path: '/equipe-bar/$barId',
+const AppImportarRoute = AppImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGovernancaRoute = AppGovernancaRouteImport.update({
+  id: '/governanca',
+  path: '/governanca',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEstoqueRoute = AppEstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsumoTempoRoute = AppConsumoTempoRouteImport.update({
+  id: '/consumo-tempo',
+  path: '/consumo-tempo',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsumoBarRoute = AppConsumoBarRouteImport.update({
+  id: '/consumo-bar',
+  path: '/consumo-bar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsumoRoute = AppConsumoRouteImport.update({
+  id: '/consumo',
+  path: '/consumo',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCentralRoute = AppCentralRouteImport.update({
+  id: '/central',
+  path: '/central',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCargasRoute = AppCargasRouteImport.update({
+  id: '/cargas',
+  path: '/cargas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBiRoute = AppBiRouteImport.update({
+  id: '/bi',
+  path: '/bi',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBaresRoute = AppBaresRouteImport.update({
+  id: '/bares',
+  path: '/bares',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBalancoRoute = AppBalancoRouteImport.update({
+  id: '/balanco',
+  path: '/balanco',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBackupsRoute = AppBackupsRouteImport.update({
+  id: '/backups',
+  path: '/backups',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAbastecimentoMeepRoute = AppAbastecimentoMeepRouteImport.update({
+  id: '/abastecimento-meep',
+  path: '/abastecimento-meep',
   getParentRoute: () => AppRoute,
 } as any)
 const AppManutencaoIndexRoute = AppManutencaoIndexRouteImport.update({
@@ -169,15 +167,35 @@ const AppManutencaoIndexRoute = AppManutencaoIndexRouteImport.update({
   path: '/manutencao/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppManutencaoBarIdRoute = AppManutencaoBarIdRouteImport.update({
-  id: '/manutencao/$barId',
-  path: '/manutencao/$barId',
+const AppEquipeBarIndexRoute = AppEquipeBarIndexRouteImport.update({
+  id: '/equipe-bar/',
+  path: '/equipe-bar/',
   getParentRoute: () => AppRoute,
 } as any)
 const RTCodeRoute = RTCodeRouteImport.update({
   id: '/r/t/$code',
   path: '/r/t/$code',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppManutencaoBarIdRoute = AppManutencaoBarIdRouteImport.update({
+  id: '/manutencao/$barId',
+  path: '/manutencao/$barId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEquipeBarBarIdRoute = AppEquipeBarBarIdRouteImport.update({
+  id: '/equipe-bar/$barId',
+  path: '/equipe-bar/$barId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBarsNewRoute = AppBarsNewRouteImport.update({
+  id: '/bars/new',
+  path: '/bars/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBarsBarIdRoute = AppBarsBarIdRouteImport.update({
+  id: '/bars/$barId',
+  path: '/bars/$barId',
+  getParentRoute: () => AppRoute,
 } as any)
 const ApiPublicBackupDailyRoute = ApiPublicBackupDailyRouteImport.update({
   id: '/api/public/backup/daily',
@@ -191,6 +209,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app/abastecimento-meep': typeof AppAbastecimentoMeepRoute
   '/app/backups': typeof AppBackupsRoute
+  '/app/balanco': typeof AppBalancoRoute
+  '/app/bares': typeof AppBaresRoute
   '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
   '/app/central': typeof AppCentralRoute
@@ -203,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/app/inventarios': typeof AppInventariosRoute
   '/app/map': typeof AppMapRoute
   '/app/notas': typeof AppNotasRoute
+  '/app/operacao': typeof AppOperacaoRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
   '/r/$barId': typeof RBarIdRoute
@@ -221,6 +242,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app/abastecimento-meep': typeof AppAbastecimentoMeepRoute
   '/app/backups': typeof AppBackupsRoute
+  '/app/balanco': typeof AppBalancoRoute
+  '/app/bares': typeof AppBaresRoute
   '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
   '/app/central': typeof AppCentralRoute
@@ -233,6 +256,7 @@ export interface FileRoutesByTo {
   '/app/inventarios': typeof AppInventariosRoute
   '/app/map': typeof AppMapRoute
   '/app/notas': typeof AppNotasRoute
+  '/app/operacao': typeof AppOperacaoRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
   '/r/$barId': typeof RBarIdRoute
@@ -253,6 +277,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/app/abastecimento-meep': typeof AppAbastecimentoMeepRoute
   '/app/backups': typeof AppBackupsRoute
+  '/app/balanco': typeof AppBalancoRoute
+  '/app/bares': typeof AppBaresRoute
   '/app/bi': typeof AppBiRoute
   '/app/cargas': typeof AppCargasRoute
   '/app/central': typeof AppCentralRoute
@@ -265,6 +291,7 @@ export interface FileRoutesById {
   '/app/inventarios': typeof AppInventariosRoute
   '/app/map': typeof AppMapRoute
   '/app/notas': typeof AppNotasRoute
+  '/app/operacao': typeof AppOperacaoRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/relatorio': typeof AppRelatorioRoute
   '/r/$barId': typeof RBarIdRoute
@@ -286,6 +313,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/abastecimento-meep'
     | '/app/backups'
+    | '/app/balanco'
+    | '/app/bares'
     | '/app/bi'
     | '/app/cargas'
     | '/app/central'
@@ -298,6 +327,7 @@ export interface FileRouteTypes {
     | '/app/inventarios'
     | '/app/map'
     | '/app/notas'
+    | '/app/operacao'
     | '/app/perfil'
     | '/app/relatorio'
     | '/r/$barId'
@@ -316,6 +346,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/abastecimento-meep'
     | '/app/backups'
+    | '/app/balanco'
+    | '/app/bares'
     | '/app/bi'
     | '/app/cargas'
     | '/app/central'
@@ -328,6 +360,7 @@ export interface FileRouteTypes {
     | '/app/inventarios'
     | '/app/map'
     | '/app/notas'
+    | '/app/operacao'
     | '/app/perfil'
     | '/app/relatorio'
     | '/r/$barId'
@@ -347,6 +380,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app/abastecimento-meep'
     | '/app/backups'
+    | '/app/balanco'
+    | '/app/bares'
     | '/app/bi'
     | '/app/cargas'
     | '/app/central'
@@ -359,6 +394,7 @@ export interface FileRouteTypes {
     | '/app/inventarios'
     | '/app/map'
     | '/app/notas'
+    | '/app/operacao'
     | '/app/perfil'
     | '/app/relatorio'
     | '/r/$barId'
@@ -384,11 +420,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -398,11 +434,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -412,102 +448,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/abastecimento-meep': {
-      id: '/app/abastecimento-meep'
-      path: '/abastecimento-meep'
-      fullPath: '/app/abastecimento-meep'
-      preLoaderRoute: typeof AppAbastecimentoMeepRouteImport
-      parentRoute: typeof AppRoute
+    '/r/$barId': {
+      id: '/r/$barId'
+      path: '/r/$barId'
+      fullPath: '/r/$barId'
+      preLoaderRoute: typeof RBarIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/backups': {
-      id: '/app/backups'
-      path: '/backups'
-      fullPath: '/app/backups'
-      preLoaderRoute: typeof AppBackupsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/bi': {
-      id: '/app/bi'
-      path: '/bi'
-      fullPath: '/app/bi'
-      preLoaderRoute: typeof AppBiRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/cargas': {
-      id: '/app/cargas'
-      path: '/cargas'
-      fullPath: '/app/cargas'
-      preLoaderRoute: typeof AppCargasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/central': {
-      id: '/app/central'
-      path: '/central'
-      fullPath: '/app/central'
-      preLoaderRoute: typeof AppCentralRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/consumo': {
-      id: '/app/consumo'
-      path: '/consumo'
-      fullPath: '/app/consumo'
-      preLoaderRoute: typeof AppConsumoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/consumo-bar': {
-      id: '/app/consumo-bar'
-      path: '/consumo-bar'
-      fullPath: '/app/consumo-bar'
-      preLoaderRoute: typeof AppConsumoBarRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/consumo-tempo': {
-      id: '/app/consumo-tempo'
-      path: '/consumo-tempo'
-      fullPath: '/app/consumo-tempo'
-      preLoaderRoute: typeof AppConsumoTempoRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/estoque': {
-      id: '/app/estoque'
-      path: '/estoque'
-      fullPath: '/app/estoque'
-      preLoaderRoute: typeof AppEstoqueRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/governanca': {
-      id: '/app/governanca'
-      path: '/governanca'
-      fullPath: '/app/governanca'
-      preLoaderRoute: typeof AppGovernancaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/importar': {
-      id: '/app/importar'
-      path: '/importar'
-      fullPath: '/app/importar'
-      preLoaderRoute: typeof AppImportarRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/inventarios': {
-      id: '/app/inventarios'
-      path: '/inventarios'
-      fullPath: '/app/inventarios'
-      preLoaderRoute: typeof AppInventariosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/map': {
-      id: '/app/map'
-      path: '/map'
-      fullPath: '/app/map'
-      preLoaderRoute: typeof AppMapRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/notas': {
-      id: '/app/notas'
-      path: '/notas'
-      fullPath: '/app/notas'
-      preLoaderRoute: typeof AppNotasRouteImport
+    '/app/relatorio': {
+      id: '/app/relatorio'
+      path: '/relatorio'
+      fullPath: '/app/relatorio'
+      preLoaderRoute: typeof AppRelatorioRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/perfil': {
@@ -517,46 +469,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPerfilRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/relatorio': {
-      id: '/app/relatorio'
-      path: '/relatorio'
-      fullPath: '/app/relatorio'
-      preLoaderRoute: typeof AppRelatorioRouteImport
+    '/app/operacao': {
+      id: '/app/operacao'
+      path: '/operacao'
+      fullPath: '/app/operacao'
+      preLoaderRoute: typeof AppOperacaoRouteImport
       parentRoute: typeof AppRoute
     }
-    '/r/$barId': {
-      id: '/r/$barId'
-      path: '/r/$barId'
-      fullPath: '/r/$barId'
-      preLoaderRoute: typeof RBarIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/bars/$barId': {
-      id: '/app/bars/$barId'
-      path: '/bars/$barId'
-      fullPath: '/app/bars/$barId'
-      preLoaderRoute: typeof AppBarsBarIdRouteImport
+    '/app/notas': {
+      id: '/app/notas'
+      path: '/notas'
+      fullPath: '/app/notas'
+      preLoaderRoute: typeof AppNotasRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/bars/new': {
-      id: '/app/bars/new'
-      path: '/bars/new'
-      fullPath: '/app/bars/new'
-      preLoaderRoute: typeof AppBarsNewRouteImport
+    '/app/map': {
+      id: '/app/map'
+      path: '/map'
+      fullPath: '/app/map'
+      preLoaderRoute: typeof AppMapRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/equipe-bar/': {
-      id: '/app/equipe-bar/'
-      path: '/equipe-bar'
-      fullPath: '/app/equipe-bar/'
-      preLoaderRoute: typeof AppEquipeBarIndexRouteImport
+    '/app/inventarios': {
+      id: '/app/inventarios'
+      path: '/inventarios'
+      fullPath: '/app/inventarios'
+      preLoaderRoute: typeof AppInventariosRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/equipe-bar/$barId': {
-      id: '/app/equipe-bar/$barId'
-      path: '/equipe-bar/$barId'
-      fullPath: '/app/equipe-bar/$barId'
-      preLoaderRoute: typeof AppEquipeBarBarIdRouteImport
+    '/app/importar': {
+      id: '/app/importar'
+      path: '/importar'
+      fullPath: '/app/importar'
+      preLoaderRoute: typeof AppImportarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/governanca': {
+      id: '/app/governanca'
+      path: '/governanca'
+      fullPath: '/app/governanca'
+      preLoaderRoute: typeof AppGovernancaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/estoque': {
+      id: '/app/estoque'
+      path: '/estoque'
+      fullPath: '/app/estoque'
+      preLoaderRoute: typeof AppEstoqueRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/consumo-tempo': {
+      id: '/app/consumo-tempo'
+      path: '/consumo-tempo'
+      fullPath: '/app/consumo-tempo'
+      preLoaderRoute: typeof AppConsumoTempoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/consumo-bar': {
+      id: '/app/consumo-bar'
+      path: '/consumo-bar'
+      fullPath: '/app/consumo-bar'
+      preLoaderRoute: typeof AppConsumoBarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/consumo': {
+      id: '/app/consumo'
+      path: '/consumo'
+      fullPath: '/app/consumo'
+      preLoaderRoute: typeof AppConsumoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/central': {
+      id: '/app/central'
+      path: '/central'
+      fullPath: '/app/central'
+      preLoaderRoute: typeof AppCentralRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/cargas': {
+      id: '/app/cargas'
+      path: '/cargas'
+      fullPath: '/app/cargas'
+      preLoaderRoute: typeof AppCargasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/bi': {
+      id: '/app/bi'
+      path: '/bi'
+      fullPath: '/app/bi'
+      preLoaderRoute: typeof AppBiRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/bares': {
+      id: '/app/bares'
+      path: '/bares'
+      fullPath: '/app/bares'
+      preLoaderRoute: typeof AppBaresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/balanco': {
+      id: '/app/balanco'
+      path: '/balanco'
+      fullPath: '/app/balanco'
+      preLoaderRoute: typeof AppBalancoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/backups': {
+      id: '/app/backups'
+      path: '/backups'
+      fullPath: '/app/backups'
+      preLoaderRoute: typeof AppBackupsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/abastecimento-meep': {
+      id: '/app/abastecimento-meep'
+      path: '/abastecimento-meep'
+      fullPath: '/app/abastecimento-meep'
+      preLoaderRoute: typeof AppAbastecimentoMeepRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/manutencao/': {
@@ -566,11 +595,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppManutencaoIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/manutencao/$barId': {
-      id: '/app/manutencao/$barId'
-      path: '/manutencao/$barId'
-      fullPath: '/app/manutencao/$barId'
-      preLoaderRoute: typeof AppManutencaoBarIdRouteImport
+    '/app/equipe-bar/': {
+      id: '/app/equipe-bar/'
+      path: '/equipe-bar'
+      fullPath: '/app/equipe-bar/'
+      preLoaderRoute: typeof AppEquipeBarIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/r/t/$code': {
@@ -579,6 +608,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/r/t/$code'
       preLoaderRoute: typeof RTCodeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/manutencao/$barId': {
+      id: '/app/manutencao/$barId'
+      path: '/manutencao/$barId'
+      fullPath: '/app/manutencao/$barId'
+      preLoaderRoute: typeof AppManutencaoBarIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/equipe-bar/$barId': {
+      id: '/app/equipe-bar/$barId'
+      path: '/equipe-bar/$barId'
+      fullPath: '/app/equipe-bar/$barId'
+      preLoaderRoute: typeof AppEquipeBarBarIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/bars/new': {
+      id: '/app/bars/new'
+      path: '/bars/new'
+      fullPath: '/app/bars/new'
+      preLoaderRoute: typeof AppBarsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/bars/$barId': {
+      id: '/app/bars/$barId'
+      path: '/bars/$barId'
+      fullPath: '/app/bars/$barId'
+      preLoaderRoute: typeof AppBarsBarIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/api/public/backup/daily': {
       id: '/api/public/backup/daily'
@@ -593,6 +650,8 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAbastecimentoMeepRoute: typeof AppAbastecimentoMeepRoute
   AppBackupsRoute: typeof AppBackupsRoute
+  AppBalancoRoute: typeof AppBalancoRoute
+  AppBaresRoute: typeof AppBaresRoute
   AppBiRoute: typeof AppBiRoute
   AppCargasRoute: typeof AppCargasRoute
   AppCentralRoute: typeof AppCentralRoute
@@ -605,6 +664,7 @@ interface AppRouteChildren {
   AppInventariosRoute: typeof AppInventariosRoute
   AppMapRoute: typeof AppMapRoute
   AppNotasRoute: typeof AppNotasRoute
+  AppOperacaoRoute: typeof AppOperacaoRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppRelatorioRoute: typeof AppRelatorioRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -619,6 +679,8 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAbastecimentoMeepRoute: AppAbastecimentoMeepRoute,
   AppBackupsRoute: AppBackupsRoute,
+  AppBalancoRoute: AppBalancoRoute,
+  AppBaresRoute: AppBaresRoute,
   AppBiRoute: AppBiRoute,
   AppCargasRoute: AppCargasRoute,
   AppCentralRoute: AppCentralRoute,
@@ -631,6 +693,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppInventariosRoute: AppInventariosRoute,
   AppMapRoute: AppMapRoute,
   AppNotasRoute: AppNotasRoute,
+  AppOperacaoRoute: AppOperacaoRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppRelatorioRoute: AppRelatorioRoute,
   AppIndexRoute: AppIndexRoute,
@@ -655,13 +718,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

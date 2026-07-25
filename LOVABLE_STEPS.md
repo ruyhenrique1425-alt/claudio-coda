@@ -20,10 +20,28 @@ Contexto de negócio completo em `.claude/skills/dispel-operacao/SKILL.md`.
 ## Passo 1 — Migrations do banco (na ordem)
 Aplique as migrations em `supabase/migrations/` (o Supabase aplica por ordem de
 nome). As novas desta entrega:
-1. `20260723120000_rotas_e_padroes.sql` — cria `rotas` (5), `bars.rota_id` e grava os **padrões** por bar.
+1. `20260723120000_rotas_e_padroes.sql` — cria `rotas` (5), `bars.rota_id` e grava os **padrões** por bar (agora tenta 2 variantes de nome por bar — ver Passo 2).
 2. `20260723130000_meep_vendas.sql` — `bars.cartao_meep` + `meep_vendas_bar` (abastecimento).
 3. `20260724120000_meep_consumo.sql` — `meep_consumo_bar` (consumo real).
 4. `20260724130000_seed_consumo_meep.sql` — **seed do consumo de cada bar até hoje**.
+5. `20260724140000_refills_photo_url_opcional.sql` — torna `refills.photo_url` opcional (necessário para o import em lote de abastecimento funcionar).
+6. ⚠️ **`20260724150000_fix_move_type_invalido.sql` — CORREÇÃO CRÍTICA.** As funções
+   `apply_heineken_carga` e `conciliar_nota_fiscal` gravavam um `move_type` que não
+   existe no enum, então **toda entrada de estoque (carga e NF) falhava**. Detalhes
+   em `docs/AUDITORIA-DADOS.md`.
+   - **Como verificar:** registre uma carga de teste e confira que aparece em
+     `warehouse_movements` com `move_type='entrada'` e que o saldo do DISPEL sobe.
+   - **Depois de aplicar:** confira se há cargas/NFs do período que falharam e
+     precisam ser relançadas — a migration conserta a função, não recria os
+     movimentos perdidos.
+7. `20260724160000_nomes_oficiais_rotas_padroes.sql` — nomes OFICIAIS dos 13 pontos,
+   rotas e padrões. Substitui o mapeamento por "variantes" que era chute.
+   Bar da Pista → Rota 2 (⚠️ **padrão ainda não definido pelo gestor**).
+   Zel Café → parceiro, sem rota.
+8. ⚠️ `20260724170000_fundir_choperia.sql` — **ALTERA DADOS, rode o BACKUP antes.**
+   Funde Choperia 1 + 2 em "Choperia" (um cartão MEEP só). Padrão somado: 12H/12A.
+9. `20260724180000_view_meep_abastecimento.sql` — view com nome correto para
+   `meep_vendas_bar` (que guarda abastecimento, não venda). Não destrutivo.
 - **Como verificar:** as tabelas `rotas`, `meep_vendas_bar`, `meep_consumo_bar`
   existem; `bars` tem `rota_id` e `cartao_meep`; `SELECT count(*) FROM meep_consumo_bar` > 0.
 
@@ -54,15 +72,23 @@ O consumo até hoje já vem no seed (Passo 1.4). Para novos relatórios:
 
 ## Passo 5 — Verificação funcional de cada tela (checklist)
 Abra e confirme que cada uma carrega **sem erro** e mostra dados coerentes:
-- [ ] **DASHBOARD** — bares em ordem alfabética, alertas de reposição.
-- [ ] **BI BARRIS** — contagem por marca/estado, estoques DISPEL/Allstar, e
-      "por rota" com **Carregar** (p/ padrão) e **Vazios**.
+- [ ] **DASHBOARD (tela inicial)** — resumo executivo, alertas de reposição e:
+      **Barris consumidos** (troque período Hoje/7d/Tudo e a fonte Vazios/MEEP —
+      os números devem mudar), **Top bares por consumo**, **Barris por estado**
+      (plugado/fechado/vazio × marca), **Estoque DISPEL e Allstar**, e
+      **Chopps mais gelados**.
+- [ ] **MENU** — 4 grupos (Operação · Estoque · Análise · Sistema). Confira que
+      cada item abre e que o item ativo fica destacado.
+- [ ] **BARRIS** — abas *Cobertura & Rotas* e *Contagem (BI)*. KPIs (carregar agora, vazios, estoque, cobertura),
+      alertas, pallet por rota, "quem está para secar" e ritmo de consumo.
+      Confira que "Carregar agora" bate com a soma do BI e que os alertas fazem
+      sentido (ex.: bares sem inventário aparecem como Atenção, não somem).
 - [ ] **CENTRAL DE ESTOQUE** — abas Visão Geral (estoque + comodato), Estoque,
       Entradas, Notas, Importar. Comodato: recebidos ≥ devolvidos.
 - [ ] **MAPA** — busca filtra lista e marcadores.
-- [ ] **CONSUMO POR BAR** — consumo real (seed) por bar e por dia.
+- [ ] **CONSUMO** — 3 abas: *Ranking*, *Por bar (real)* (consumo do seed por bar
+      e por dia) e *Ao longo do tempo*. As abas carregam sob demanda.
 - [ ] **ABASTECIMENTO MEEP** — barris entregues por bar (após importar).
-- [ ] **CONSUMO × TEMPO** — série diária (vazios recolhidos).
 - [ ] Abrir um bar → **Reposição** sugere plugado fixo e reposição = vazios.
 - [ ] **RELATÓRIO** gera PDF; **IMPORTAR** lê CSV/xlsx.
 
@@ -70,10 +96,17 @@ Abra e confirme que cada uma carrega **sem erro** e mostra dados coerentes:
 - Definir se **Zel Café** e **Bar da Pista** (parceiros) entram em alguma rota/padrão.
 - Cruzar **consumo × padrão** para sugerir ajuste de padrão por bar.
 
-## Passo 7 — ⚠️ Reset + reabastecer (Fase 5, só com backup + OK do gestor)
-Não executar sem: (a) **backup** feito na tela BACKUPS; (b) OK explícito.
-Sequência pretendida: backup → zerar estoques → reiniciar contagem mantendo
-config/padrão (mudando só barris) → recarregar pela MEEP.
+## Passo 7 — ⚠️ Reset + reabastecer (Fase 5)
+Gestor autorizou (2026-07-24), **na ordem**: backup primeiro, reset depois.
+Script: **`docs/FASE5-RESET.sql`** — fica fora de `migrations/` de propósito,
+para não rodar sozinho. Tem trava: aborta se a variável de autorização não for
+definida na mesma execução.
+1. Backup na tela BACKUPS → **baixar e abrir** para conferir que não está vazio.
+2. Aplicar antes as migrations 20260724150000 e 20260724160000.
+3. Rodar `docs/FASE5-RESET.sql` conforme as instruções no topo do arquivo.
+4. Lançar as entradas reais e conferir que **o saldo do DISPEL SOBE**
+   (se não subir, a correção do `move_type` não foi aplicada).
+5. Primeiro inventário de cada bar.
 
 ---
 

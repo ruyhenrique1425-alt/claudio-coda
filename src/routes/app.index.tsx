@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,335 +12,180 @@ import {
   AlertTriangle,
   CheckCircle2,
   PackageOpen,
+  Beer,
+  Warehouse,
   Snowflake,
   Thermometer,
   ClipboardCheck,
   Truck,
   Trophy,
   Bell,
+  ListOrdered,
 } from "lucide-react";
+
+import {
+  IDEAL_TEMP,
+  TEMP_ALERTA,
+  SEVERITY_ORDER,
+  type Severity,
+} from "@/lib/operacao";
+import {
+  BRANDS,
+  ESTADOS,
+  ESTADO_LABEL,
+  TEMP_SLOTS,
+  BRAND_LABEL,
+  BRAND_ACCENT,
+  SEVERITY_STYLES,
+  BrandChip,
+  useBarsRows,
+  type Brand,
+  type Estado,
+  type BarRow,
+} from "@/lib/bars-dashboard";
 
 export const Route = createFileRoute("/app/")({
   component: Dashboard,
 });
 
-const BRANDS = ["heineken", "amstel"] as const;
-type Brand = (typeof BRANDS)[number];
-const IDEAL_TEMP = -1;
-const TEMP_SLOTS = [
-  { v: "t_11", l: "11h", hour: 11 },
-  { v: "t_17", l: "17h", hour: 17 },
-  { v: "t_22", l: "22h", hour: 22 },
-] as const;
-
-type Severity = "ok" | "medium" | "high" | "critical";
-
-type BarRow = {
-  id: string;
-  name: string;
-  apoio_responsavel: string | null;
-  standards: Record<Brand, number>;
-  cheios: Record<Brand, number>;
-  consumidos: Record<Brand, number>;
-  needed: Record<Brand, number>;
-  fillByBrand: Record<Brand, number>;
-  sevByBrand: Record<Brand, Severity>;
-  totalNeeded: number;
-  totalStandard: number;
-  totalCheios: number;
-  fillPct: number;
-  severity: Severity;
-  hasInventory: boolean;
-  lastAt: string | null;
-  lastBy: string | null;
-  tempsToday: Record<string, { temperatura: number } | null>;
-  orgToday: boolean;
-  bestTempToday: number | null;
-};
-
-function computeSeverity(fillPct: number, standard: number): Severity {
-  if (standard <= 0) return "ok";
-  if (fillPct < 20) return "critical";
-  if (fillPct < 30) return "high";
-  if (fillPct <= 50) return "medium";
-  return "ok";
-}
-const SEV_RANK: Record<Severity, number> = { ok: 0, medium: 1, high: 2, critical: 3 };
-const worst = (a: Severity, b: Severity): Severity => (SEV_RANK[a] >= SEV_RANK[b] ? a : b);
-
-const SEVERITY_STYLES: Record<
-  Exclude<Severity, "ok">,
-  {
-    label: string;
-    border: string;
-    bg: string;
-    text: string;
-    badgeBg: string;
-    badgeText: string;
-    pillBg: string;
-    pillText: string;
-  }
-> = {
-  medium: {
-    label: "Atenção",
-    border: "border-yellow-400",
-    bg: "bg-yellow-50",
-    text: "text-yellow-700",
-    badgeBg: "bg-yellow-400",
-    badgeText: "text-yellow-950",
-    pillBg: "bg-yellow-100",
-    pillText: "text-yellow-700",
-  },
-  high: {
-    label: "Urgente",
-    border: "border-orange-500",
-    bg: "bg-orange-50",
-    text: "text-orange-700",
-    badgeBg: "bg-orange-500",
-    badgeText: "text-white",
-    pillBg: "bg-orange-100",
-    pillText: "text-orange-700",
-  },
-  critical: {
-    label: "Crítico",
-    border: "border-red-600",
-    bg: "bg-red-50",
-    text: "text-red-700",
-    badgeBg: "bg-red-600",
-    badgeText: "text-white",
-    pillBg: "bg-red-100",
-    pillText: "text-red-700",
-  },
-};
-
-function isToday(iso: string | null | undefined) {
-  if (!iso) return false;
-  const d = new Date(iso);
-  const n = new Date();
-  return (
-    d.getFullYear() === n.getFullYear() &&
-    d.getMonth() === n.getMonth() &&
-    d.getDate() === n.getDate()
-  );
-}
-
 function Dashboard() {
   const nav = useNavigate();
+  const [tempPhoto, setTempPhoto] = useState<
+    | { barName: string; temperatura: number; slot: string | null; at: string | null; url: string | null; loading: boolean }
+    | null
+  >(null);
 
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["dashboard-v2"],
-    queryFn: async (): Promise<BarRow[]> => {
-      const { data: bars, error } = await supabase
-        .from("bars")
-        .select("id,name,apoio_responsavel")
-        .in("bar_type", ["bar_venda", "bar_parceiro"])
-        .order("name");
-      if (error) throw error;
-      if (!bars?.length) return [];
-      const ids = bars.map((b) => b.id);
+  const openTempPhoto = async (r: BarRow) => {
+    setTempPhoto({
+      barName: r.name,
+      temperatura: r.bestTempToday as number,
+      slot: r.bestTempSlot,
+      at: r.bestTempAt,
+      url: null,
+      loading: true,
+    });
+    if (!r.bestTempPhoto) {
+      setTempPhoto((p) => (p ? { ...p, loading: false } : p));
+      return;
+    }
+    try {
+      const { data } = await supabase.storage
+        .from("operacao-fotos")
+        .createSignedUrl(r.bestTempPhoto, 60 * 60);
+      setTempPhoto((p) => (p ? { ...p, loading: false, url: data?.signedUrl ?? null } : p));
+    } catch {
+      setTempPhoto((p) => (p ? { ...p, loading: false } : p));
+    }
+  };
 
-      const [{ data: stds }, { data: invs }, { data: temps }, { data: orgs }] = await Promise.all([
-        supabase.from("bar_stock_standard").select("*").in("bar_id", ids),
-        supabase
-          .from("inventories")
-          .select("id,bar_id,performed_at,performed_by,inventory_items(brand,status,quantidade)")
-          .in("bar_id", ids)
-          .order("performed_at", { ascending: false }),
-        supabase
-          .from("bar_temperature_checks")
-          .select("bar_id,slot,temperatura,performed_at")
-          .in("bar_id", ids)
-          .order("performed_at", { ascending: false }),
-        supabase
-          .from("bar_organization_checks")
-          .select("bar_id,performed_at,copo_ok,meninas_ok,limpo_ok,sem_fila_ok")
-          .in("bar_id", ids)
-          .order("performed_at", { ascending: false }),
-      ]);
-
-      const lastInv = new Map<string, any>();
-      (invs ?? []).forEach((i: any) => {
-        if (!lastInv.has(i.bar_id)) lastInv.set(i.bar_id, i);
-      });
-
-      const userIds = Array.from(
-        new Set(
-          Array.from(lastInv.values())
-            .map((i: any) => i.performed_by)
-            .filter(Boolean),
-        ),
-      );
-      const profMap: Record<string, string> = {};
-      if (userIds.length > 0) {
-        const { data: profs } = await supabase
-          .from("profiles")
-          .select("id,display_name,username")
-          .in("id", userIds);
-        (profs ?? []).forEach((p: any) => {
-          profMap[p.id] = p.display_name ?? p.username ?? null;
-        });
-      }
-
-      return bars.map((b) => {
-        const standards: Record<Brand, number> = { heineken: 0, amstel: 0 };
-        (stds ?? [])
-          .filter((s: any) => s.bar_id === b.id)
-          .forEach((s: any) => {
-            standards[s.brand as Brand] = s.barris_padrao;
-          });
-        const inv = lastInv.get(b.id);
-        const cheios: Record<Brand, number> = { heineken: 0, amstel: 0 };
-        const vaziosRaw: Record<Brand, number> = { heineken: 0, amstel: 0 };
-        (inv?.inventory_items ?? []).forEach((it: any) => {
-          if (
-            (it.status === "plugado" || it.status === "fechado") &&
-            cheios[it.brand as Brand] !== undefined
-          ) {
-            cheios[it.brand as Brand] += it.quantidade;
-          }
-          if (it.status === "vazio" && vaziosRaw[it.brand as Brand] !== undefined) {
-            vaziosRaw[it.brand as Brand] += it.quantidade;
-          }
-        });
-        const consumidos: Record<Brand, number> = {
-          heineken: Math.min(vaziosRaw.heineken, standards.heineken),
-          amstel: Math.min(vaziosRaw.amstel, standards.amstel),
-        };
-        const needed: Record<Brand, number> = {
-          heineken: Math.max(0, standards.heineken - cheios.heineken),
-          amstel: Math.max(0, standards.amstel - cheios.amstel),
-        };
-
-        const tempsToday: Record<string, { temperatura: number } | null> = {
-          t_11: null,
-          t_17: null,
-          t_22: null,
-        };
-        let best: number | null = null;
-        (temps ?? [])
-          .filter((t: any) => t.bar_id === b.id && isToday(t.performed_at))
-          .forEach((t: any) => {
-            if (!tempsToday[t.slot]) tempsToday[t.slot] = { temperatura: Number(t.temperatura) };
-            const tv = Number(t.temperatura);
-            if (best === null || tv < best) best = tv;
-          });
-
-        const orgToday = (orgs ?? []).some(
-          (o: any) =>
-            o.bar_id === b.id &&
-            isToday(o.performed_at) &&
-            o.copo_ok &&
-            o.meninas_ok &&
-            o.limpo_ok &&
-            o.sem_fila_ok,
-        );
-
-        const totalStandard = standards.heineken + standards.amstel;
-        const totalCheios = cheios.heineken + cheios.amstel;
-        const fillPct = totalStandard > 0 ? Math.round((totalCheios / totalStandard) * 100) : 100;
-        const fillByBrand: Record<Brand, number> = {
-          heineken:
-            standards.heineken > 0 ? Math.round((cheios.heineken / standards.heineken) * 100) : 100,
-          amstel: standards.amstel > 0 ? Math.round((cheios.amstel / standards.amstel) * 100) : 100,
-        };
-        const sevByBrand: Record<Brand, Severity> = inv
-          ? {
-              heineken: computeSeverity(fillByBrand.heineken, standards.heineken),
-              amstel: computeSeverity(fillByBrand.amstel, standards.amstel),
-            }
-          : { heineken: "ok", amstel: "ok" };
-        const severity: Severity = inv ? worst(sevByBrand.heineken, sevByBrand.amstel) : "ok";
-
-        return {
-          id: b.id,
-          name: b.name,
-          apoio_responsavel: b.apoio_responsavel,
-          standards,
-          cheios,
-          consumidos,
-          needed,
-          fillByBrand,
-          sevByBrand,
-          totalNeeded: needed.heineken + needed.amstel,
-          totalStandard,
-          totalCheios,
-          fillPct,
-          severity,
-          hasInventory: !!inv,
-          lastAt: inv?.performed_at ?? null,
-          lastBy: inv?.performed_by ? (profMap[inv.performed_by] ?? null) : null,
-          tempsToday,
-          orgToday,
-          bestTempToday: best,
-        };
-      });
-    },
-  });
+  const { data: rows = [] } = useBarsRows();
 
   const totalHein = rows.reduce((a, r) => a + r.needed.heineken, 0);
   const totalAms = rows.reduce((a, r) => a + r.needed.amstel, 0);
   const semInv = rows.filter((r) => !r.hasInventory).length;
 
-  // Consumidos com filtro por dia (default: último inventário de cada bar)
-  const [consumoDay, setConsumoDay] = useState<string>(""); // yyyy-mm-dd; "" = último
+  // ===== CONSUMO =====
+  type Periodo = "hoje" | "7d" | "tudo";
+  type Fonte = "vazios" | "meep";
+  const [periodo, setPeriodo] = useState<Periodo>("7d");
+  const [fonte, setFonte] = useState<Fonte>("vazios");
 
-  const { data: allInvs = [] } = useQuery({
-    queryKey: ["dashboard-consumo-invs"],
+  const desde = useMemo(() => {
+    if (periodo === "tudo") return null;
+    const d = new Date();
+    if (periodo === "hoje") d.setHours(0, 0, 0, 0);
+    else {
+      d.setDate(d.getDate() - 6);
+      d.setHours(0, 0, 0, 0);
+    }
+    return d;
+  }, [periodo]);
+
+  const { data: vaziosFlow = [] } = useQuery({
+    queryKey: ["dashboard-vazios", periodo],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inventories")
-        .select("id,bar_id,performed_at,inventory_items(brand,status,quantidade)")
-        .order("performed_at", { ascending: false });
+      let q = supabase.from("empties_removed").select("bar_id,brand,quantidade,performed_at");
+      if (desde) q = q.gte("performed_at", desde.toISOString());
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  const consumoData = useMemo(() => {
-    const byBar = new Map<string, any>();
-    for (const inv of allInvs as any[]) {
-      if (consumoDay) {
-        const d = new Date(inv.performed_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        if (key !== consumoDay) continue;
+  const { data: meepFlow } = useQuery({
+    queryKey: ["dashboard-meep", periodo],
+    queryFn: async () => {
+      try {
+        let q = (supabase as any).from("meep_consumo_bar").select("bar_nome,data,marca,barris");
+        if (desde) q = q.gte("data", desde.toISOString().slice(0, 10));
+        const res = await q;
+        if (res.error) return { ready: false, rows: [] as any[] };
+        return { ready: true, rows: (res.data ?? []) as any[] };
+      } catch {
+        return { ready: false, rows: [] as any[] };
       }
-      if (!byBar.has(inv.bar_id)) byBar.set(inv.bar_id, inv);
-    }
-    return rows.map((r) => {
-      const inv = byBar.get(r.id);
-      const raw: Record<Brand, number> = { heineken: 0, amstel: 0 };
-      (inv?.inventory_items ?? []).forEach((it: any) => {
-        if (it.status === "vazio" && raw[it.brand as Brand] !== undefined) {
-          raw[it.brand as Brand] += it.quantidade;
-        }
-      });
-      return {
-        ...r,
-        consumidos: {
-          heineken: Math.min(raw.heineken, r.standards.heineken),
-          amstel: Math.min(raw.amstel, r.standards.amstel),
-        },
-        hasInvForDay: !!inv,
-      };
-    });
-  }, [rows, allInvs, consumoDay]);
+    },
+  });
+  const meepReady = meepFlow?.ready ?? false;
 
-  const consumHein = consumoData.reduce((a, r) => a + r.consumidos.heineken, 0);
-  const consumAms = consumoData.reduce((a, r) => a + r.consumidos.amstel, 0);
-  const topConsumHein = [...consumoData]
-    .filter((r) => r.consumidos.heineken > 0)
-    .sort((a, b) => b.consumidos.heineken - a.consumidos.heineken)
-    .slice(0, 3);
-  const topConsumAms = [...consumoData]
-    .filter((r) => r.consumidos.amstel > 0)
-    .sort((a, b) => b.consumidos.amstel - a.consumidos.amstel)
-    .slice(0, 3);
-  const SEV_ORDER: Record<Severity, number> = { critical: 0, high: 1, medium: 2, ok: 3 };
+  const { data: estoques = [] } = useQuery({
+    queryKey: ["dashboard-estoques"],
+    queryFn: async () => {
+      const [{ data: whs }, { data: stock }] = await Promise.all([
+        supabase.from("warehouses").select("id,code,name"),
+        supabase.from("warehouse_stock").select("warehouse_id,brand,barrels"),
+      ]);
+      const byWh: Record<string, Record<Brand, number>> = {};
+      (stock ?? []).forEach((s: any) => {
+        byWh[s.warehouse_id] ??= { heineken: 0, amstel: 0 };
+        byWh[s.warehouse_id][s.brand as Brand] = s.barrels ?? 0;
+      });
+      return (whs ?? []).map((w: any) => ({
+        code: String(w.code ?? ""),
+        name: String(w.name ?? ""),
+        stock: byWh[w.id] ?? { heineken: 0, amstel: 0 },
+      }));
+    },
+  });
+
+  const consumo = useMemo(() => {
+    const porBar = new Map<string, { nome: string; heineken: number; amstel: number }>();
+    const nomePorId = new Map(rows.map((r) => [r.id, r.name]));
+
+    if (fonte === "vazios") {
+      (vaziosFlow as any[]).forEach((e) => {
+        const nome = nomePorId.get(e.bar_id);
+        if (!nome) return;
+        const br = e.brand as Brand;
+        const cur = porBar.get(e.bar_id) ?? { nome, heineken: 0, amstel: 0 };
+        if (br === "heineken" || br === "amstel") cur[br] += Number(e.quantidade) || 0;
+        porBar.set(e.bar_id, cur);
+      });
+    } else {
+      (meepFlow?.rows ?? []).forEach((m: any) => {
+        const nome = String(m.bar_nome ?? "");
+        if (!nome) return;
+        const br = m.marca === "heineken" ? "heineken" : m.marca === "amstel" ? "amstel" : null;
+        const cur = porBar.get(nome) ?? { nome, heineken: 0, amstel: 0 };
+        if (br) cur[br] += Number(m.barris) || 0;
+        porBar.set(nome, cur);
+      });
+    }
+
+    const lista = Array.from(porBar.values())
+      .map((b) => ({ ...b, total: b.heineken + b.amstel }))
+      .filter((b) => b.total !== 0)
+      .sort((a, b) => b.total - a.total);
+    const totH = lista.reduce((s, b) => s + b.heineken, 0);
+    const totA = lista.reduce((s, b) => s + b.amstel, 0);
+    return { lista, heineken: totH, amstel: totA, total: totH + totA };
+  }, [fonte, vaziosFlow, meepFlow, rows]);
+
   const precisaRepor = rows
     .filter((r) => r.hasInventory && r.severity !== "ok")
-    .sort((a, b) => SEV_ORDER[a.severity] - SEV_ORDER[b.severity] || b.totalNeeded - a.totalNeeded);
+    .sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.totalNeeded - a.totalNeeded);
 
-  // Missões pendentes hoje (slot vencido sem registro)
+  // Missões pendentes hoje
   const nowH = new Date().getHours();
   type PendingMission = { barId: string; barName: string; kind: "temp" | "org"; label: string };
   const pendingMissions: PendingMission[] = [];
@@ -363,23 +209,19 @@ function Dashboard() {
       });
   });
 
-  // Ranking chopps mais gelados (hoje)
+  const choppQuente = rows
+    .filter((r) => r.worstTempToday !== null && (r.worstTempToday as number) > TEMP_ALERTA)
+    .sort((a, b) => (b.worstTempToday as number) - (a.worstTempToday as number));
+
   const coldRanking = rows
     .filter((r) => r.bestTempToday !== null)
     .sort((a, b) => (a.bestTempToday as number) - (b.bestTempToday as number))
     .slice(0, 5);
 
-  // Bares para lista principal
-  const sorted = [...rows].sort((a, b) =>
-    a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }),
-  );
-
   const goReposicao = (barId: string) =>
     nav({ to: "/app/bars/$barId", params: { barId }, search: { tab: "reposicao" } });
   const goMissoes = (barId: string) =>
     nav({ to: "/app/bars/$barId", params: { barId }, search: { tab: "missoes" } });
-  const goInventario = (barId: string) =>
-    nav({ to: "/app/bars/$barId", params: { barId }, search: { tab: "inventario" } });
 
   // ===== RESUMO EXECUTIVO =====
   const estoqueBaresH = rows.reduce((a, r) => a + r.cheios.heineken, 0);
@@ -392,6 +234,37 @@ function Dashboard() {
   const baresOK = rows.filter((r) => r.hasInventory && r.severity === "ok").length;
   const baresAlerta = rows.filter((r) => r.hasInventory && r.severity !== "ok").length;
 
+  // ===== Barris por estado e por marca =====
+  const porEstado: Record<Brand, Record<Estado, number>> = {
+    heineken: { plugado: 0, fechado: 0, vazio: 0 },
+    amstel: { plugado: 0, fechado: 0, vazio: 0 },
+  };
+  rows.forEach((r) =>
+    BRANDS.forEach((br) =>
+      ESTADOS.forEach((st) => {
+        porEstado[br][st] += r.estados[br][st];
+      }),
+    ),
+  );
+  // Soma "recolhidos + ainda no bar" só vale no período TUDO e fonte vazios:
+  // fora disso misturaria fluxo de janela com foto do momento (sem dupla
+  // contagem — o "a recolher" já desconta o que saiu após o inventário).
+  const somaEvento = periodo === "tudo" && fonte === "vazios";
+
+  const totalPorEstado: Record<Estado, number> = {
+    plugado: porEstado.heineken.plugado + porEstado.amstel.plugado,
+    fechado: porEstado.heineken.fechado + porEstado.amstel.fechado,
+    vazio: porEstado.heineken.vazio + porEstado.amstel.vazio,
+  };
+  const aRecolherTotal = totalPorEstado.vazio;
+
+  const estoqueDispel = estoques.find((e) => e.code.toLowerCase() === "dispel");
+  const estoqueAllstar = estoques.find((e) => e.code.toLowerCase() === "allstar");
+  const estoqueTotalGeral = estoques.reduce(
+    (s, e) => s + e.stock.heineken + e.stock.amstel,
+    0,
+  );
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-4 space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -401,15 +274,112 @@ function Dashboard() {
             Hoje · {new Date().toLocaleDateString("pt-BR")}
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/app/map">
-            <MapPin className="w-4 h-4 mr-1" />
-            Mapa
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/app/bares">
+              <ListOrdered className="w-4 h-4 mr-1" />
+              Todos os Bares
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/app/map">
+              <MapPin className="w-4 h-4 mr-1" />
+              Mapa
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* RESUMO EXECUTIVO */}
+      {/* 1. BARRIS NOS BARES POR ESTADO */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Beer className="w-4 h-4 text-primary" />
+          <h2 className="font-display text-sm tracking-widest text-muted-foreground">
+            BARRIS NOS BARES POR ESTADO
+          </h2>
+          <Link to="/app/operacao" className="ml-auto text-[11px] text-muted-foreground underline">
+            ver Barris
+          </Link>
+        </div>
+        <Card className="p-3">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <th className="text-left py-1 pr-2">Marca</th>
+                  {ESTADOS.map((st) => (
+                    <th key={st} className="py-1 px-2 text-right">
+                      {ESTADO_LABEL[st]}
+                    </th>
+                  ))}
+                  <th className="py-1 pl-2 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {BRANDS.map((br) => {
+                  const e = porEstado[br];
+                  const tot = e.plugado + e.fechado + e.vazio;
+                  return (
+                    <tr key={br} className="border-t border-border/50">
+                      <td className="py-1.5 pr-2 flex items-center gap-1.5">
+                        <span
+                          className={`w-2 h-2 rounded-full ${BRAND_ACCENT[br].dot}`}
+                          aria-hidden
+                        />
+                        {BRAND_LABEL[br]}
+                      </td>
+                      <td className="py-1.5 px-2 text-right tabular-nums">{e.plugado}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums">{e.fechado}</td>
+                      <td className="py-1.5 px-2 text-right tabular-nums font-bold text-accent">
+                        {e.vazio}
+                      </td>
+                      <td className="py-1.5 pl-2 text-right tabular-nums font-bold">{tot}</td>
+                    </tr>
+                  );
+                })}
+                <tr className="border-t-2 border-border">
+                  <td className="py-1.5 pr-2 text-[11px] uppercase tracking-widest text-muted-foreground">
+                    Total
+                  </td>
+                  <td className="py-1.5 px-2 text-right tabular-nums font-bold">
+                    {totalPorEstado.plugado}
+                  </td>
+                  <td className="py-1.5 px-2 text-right tabular-nums font-bold">
+                    {totalPorEstado.fechado}
+                  </td>
+                  <td className="py-1.5 px-2 text-right tabular-nums font-bold text-accent">
+                    {totalPorEstado.vazio}
+                  </td>
+                  <td className="py-1.5 pl-2 text-right tabular-nums font-bold">
+                    {totalPorEstado.plugado + totalPorEstado.fechado + totalPorEstado.vazio}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">
+            Foto do último inventário de cada bar. Plugado = na torneira · Fechado = cheio de
+            reserva · Vazio = já consumido, a recolher.
+          </p>
+        </Card>
+      </div>
+
+      {/* 2. ESTOQUE NOS ARMAZÉNS */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Warehouse className="w-4 h-4 text-primary" />
+          <h2 className="font-display text-sm tracking-widest text-muted-foreground">
+            ESTOQUE NOS ARMAZÉNS
+          </h2>
+          <span className="ml-auto font-display text-sm">{estoqueTotalGeral} barris</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <EstoqueCard nome="DISPEL" stock={estoqueDispel?.stock} />
+          <EstoqueCard nome="ALLSTAR" stock={estoqueAllstar?.stock} />
+        </div>
+      </div>
+
+      {/* 3. RESUMO EXECUTIVO */}
       <Card className="p-3 bg-gradient-to-br from-primary/8 via-primary/4 to-accent/8 border-primary/20">
         <div className="flex items-center justify-between mb-2">
           <h2 className="font-display text-[11px] tracking-[0.25em] text-primary/80">
@@ -465,68 +435,149 @@ function Dashboard() {
         </div>
       </Card>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-4 gap-2">
-        <Kpi label="Bares" value={rows.length} />
-        <Kpi label="Sem inv." value={semInv} tone={semInv > 0 ? "danger" : "ok"} />
-        <Kpi
-          label="Heineken"
-          value={totalHein}
-          tone={totalHein > 0 ? "warn" : "ok"}
-          suffix="repor"
-        />
-        <Kpi label="Amstel" value={totalAms} tone={totalAms > 0 ? "warn" : "ok"} suffix="repor" />
+      {/* 4. MISSÕES + RANKING GELADO */}
+      <div className="grid gap-3 md:grid-cols-2">
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <ClipboardCheck className="w-4 h-4 text-primary" />
+            <h2 className="font-display text-sm tracking-widest text-muted-foreground">
+              MISSÕES PENDENTES
+            </h2>
+          </div>
+          {pendingMissions.length === 0 ? (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4 text-primary" />
+              Tudo em dia por aqui.
+            </p>
+          ) : (
+            <div className="space-y-1.5 max-h-56 overflow-auto">
+              {pendingMissions.slice(0, 8).map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => goMissoes(m.barId)}
+                  className="w-full flex items-center gap-2 text-left rounded border border-border p-1.5 hover:border-primary transition"
+                >
+                  {m.kind === "temp" ? (
+                    <Thermometer className="w-3.5 h-3.5 text-accent" />
+                  ) : (
+                    <ClipboardCheck className="w-3.5 h-3.5 text-accent" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-display truncate">{m.barName}</div>
+                    <div className="text-[10px] text-muted-foreground">{m.label}</div>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              ))}
+              {pendingMissions.length > 8 && (
+                <p className="text-[10px] text-muted-foreground">
+                  +{pendingMissions.length - 8} pendentes
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Trophy className="w-4 h-4 text-primary" />
+            <h2 className="font-display text-sm tracking-widest text-muted-foreground">
+              CHOPPS MAIS GELADOS
+            </h2>
+          </div>
+          {coldRanking.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Sem medições hoje ainda.</p>
+          ) : (
+            <ol className="space-y-1.5">
+              {coldRanking.map((r, i) => {
+                const t = r.bestTempToday as number;
+                const seal = t <= IDEAL_TEMP;
+                return (
+                  <li key={r.id}>
+                    <button
+                      onClick={() => openTempPhoto(r)}
+                      title="Ver foto do termômetro"
+                      className="w-full flex items-center gap-2 rounded border border-border p-1.5 hover:border-primary transition text-left"
+                    >
+                      <div
+                        className={`w-6 h-6 grid place-items-center rounded-full font-display text-xs ${i === 0 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                      >
+                        {i + 1}
+                      </div>
+                      <Snowflake
+                        className={`w-3.5 h-3.5 ${seal ? "text-primary" : "text-accent"}`}
+                      />
+                      <div className="flex-1 min-w-0 text-xs font-display truncate">{r.name}</div>
+                      <div
+                        className={`font-display text-sm ${seal ? "text-primary" : "text-accent"}`}
+                      >
+                        {t.toFixed(1)}°C
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </Card>
       </div>
 
-      {/* CONSUMIDOS — foco por marca */}
+      {/* 5. QUANTOS PRECISO REPOR — KPIs */}
       <div>
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <div className="flex items-center gap-2 mb-2">
           <PackageOpen className="w-4 h-4 text-accent" />
           <h2 className="font-display text-sm tracking-widest text-accent">
-            CONSUMIDOS ·{" "}
-            {consumoDay
-              ? new Date(consumoDay + "T00:00:00").toLocaleDateString("pt-BR")
-              : "ÚLTIMO INVENTÁRIO"}
+            QUANTOS PRECISO REPOR
           </h2>
-          <div className="ml-auto flex items-center gap-1">
-            <input
-              type="date"
-              value={consumoDay}
-              onChange={(e) => setConsumoDay(e.target.value)}
-              className="text-[11px] px-1.5 py-0.5 rounded border bg-background"
-            />
-            {consumoDay && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px]"
-                onClick={() => setConsumoDay("")}
-              >
-                limpar
-              </Button>
-            )}
-            <Link to="/app/consumo" className="text-[11px] text-muted-foreground underline">
-              ver consumo
-            </Link>
-          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <ConsumoBrandCard
-            brand="heineken"
-            total={consumHein}
-            top={topConsumHein}
-            onGo={goInventario}
+        <div className="grid grid-cols-4 gap-2">
+          <Kpi label="Bares" value={rows.length} />
+          <Kpi label="Sem inv." value={semInv} tone={semInv > 0 ? "danger" : "ok"} />
+          <Kpi
+            label="Heineken"
+            value={totalHein}
+            tone={totalHein > 0 ? "warn" : "ok"}
+            suffix="repor"
           />
-          <ConsumoBrandCard
-            brand="amstel"
-            total={consumAms}
-            top={topConsumAms}
-            onGo={goInventario}
-          />
+          <Kpi label="Amstel" value={totalAms} tone={totalAms > 0 ? "warn" : "ok"} suffix="repor" />
         </div>
       </div>
 
-      {/* Alertas prioritários */}
+      {/* CHOPP QUENTE */}
+      {choppQuente.length > 0 && (
+        <Card className="p-3 border-red-500/50 bg-red-50">
+          <div className="flex items-center gap-2 mb-2">
+            <Thermometer className="w-4 h-4 text-red-600" />
+            <h2 className="font-display text-sm tracking-widest text-red-700">
+              CHOPP ACIMA DE {TEMP_ALERTA}°C
+            </h2>
+            <span className="ml-auto text-[10px] uppercase tracking-widest text-red-700/70">
+              {choppQuente.length} {choppQuente.length === 1 ? "bar" : "bares"}
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            {choppQuente.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => goMissoes(r.id)}
+                className="w-full flex items-center gap-2 rounded border border-red-300 bg-white/60 p-1.5 hover:brightness-95 transition text-left"
+              >
+                <Thermometer className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                <span className="text-xs font-display truncate flex-1">{r.name}</span>
+                <span className="font-display text-sm text-red-700 shrink-0">
+                  {(r.worstTempToday as number).toFixed(1)}°C
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-red-700/70 mt-2">
+            Pior medição de hoje. Meta: ≤ {IDEAL_TEMP}°C. Verificar chopeira e gelo.
+          </p>
+        </Card>
+      )}
+
+      {/* 6. ALERTAS DE REPOSIÇÃO */}
       {(precisaRepor.length > 0 || semInv > 0) && (
         <Card className="p-3 border-accent/40 bg-accent/5">
           <div className="flex items-center gap-2 mb-2">
@@ -582,221 +633,222 @@ function Dashboard() {
         </Card>
       )}
 
-      {/* Grid: Missões + Ranking gelado */}
-      <div className="grid gap-3 md:grid-cols-2">
-        {/* Missões pendentes */}
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <ClipboardCheck className="w-4 h-4 text-primary" />
-            <h2 className="font-display text-sm tracking-widest text-muted-foreground">
-              MISSÕES PENDENTES
-            </h2>
+      {/* CONSUMO — filtro por período e fonte */}
+      <div>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <PackageOpen className="w-4 h-4 text-accent" />
+          <h2 className="font-display text-sm tracking-widest text-accent">
+            {fonte === "meep" ? "BARRIS ENTREGUES (MEEP)" : "BARRIS CONSUMIDOS"}
+          </h2>
+          <div className="ml-auto flex items-center gap-1 flex-wrap">
+            {(
+              [
+                { v: "hoje", l: "Hoje" },
+                { v: "7d", l: "7 dias" },
+                { v: "tudo", l: "Tudo" },
+              ] as const
+            ).map((p) => (
+              <button
+                key={p.v}
+                onClick={() => setPeriodo(p.v)}
+                className={`text-[10px] px-2 py-0.5 rounded border transition ${
+                  periodo === p.v
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border hover:border-primary"
+                }`}
+              >
+                {p.l}
+              </button>
+            ))}
           </div>
-          {pendingMissions.length === 0 ? (
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              Tudo em dia por aqui.
+        </div>
+
+        <div className="flex items-center gap-1 mb-2 flex-wrap">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1">
+            Fonte
+          </span>
+          <button
+            onClick={() => setFonte("vazios")}
+            className={`text-[10px] px-2 py-0.5 rounded border transition ${
+              fonte === "vazios"
+                ? "bg-accent text-accent-foreground border-accent"
+                : "border-border hover:border-accent"
+            }`}
+          >
+            Vazios recolhidos
+          </button>
+          <button
+            onClick={() => meepReady && setFonte("meep")}
+            disabled={!meepReady}
+            title={
+              meepReady
+                ? "Barris ENTREGUES ao bar, bipados na MEEP (estoque DISPEL → bar). NÃO é consumo do cliente."
+                : "Abastecimento MEEP ainda não importado"
+            }
+            className={`text-[10px] px-2 py-0.5 rounded border transition disabled:opacity-40 ${
+              fonte === "meep"
+                ? "bg-accent text-accent-foreground border-accent"
+                : "border-border hover:border-accent"
+            }`}
+          >
+            MEEP (entregue)
+          </button>
+        </div>
+
+        <Card className="p-3">
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="rounded-lg border bg-background/60 p-2">
+              <div className="text-[9px] tracking-widest text-muted-foreground uppercase">
+                {fonte === "meep"
+                  ? "Entregues"
+                  : somaEvento
+                    ? "Consumidos no evento"
+                    : "Total"}
+              </div>
+              <div className="font-display text-3xl leading-tight">
+                {somaEvento ? consumo.total + aRecolherTotal : consumo.total}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {somaEvento ? `${consumo.total} recolhidos + ${aRecolherTotal} no bar` : "barris"}
+              </div>
+            </div>
+            <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-2">
+              <div className="text-[9px] tracking-widest text-emerald-800/70 uppercase">
+                Heineken
+              </div>
+              <div className="font-display text-3xl leading-tight text-emerald-800">
+                {consumo.heineken}
+              </div>
+            </div>
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-2">
+              <div className="text-[9px] tracking-widest text-amber-800/70 uppercase">Amstel</div>
+              <div className="font-display text-3xl leading-tight text-amber-800">
+                {consumo.amstel}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mb-1.5">
+            <Trophy className="w-3.5 h-3.5 text-accent" />
+            <h3 className="font-display text-[11px] tracking-widest text-muted-foreground">
+              {fonte === "meep" ? "TOP BARES POR ENTREGA" : "TOP BARES POR CONSUMO"}
+            </h3>
+          </div>
+          {consumo.lista.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              {fonte === "meep"
+                ? "Sem consumo MEEP no período."
+                : "Nenhum vazio recolhido no período."}
             </p>
           ) : (
-            <div className="space-y-1.5 max-h-56 overflow-auto">
-              {pendingMissions.slice(0, 8).map((m, i) => (
-                <button
-                  key={i}
-                  onClick={() => goMissoes(m.barId)}
-                  className="w-full flex items-center gap-2 text-left rounded border border-border p-1.5 hover:border-primary transition"
-                >
-                  {m.kind === "temp" ? (
-                    <Thermometer className="w-3.5 h-3.5 text-accent" />
-                  ) : (
-                    <ClipboardCheck className="w-3.5 h-3.5 text-accent" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-display truncate">{m.barName}</div>
-                    <div className="text-[10px] text-muted-foreground">{m.label}</div>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                </button>
-              ))}
-              {pendingMissions.length > 8 && (
-                <p className="text-[10px] text-muted-foreground">
-                  +{pendingMissions.length - 8} pendentes
-                </p>
-              )}
-            </div>
-          )}
-        </Card>
-
-        {/* Ranking mais gelados */}
-        <Card className="p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="w-4 h-4 text-primary" />
-            <h2 className="font-display text-sm tracking-widest text-muted-foreground">
-              CHOPPS MAIS GELADOS
-            </h2>
-          </div>
-          {coldRanking.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Sem medições hoje ainda.</p>
-          ) : (
-            <ol className="space-y-1.5">
-              {coldRanking.map((r, i) => {
-                const t = r.bestTempToday as number;
-                const seal = t <= IDEAL_TEMP;
+            <ol className="space-y-1">
+              {consumo.lista.slice(0, 5).map((b, i) => {
+                const maxTotal = consumo.lista[0].total || 1;
+                const pct = Math.max(3, Math.round((b.total / maxTotal) * 100));
                 return (
-                  <li key={r.id}>
-                    <button
-                      onClick={() => goMissoes(r.id)}
-                      className="w-full flex items-center gap-2 rounded border border-border p-1.5 hover:border-primary transition text-left"
+                  <li key={b.nome} className="flex items-center gap-2">
+                    <span
+                      className={`w-5 h-5 shrink-0 grid place-items-center rounded-full font-display text-[10px] ${
+                        i === 0 ? "bg-accent text-accent-foreground" : "bg-muted"
+                      }`}
                     >
-                      <div
-                        className={`w-6 h-6 grid place-items-center rounded-full font-display text-xs ${i === 0 ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-                      >
-                        {i + 1}
-                      </div>
-                      <Snowflake
-                        className={`w-3.5 h-3.5 ${seal ? "text-primary" : "text-accent"}`}
-                      />
-                      <div className="flex-1 min-w-0 text-xs font-display truncate">{r.name}</div>
-                      <div
-                        className={`font-display text-sm ${seal ? "text-primary" : "text-accent"}`}
-                      >
-                        {t.toFixed(1)}°C
-                      </div>
-                    </button>
+                      {i + 1}
+                    </span>
+                    <span className="text-xs truncate w-28 shrink-0">{b.nome}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums w-16 text-right">
+                      {b.heineken}H · {b.amstel}A
+                    </span>
+                    <span className="font-display text-sm shrink-0 tabular-nums w-8 text-right">
+                      {b.total}
+                    </span>
                   </li>
                 );
               })}
             </ol>
           )}
+          <p className="text-[10px] text-muted-foreground mt-2">
+            {fonte === "meep"
+              ? "⚠️ Barris ENTREGUES ao bar (estoque DISPEL → bar), bipados na MEEP. Não é consumo do cliente — serve para conferir a distribuição."
+              : somaEvento
+                ? "Recolhidos + os que ainda estão no bar, sem dupla contagem. Não inclui o que foi consumido após o último inventário e ainda não foi recolhido."
+                : "Vazios recolhidos no período (fluxo com data). Para o consumo completo do evento, selecione Tudo."}
+          </p>
         </Card>
       </div>
 
-      {/* Lista completa */}
-      <div className="space-y-2">
-        <h2 className="font-display text-sm tracking-widest text-muted-foreground pt-1">
-          TODOS OS BARES
-        </h2>
-        {isLoading && (
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Card key={i} className="p-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-muted animate-pulse shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-2/3 bg-muted animate-pulse rounded" />
-                    <div className="h-3 w-1/3 bg-muted/70 animate-pulse rounded" />
-                  </div>
-                  <div className="h-6 w-16 bg-muted animate-pulse rounded" />
-                </div>
-              </Card>
-            ))}
+      {/* Atalho para todos os bares */}
+      <Card className="p-3">
+        <Link
+          to="/app/bares"
+          className="flex items-center gap-3 hover:text-primary transition"
+        >
+          <div className="w-10 h-10 rounded-full grid place-items-center bg-primary/15 text-primary shrink-0">
+            <ListOrdered className="w-5 h-5" />
           </div>
-        )}
-        {!isLoading && sorted.length === 0 && (
-          <Card className="p-4 text-sm text-muted-foreground">Nenhum bar cadastrado.</Card>
-        )}
-        {sorted.map((r) => {
-          const state = !r.hasInventory ? "no_inv" : r.severity !== "ok" ? "refill" : "ok";
-          const sev =
-            r.severity !== "ok" ? SEVERITY_STYLES[r.severity as Exclude<Severity, "ok">] : null;
-          const abaixoPadrao =
-            r.hasInventory &&
-            (r.cheios.heineken < r.standards.heineken || r.cheios.amstel < r.standards.amstel);
-          const acimaPadrao =
-            r.hasInventory &&
-            !abaixoPadrao &&
-            (r.cheios.heineken > r.standards.heineken || r.cheios.amstel > r.standards.amstel);
-          return (
-            <Card
-              key={r.id}
-              className={`p-3 hover:border-primary transition ${abaixoPadrao ? "border-destructive/60" : acimaPadrao ? "border-yellow-400" : ""}`}
-            >
-              {(abaixoPadrao || acimaPadrao) && (
-                <div
-                  className={`mb-2 rounded px-2 py-1 text-[10px] font-bold tracking-wider animate-pulse ${abaixoPadrao ? "bg-destructive/15 text-destructive" : "bg-yellow-100 text-yellow-800"}`}
-                >
-                  {abaixoPadrao
-                    ? "⚠ ATENÇÃO · ESTOQUE ABAIXO DO PADRÃO"
-                    : "⚡ BAR FORA DO PADRÃO ESTABELECIDO"}
-                </div>
-              )}
-              <div className="flex items-center gap-3">
-                <button onClick={() => goInventario(r.id)} className="shrink-0">
-                  <StatePill state={state} severity={r.severity} count={r.totalNeeded} />
-                </button>
-                <button onClick={() => goInventario(r.id)} className="flex-1 min-w-0 text-left">
-                  <div className="font-display text-base truncate">{r.name}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">
-                    {state === "refill" && sev && (
-                      <span className={`font-bold ${sev.text}`}>{sev.label}</span>
-                    )}
-                    {state === "no_inv" && "Faça o primeiro inventário"}
-                    {state === "ok" &&
-                      (r.hasInventory
-                        ? `Tudo em ordem · ${r.fillPct}% do padrão`
-                        : r.apoio_responsavel
-                          ? `Apoio: ${r.apoio_responsavel}`
-                          : "Tudo em ordem")}
-                  </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-display text-base">TODOS OS BARES</div>
+            <div className="text-[11px] text-muted-foreground">
+              Lista completa com status, temperatura e reposição por bar.
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </Link>
+      </Card>
 
-                  {r.hasInventory &&
-                    (r.needed.heineken > 0 || r.needed.amstel > 0 || state === "refill") && (
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        <BrandChip
-                          brand="heineken"
-                          need={r.needed.heineken}
-                          fill={r.fillByBrand.heineken}
-                          sev={r.sevByBrand.heineken}
-                        />
-                        <BrandChip
-                          brand="amstel"
-                          need={r.needed.amstel}
-                          fill={r.fillByBrand.amstel}
-                          sev={r.sevByBrand.amstel}
-                        />
-                      </div>
-                    )}
-                  {r.bestTempToday !== null && (
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <Snowflake className="w-3 h-3" />
-                      Mais gelado hoje:{" "}
-                      <b className={r.bestTempToday <= IDEAL_TEMP ? "text-primary" : "text-accent"}>
-                        {r.bestTempToday.toFixed(1)}°C
-                      </b>
-                    </div>
-                  )}
-                  {r.lastAt && (
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      Últ. inv.: {new Date(r.lastAt).toLocaleDateString("pt-BR")}{" "}
-                      {new Date(r.lastAt).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                      {r.lastBy && (
-                        <>
-                          {" "}
-                          · por <b className="text-foreground">{r.lastBy}</b>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </button>
-                {state === "refill" && sev ? (
-                  <Button
-                    size="sm"
-                    className={`${sev.badgeBg} ${sev.badgeText} hover:brightness-95`}
-                    onClick={() => goReposicao(r.id)}
-                  >
-                    <Truck className="w-3.5 h-3.5 mr-1" />
-                    Repor
-                  </Button>
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+      <Dialog open={!!tempPhoto} onOpenChange={(o) => !o && setTempPhoto(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display tracking-wider">
+              {tempPhoto?.barName}
+            </DialogTitle>
+          </DialogHeader>
+          {tempPhoto && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Snowflake
+                  className={`w-5 h-5 ${tempPhoto.temperatura <= IDEAL_TEMP ? "text-primary" : "text-accent"}`}
+                />
+                <div
+                  className={`font-display text-3xl ${tempPhoto.temperatura <= IDEAL_TEMP ? "text-primary" : "text-accent"}`}
+                >
+                  {tempPhoto.temperatura.toFixed(1)}°C
+                </div>
+                {tempPhoto.temperatura <= IDEAL_TEMP && (
+                  <span className="text-[10px] font-bold tracking-wider bg-primary/15 text-primary px-2 py-0.5 rounded">
+                    ★ SUPER GELADO
+                  </span>
                 )}
               </div>
-            </Card>
-          );
-        })}
-      </div>
+              <div className="text-xs text-muted-foreground">
+                {tempPhoto.slot && <>Slot {tempPhoto.slot.replace("t_", "")}h · </>}
+                {tempPhoto.at &&
+                  new Date(tempPhoto.at).toLocaleString("pt-BR", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+              </div>
+              <div className="rounded-lg overflow-hidden border border-border bg-muted min-h-[240px] grid place-items-center">
+                {tempPhoto.loading ? (
+                  <div className="text-xs text-muted-foreground p-6">Carregando foto…</div>
+                ) : tempPhoto.url ? (
+                  <img
+                    src={tempPhoto.url}
+                    alt={`Termômetro em ${tempPhoto.barName}`}
+                    className="w-full h-auto max-h-[70vh] object-contain"
+                  />
+                ) : (
+                  <div className="text-xs text-muted-foreground p-6">
+                    Foto do termômetro indisponível.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -831,117 +883,48 @@ function Kpi({
   );
 }
 
-const BRAND_LABEL: Record<Brand, string> = { heineken: "Heineken", amstel: "Amstel" };
-function BrandChip({
-  brand,
-  need,
-  fill,
-  sev,
+function EstoqueCard({
+  nome,
+  stock,
 }: {
-  brand: Brand;
-  need: number;
-  fill: number;
-  sev: Severity;
+  nome: string;
+  stock?: Record<Brand, number>;
 }) {
-  const s = sev !== "ok" ? SEVERITY_STYLES[sev] : null;
-  const cls = s
-    ? `${s.pillBg} ${s.pillText} border ${s.border}`
-    : "bg-primary/10 text-primary border border-primary/20";
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-display tracking-wide ${cls}`}
-    >
-      <span className="font-bold">{BRAND_LABEL[brand]}</span>
-      <span>{fill}%</span>
-      {need > 0 && <span>· repor {need}</span>}
-    </span>
-  );
-}
-
-function StatePill({
-  state,
-  severity,
-  count,
-}: {
-  state: "ok" | "refill" | "no_inv";
-  severity: Severity;
-  count: number;
-}) {
-  if (state === "no_inv")
+  if (!stock) {
     return (
-      <div className="w-12 h-12 shrink-0 rounded-full grid place-items-center bg-destructive/15 text-destructive">
-        <AlertTriangle className="w-5 h-5" />
-      </div>
-    );
-  if (state === "refill" && severity !== "ok") {
-    const s = SEVERITY_STYLES[severity];
-    return (
-      <div
-        className={`w-12 h-12 shrink-0 rounded-full grid place-items-center ${s.pillBg} ${s.pillText}`}
-      >
-        <div className="flex flex-col items-center leading-none">
-          <PackageOpen className="w-4 h-4" />
-          <span className="font-display text-sm mt-0.5">{count}</span>
+      <Card className="p-3">
+        <div className="font-display text-xs tracking-widest uppercase text-muted-foreground">
+          {nome}
         </div>
-      </div>
+        <p className="text-[11px] text-muted-foreground mt-2">Armazém não cadastrado.</p>
+      </Card>
     );
   }
+  const total = stock.heineken + stock.amstel;
   return (
-    <div className="w-12 h-12 shrink-0 rounded-full grid place-items-center bg-primary/15 text-primary">
-      <CheckCircle2 className="w-5 h-5" />
-    </div>
-  );
-}
-
-const BRAND_ACCENT: Record<Brand, { bg: string; text: string; dot: string }> = {
-  heineken: {
-    bg: "bg-emerald-50 border-emerald-300",
-    text: "text-emerald-800",
-    dot: "bg-emerald-600",
-  },
-  amstel: { bg: "bg-amber-50 border-amber-300", text: "text-amber-800", dot: "bg-amber-600" },
-};
-
-function ConsumoBrandCard({
-  brand,
-  total,
-  top,
-  onGo,
-}: {
-  brand: Brand;
-  total: number;
-  top: BarRow[];
-  onGo: (barId: string) => void;
-}) {
-  const a = BRAND_ACCENT[brand];
-  return (
-    <Card className={`p-3 border ${a.bg}`}>
+    <Card className="p-3">
       <div className="flex items-center gap-2">
-        <span className={`w-2.5 h-2.5 rounded-full ${a.dot}`} />
-        <div className="font-display text-xs tracking-widest uppercase">{BRAND_LABEL[brand]}</div>
-        <span className="ml-auto text-[10px] uppercase tracking-widest text-muted-foreground">
-          Consumidos
-        </span>
+        <Warehouse className="w-4 h-4 text-primary" />
+        <div className="font-display text-xs tracking-widest uppercase text-muted-foreground">
+          {nome}
+        </div>
+        <span className="ml-auto font-display text-lg">{total}</span>
       </div>
-      <div className={`font-display text-4xl leading-none mt-1 ${a.text}`}>{total}</div>
-      <div className="text-[10px] text-muted-foreground mt-0.5">barris (teto = padrão por bar)</div>
-      <div className="mt-2 space-y-1">
-        {top.length === 0 && (
-          <div className="text-[11px] text-muted-foreground">Sem consumo registrado.</div>
-        )}
-        {top.map((r, i) => (
-          <button
-            key={r.id}
-            onClick={() => onGo(r.id)}
-            className="w-full flex items-center justify-between text-[11px] hover:bg-black/5 rounded px-1 py-0.5"
-          >
-            <span className="truncate">
-              <span className="text-muted-foreground mr-1">#{i + 1}</span>
-              {r.name}
-            </span>
-            <span className={`font-mono font-bold ${a.text}`}>{r.consumidos[brand]}</span>
-          </button>
-        ))}
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+        <div className={`rounded border p-1.5 ${BRAND_ACCENT.heineken.bg}`}>
+          <div className={`text-[9px] uppercase tracking-widest ${BRAND_ACCENT.heineken.text}`}>
+            Heineken
+          </div>
+          <div className={`font-display text-lg ${BRAND_ACCENT.heineken.text}`}>
+            {stock.heineken}
+          </div>
+        </div>
+        <div className={`rounded border p-1.5 ${BRAND_ACCENT.amstel.bg}`}>
+          <div className={`text-[9px] uppercase tracking-widest ${BRAND_ACCENT.amstel.text}`}>
+            Amstel
+          </div>
+          <div className={`font-display text-lg ${BRAND_ACCENT.amstel.text}`}>{stock.amstel}</div>
+        </div>
       </div>
     </Card>
   );

@@ -2,6 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  BAR_TYPES_OPERACAO,
+  recolhidosAposInventario,
+  vaziosARecolher,
+} from "@/lib/operacao";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +25,7 @@ const NotasPanel = lazy(() => import("./app.notas").then((m) => ({ default: m.No
 const ImportarPanel = lazy(() =>
   import("./app.importar").then((m) => ({ default: m.ImportarPage })),
 );
+const BalancoPanel = lazy(() => import("./app.balanco").then((m) => ({ default: m.BalancoPage })));
 
 const BRANDS = ["heineken", "amstel"] as const;
 type Brand = (typeof BRANDS)[number];
@@ -46,7 +52,7 @@ function CentralPage() {
       const { data: bars } = await supabase
         .from("bars")
         .select("id")
-        .in("bar_type", ["bar_venda", "bar_parceiro"]);
+        .in("bar_type", [...BAR_TYPES_OPERACAO]);
       const ids = (bars ?? []).map((b) => b.id);
 
       const [
@@ -56,6 +62,7 @@ function CentralPage() {
         { data: whs },
         { data: nfs },
         { data: comodato },
+        { data: emps },
       ] = await Promise.all([
         supabase.from("bar_stock_standard").select("bar_id,brand,barris_padrao").in("bar_id", ids),
         supabase
@@ -71,12 +78,22 @@ function CentralPage() {
           .select(
             "marca,cheios_recebidos_acumulados,vazios_devolvidos_acumulados,vazios_disponiveis",
           ),
+        supabase
+          .from("empties_removed")
+          .select("bar_id,brand,quantidade,performed_at")
+          .in("bar_id", ids),
       ]);
 
       const lastInv = new Map<string, any>();
       (invs ?? []).forEach((i: any) => {
         if (!lastInv.has(i.bar_id)) lastInv.set(i.bar_id, i);
       });
+
+      // "Vazios nos bares" desconta o que já foi recolhido depois da foto do
+      // inventário — recolher não reescreve o inventário. Ver lib/operacao.
+      const invAtPorBar = new Map<string, string | null>();
+      lastInv.forEach((inv, barId) => invAtPorBar.set(barId, inv?.performed_at ?? null));
+      const recolhidosApos = recolhidosAposInventario((emps ?? []) as any, invAtPorBar);
 
       const padraoBy: Record<string, Record<Brand, number>> = {};
       (stds ?? []).forEach((s: any) => {
@@ -93,7 +110,12 @@ function CentralPage() {
           if (it.status === "plugado" || it.status === "fechado") {
             cheios[it.brand as Brand] += it.quantidade ?? 0;
           } else if (it.status === "vazio") {
-            vaziosBares[it.brand as Brand] += it.quantidade ?? 0;
+            vaziosBares[it.brand as Brand] += vaziosARecolher(
+              it.quantidade ?? 0,
+              b.id,
+              it.brand as Brand,
+              recolhidosApos,
+            );
           }
         });
         BRANDS.forEach((br) => {
@@ -162,21 +184,18 @@ function CentralPage() {
       </div>
 
       <Tabs defaultValue="visao">
-        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-5">
+        <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="visao" className="text-[11px] font-display tracking-wider">
             VISÃO GERAL
           </TabsTrigger>
           <TabsTrigger value="estoque" className="text-[11px] font-display tracking-wider">
             ESTOQUE
           </TabsTrigger>
-          <TabsTrigger value="cargas" className="text-[11px] font-display tracking-wider">
+          <TabsTrigger value="entradas" className="text-[11px] font-display tracking-wider">
             ENTRADAS
           </TabsTrigger>
-          <TabsTrigger value="notas" className="text-[11px] font-display tracking-wider">
-            NOTAS
-          </TabsTrigger>
-          <TabsTrigger value="importar" className="text-[11px] font-display tracking-wider">
-            IMPORTAR
+          <TabsTrigger value="balanco" className="text-[11px] font-display tracking-wider">
+            BALANÇO
           </TabsTrigger>
         </TabsList>
 
@@ -286,8 +305,8 @@ function CentralPage() {
 
               <div className="text-[11px] text-muted-foreground">
                 Precisa da contagem por bar e estado?{" "}
-                <Link to="/app/bi" className="text-primary underline underline-offset-2">
-                  Abrir o BI de barris
+                <Link to="/app/operacao" className="text-primary underline underline-offset-2">
+                  Abrir Barris (contagem)
                 </Link>
                 .
               </div>
@@ -301,19 +320,54 @@ function CentralPage() {
             <EstoquePanel />
           </Suspense>
         </TabsContent>
-        <TabsContent value="cargas" className="mt-2">
-          <Suspense fallback={<TabFallback />}>
-            <CargasPanel />
-          </Suspense>
+        <TabsContent value="entradas" className="mt-2">
+          <p className="text-[11px] text-muted-foreground mb-3">
+            Três jeitos de dar entrada de barril no estoque — todos alimentam o mesmo lugar.
+            Escolha pelo que você tem em mãos.
+          </p>
+          <Tabs defaultValue="manual">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="manual" className="text-[10px] font-display tracking-wider">
+                MANUAL / CARGA
+              </TabsTrigger>
+              <TabsTrigger value="nf" className="text-[10px] font-display tracking-wider">
+                NOTA FISCAL
+              </TabsTrigger>
+              <TabsTrigger value="csv" className="text-[10px] font-display tracking-wider">
+                IMPORTAR CSV
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="manual" className="mt-2">
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Entrada rápida, digitando a quantidade e anexando foto. Para o dia a dia.
+              </p>
+              <Suspense fallback={<TabFallback />}>
+                <CargasPanel />
+              </Suspense>
+            </TabsContent>
+            <TabsContent value="nf" className="mt-2">
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Cadastra a NF (PDF ou foto) e concilia para virar entrada. Deixa o documento
+                anexado para auditoria.
+              </p>
+              <Suspense fallback={<TabFallback />}>
+                <NotasPanel />
+              </Suspense>
+            </TabsContent>
+            <TabsContent value="csv" className="mt-2">
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Várias entradas de uma vez, via planilha. Use quando tiver muitas notas juntas
+                (ex.: o CSV consolidado das NFs).
+              </p>
+              <Suspense fallback={<TabFallback />}>
+                <ImportarPanel />
+              </Suspense>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
-        <TabsContent value="notas" className="mt-2">
+        <TabsContent value="balanco" className="mt-2">
           <Suspense fallback={<TabFallback />}>
-            <NotasPanel />
-          </Suspense>
-        </TabsContent>
-        <TabsContent value="importar" className="mt-2">
-          <Suspense fallback={<TabFallback />}>
-            <ImportarPanel />
+            <BalancoPanel />
           </Suspense>
         </TabsContent>
       </Tabs>

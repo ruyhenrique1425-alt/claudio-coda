@@ -150,17 +150,75 @@ dedup, nomes) é feito fora e importado como CSV limpo.
   novas ainda não tipadas, usar `(supabase as any)` e ler de forma resiliente
   (try/catch), como em `app.bi.tsx` (rotas) e `app.central.tsx`.
 
+## Menu lateral (agrupado por intenção)
+
+Definido em `NAV_SECTIONS` (`src/components/AppShell.tsx`). Telas que
+compartilhavam a mesma informação viraram **abas** de um destino único; as
+rotas antigas continuam existindo (links e URLs salvas seguem funcionando),
+apenas saíram do menu.
+
+| Grupo    | Itens                                                        |
+|----------|--------------------------------------------------------------|
+| Operação | Início · **Barris** · Inventários · Mapa · Manutenção · Equipe de Bar |
+| Estoque  | Central de Estoque · Abastecimento MEEP                       |
+| Análise  | **Consumo** · Relatório                                       |
+| Sistema  | Backups · Governança · Meu perfil                             |
+
+Consolidações (padrão de abas lazy, o mesmo já usado em `app.central`):
+- **Barris** (`app.operacao`) = aba *Cobertura & Rotas* + aba *Contagem (BI)*.
+  As duas telas repetiam a tabela de reposição por rota. `app.bi` exporta
+  `BIPage` e vira aba; `/app/bi` continua acessível.
+- **Consumo** (`app.consumo`) = aba *Ranking* (a tela que já existia) + aba
+  *Por bar (real)* (`app.consumo-bar`) + aba *Ao longo do tempo*
+  (`app.consumo-tempo`). Ambas exportam seus componentes.
+- **Central de Estoque** (`app.central`) — consolidação que já existia:
+  Visão Geral + Estoque + Entradas + Notas + Importar.
+
+De 16 itens soltos para 13 em 4 grupos. `Abastecimento MEEP` ficou em
+**Estoque** (e não em Análise) de propósito: é barril *entregue*, não consumo —
+a distinção que o gestor pediu para não misturar.
+
 ## Estrutura do app (rotas principais)
 
-- `app.index` — Dashboard (bares ordenados alfabeticamente, alertas de reposição).
+- `app.index` — **Dashboard / CENTRAL DE OPERAÇÃO** (tela inicial). Resumo
+  executivo, alertas de reposição, missões pendentes e:
+  - **BARRIS CONSUMIDOS** com filtro de período (Hoje/7 dias/Tudo) e seletor de
+    fonte: **vazios recolhidos** (`empties_removed`, fluxo operacional) ou
+    **MEEP** (`meep_consumo_bar`, venda real). ⚠️ Usa tabelas de FLUXO, não o
+    `vazio` do inventário — este é uma *foto* e somar vários dias duplicaria.
+    O teto antigo (`Math.min(vazios, padrão)`) foi removido: subestimava o
+    consumo de quem passava do padrão.
+  - **TOP BARES POR CONSUMO** (ranking geral com barra proporcional).
+  - **BARRIS NOS BARES POR ESTADO** — plugado/fechado/vazio × marca (foto do
+    último inventário).
+  - **ESTOQUE NOS ARMAZÉNS** — DISPEL e Allstar por marca.
+  - **CHOPPS MAIS GELADOS** — top 5 por menor temperatura do dia
+    (`bar_temperature_checks`, slots 11h/17h/22h; meta ≤ -1 °C).
+- `app.operacao` — **Cobertura e Rotas** (planejamento, refetch 60s):
+  KPIs de decisão (carregar agora, vazios a recolher, estoque, **cobertura em
+  dias**), painel de alertas por severidade (ruptura de estoque vs. reposição,
+  invariante do comodato, bares zerados/sem inventário/sem padrão), **pallet por
+  rota** ordenado pela rota que mais precisa de barril, ranking "quem está para
+  secar" (% do padrão atendido, pior primeiro) e ritmo de consumo diário.
+  ⚠️ Respeita a regra do gestor: **consumo não entra no cálculo de reposição** —
+  reposição vem do inventário (padrão − cheios); consumo só alimenta ritmo e
+  cobertura, sempre rotulados como estimativa.
+  (Nome escolhido para não colidir com o dashboard, que já se chamava "Central
+  de Operação".)
 - `app.bi` — **BI de barris**: contagem exata por marca/estado + estoques +
   sugestão de reposição por rota.
-- `app.central` — **Central de Estoque** (fusão): abas Visão Geral (estoque,
-  comodato, falta p/ padrão, vazios, NFs) + Estoque + Entradas(Cargas) + Notas +
-  Importar, carregadas sob demanda (lazy). As telas `app.estoque/cargas/notas/
-  importar` seguem existindo como rotas mas saíram do menu (viraram abas). Seus
-  componentes são exportados (`EstoquePage`, `CargasHeinekenPage`, `NotasPage`,
-  `ImportarPage`).
+- `app.central` — **Central de Estoque** (fusão): **4 abas** — Visão Geral
+  (estoque, comodato, falta p/ padrão, vazios, NFs) + Estoque + **Entradas** +
+  Balanço. Carregadas sob demanda (lazy).
+  ⚠️ **Entradas unifica os 3 caminhos de dar entrada de barril** (antes eram 3
+  abas separadas — Entradas/Notas/Importar — que confundiam por servir ao mesmo
+  fim). Agora são **sub-abas** dentro de Entradas:
+  - **Manual / Carga** (`CargasHeinekenPage`) — entrada rápida com foto.
+  - **Nota Fiscal** (`NotasPage`) — cadastra NF (PDF/foto) e concilia.
+  - **Importar CSV** (`ImportarPage`) — entrada em massa por planilha.
+  As rotas `app.estoque/cargas/notas/importar` seguem existindo (links antigos
+  funcionam); os componentes são exportados (`EstoquePage`, `CargasHeinekenPage`,
+  `NotasPage`, `ImportarPage`).
 - `app.bars.$barId` — detalhe do bar (abas inventário/reposição/missões/equipe/
   consumo/config). Reposição sugere plugado fixo e reposição = vazios.
 - `app.consumo` — ranking de consumo. `app.consumo-tempo` — **série temporal**
@@ -212,11 +270,47 @@ consumo/central: gestor ou manutenção. `equipe_bar` só vê `/app/equipe-bar`.
 
 ## Pendências que dependem do gestor
 
-1. **Confirmar nomes reais dos bares** no banco (`bars.name`) → para as
-   migrations de rotas/padrões e o `bar_id` do consumo/abastecimento casarem.
-2. **Vínculo cartão→bar** do evento de estoque (feito no app, painel "Vincular
-   cartões").
-3. **Zel Café / Bar da Pista** (parceiros): entram em rota/padrão?
+1. **Confirmar nomes reais dos bares** no banco (`bars.name`). A migration
+   `20260723120000_rotas_e_padroes.sql` foi ajustada para tentar **duas
+   variantes de nome** por bar (ex.: 'Fundo' e 'Fundo (arquibancada)'), pois
+   foi encontrada inconsistência entre ela e `20260724130000_seed_consumo_meep.sql`
+   (esta usa nomes vindos dos relatórios reais da MEEP: "Fundo (arquibancada)",
+   "Choperia (1+2)", "Vila 2 maior/menor" etc.). Isso reduz o risco de falha,
+   mas **ainda precisa confirmação**: se `bars.name` usa uma terceira variação,
+   ou se "Choperia" é 1 ponto físico só (não 2), ajustar o mapeamento na
+   migration. Rodar o `SELECT` do Passo 2 do `LOVABLE_STEPS.md` para conferir.
+2. **Vínculo cartão→bar** do evento de estoque — painel "Vincular cartões" em
+   `app.abastecimento-meep` já funciona corretamente (confirmado no código);
+   falta só o gestor preencher os cartões de fato.
+3. **Zel Café / Bar da Pista** (parceiros): entram em rota/padrão? (decisão de
+   negócio, não implementada ainda)
 4. **OK + backup** antes de qualquer passo destrutivo (Fase 5: zerar estoque /
    reiniciar contagem mantendo config, mudando só barris).
-5. (Opcional) App ler o `.xls` bruto da MEEP direto (hoje: parse externo → CSV limpo).
+5. ~~App ler o `.xls` bruto da MEEP direto~~ **Feito.** Novo modo "Consumo MEEP
+   (.xls bruto por bar)" em `app.importar` lê o arquivo cru da MEEP direto
+   (extrai qtd embutida no nome do produto, filtra CHOPP, detecta marca, data
+   serial do Excel, soma estornos), sem precisar do CSV limpo intermediário.
+   O usuário só seleciona o bar (dropdown com o mapa MEEP→bar já preenchido).
+
+## Bugs corrigidos em `app.importar.tsx` (auditoria contra o schema real)
+
+Achados comparando o código com as migrations (não suposição — `bars` não tem
+coluna `code`, confirmado em `20260717202752_...sql`):
+- Modos **"Padrões de estoque"**, **"Cadastro de bares"** e **"Abastecimento em
+  lote"** buscavam `bars.code` (coluna inexistente) → falhavam sempre. Agora
+  casam por `bars.name`.
+- Modo **"Cadastro de bares"** também gravava em colunas erradas (`code`,
+  `type`, `lat`, `lng` em vez de `bar_type`, `latitude`, `longitude`) e fazia
+  upsert por `code`, que nunca existiu. Reescrito para buscar por nome
+  (case-insensitive) e inserir/atualizar com as colunas reais.
+- Modo **"Entradas/saídas de estoque"**: usava `move_type = "recebimento_heineken"`,
+  valor que não existe no enum `warehouse_move_type` (só `entrada|transferencia|
+  abastecimento_bar|ajuste`) → toda entrada falhava. Corrigido para `"entrada"`.
+- Modo **"Abastecimento MEEP"**: buscava `id,name` mas o código lia
+  `cartao_meep` de cada bar (nunca vinha na query) → vínculo por cartão nunca
+  resolvia o bar. Corrigido para selecionar `cartao_meep` também.
+- `refills.photo_url` era `NOT NULL` sem default, o que quebrava qualquer
+  importação em lote de abastecimento (o CSV não tem foto). Nova migration
+  `20260724140000_refills_photo_url_opcional.sql` relaxa essa constraint
+  (aditivo, não destrutivo — reposições feitas pelo app continuam com foto no
+  fluxo normal).

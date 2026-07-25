@@ -82,15 +82,17 @@ export function BarsMap({
   onSelectBar,
   onMapClick,
   pickedPoint,
+  focusedBarId,
 }: {
   bars: Bar[];
   onSelectBar?: (id: string) => void;
   onMapClick?: (lat: number, lng: number) => void;
   pickedPoint?: { lat: number; lng: number } | null;
+  focusedBarId?: string | null;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const markersRef = useRef<Record<string, any>>({});
   const pickedMarkerRef = useRef<any>(null);
   const userMarkerRef = useRef<any>(null);
   const userAccuracyRef = useRef<any>(null);
@@ -206,8 +208,9 @@ export function BarsMap({
   useEffect(() => {
     const g = window.google?.maps;
     if (!mapRef.current || !g?.Marker || !g?.SymbolPath) return;
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = bars.map((b) => {
+    Object.values(markersRef.current).forEach((m: any) => m.setMap(null));
+    const next: Record<string, any> = {};
+    bars.forEach((b) => {
       const m = new g.Marker({
         position: { lat: b.latitude, lng: b.longitude },
         map: mapRef.current,
@@ -222,9 +225,27 @@ export function BarsMap({
         },
       });
       m.addListener("click", () => onSelectBar?.(b.id));
-      return m;
+      next[b.id] = m;
     });
+    markersRef.current = next;
   }, [bars, onSelectBar]);
+
+  // Focar/bouncear o marcador selecionado antes de navegar
+  useEffect(() => {
+    const g = window.google?.maps;
+    if (!mapRef.current || !g?.Animation) return;
+    Object.values(markersRef.current).forEach((m: any) => m.setAnimation(null));
+    if (!focusedBarId) return;
+    const m = markersRef.current[focusedBarId];
+    const b = bars.find((x) => x.id === focusedBarId);
+    if (!m || !b) return;
+    mapRef.current.panTo({ lat: b.latitude, lng: b.longitude });
+    const currentZoom = mapRef.current.getZoom?.() ?? 15;
+    if (currentZoom < 17) mapRef.current.setZoom(17);
+    m.setAnimation(g.Animation.BOUNCE);
+    const t = window.setTimeout(() => m.setAnimation(null), 1400);
+    return () => window.clearTimeout(t);
+  }, [focusedBarId, bars]);
 
   useEffect(() => {
     const g = window.google?.maps;

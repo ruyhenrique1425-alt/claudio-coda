@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { IDEAL_TEMP, TEMP_ALERTA } from "@/lib/operacao";
 import { useSession, usePermissions } from "@/hooks/useSession";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -144,12 +145,14 @@ function BarDetail() {
           .eq("bar_id", barId)
           .order("performed_at", { ascending: false })
           .limit(10),
+        // SEM limit: este resultado alimenta o total de "barris consumidos"
+        // do bar (ver `consumo` abaixo). Com limit(50) o número era truncado
+        // em silêncio assim que o bar passava de 50 recolhimentos.
         supabase
           .from("empties_removed")
           .select("*")
           .eq("bar_id", barId)
-          .order("performed_at", { ascending: false })
-          .limit(50),
+          .order("performed_at", { ascending: false }),
       ]);
       setBar(b);
       setMachines(m ?? []);
@@ -1422,7 +1425,6 @@ const TEMP_SLOTS = [
   { v: "t_17", l: "17h" },
   { v: "t_22", l: "22h" },
 ] as const;
-const IDEAL_TEMP = -1;
 
 function MissionsSection({ barId }: { barId: string }) {
   const [temps, setTemps] = useState<any[]>([]);
@@ -1480,6 +1482,8 @@ function MissionsSection({ barId }: { barId: string }) {
 
 function tempVerdict(t: number) {
   if (t <= IDEAL_TEMP) return { seal: true, label: "PADRÃO DISPEL · SUPER GELADO" };
+  // Regra do gestor: acima de +1 °C é chopp quente e precisa de ação.
+  if (t > TEMP_ALERTA) return { seal: false, alerta: true, label: "QUENTE · VERIFICAR CHOPEIRA" };
   return { seal: false, label: "REGULAR TEMPERATURA" };
 }
 

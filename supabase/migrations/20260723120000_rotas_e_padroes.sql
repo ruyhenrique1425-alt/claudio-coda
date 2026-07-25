@@ -50,40 +50,62 @@ INSERT INTO public.rotas (nome, ordem) VALUES
 ON CONFLICT (nome) DO NOTHING;
 
 -- 4) Mapeamento bar → rota + padrão (H = heineken, A = amstel) -----------
---    EDITE apenas a 1ª coluna (nome_no_app) se o nome no banco for diferente.
+--    ⚠️ Cada bar tem uma LISTA de nomes candidatos (array), não um nome só.
+--    Motivo: a migration 20260724130000_seed_consumo_meep.sql (gerada dos
+--    relatórios reais da MEEP, mapeamento confirmado pelo gestor) usa uma
+--    convenção diferente da que este arquivo usava originalmente:
+--      'Fundo'      vs 'Fundo (arquibancada)'
+--      'Meio'       vs 'Meio (arquibancada)'
+--      'Entrada'    vs 'Entrada (arquibancada)'
+--      'Nova'       vs 'Nova (arquibancada)'
+--      'Choperia 1'+'Choperia 2' vs 'Choperia (1+2)' (ponto único no seed)
+--      'Vila 2 ma'/'me' vs 'Vila 2 maior'/'menor'
+--      'Vila 3 ma'/'me' vs 'Vila 3 maior'/'menor'
+--    Sem saber qual convenção está de fato em `bars.name`, tentamos as duas
+--    (primeiro candidato que casar exato vence — sem fuzzy). Se `bars.name`
+--    usa uma terceira variação, edite os arrays abaixo.
+--    ⚠️ Caso especial Choperia: se no banco só existe UM bar "Choperia
+--    (1+2)" (não dois pontos separados), as duas linhas abaixo resolvem
+--    para o MESMO bar_id e o padrão final gravado será o da última que
+--    rodar (Choperia 2: 6/6) — sem problema aqui pois os dois têm o mesmo
+--    valor (6/6), mas CONFIRME com o gestor se Choperia é 1 ou 2 pontos
+--    físicos antes de usar esse padrão para reposição real.
 DO $$
 DECLARE
   m        RECORD;
+  cand     text;
   v_bar    uuid;
   v_rota   uuid;
   faltando text := '';
 BEGIN
   FOR m IN
     SELECT * FROM (VALUES
-      -- nome_no_app,   rota,     padrao_H, padrao_A
-      ('Fundo',        'Rota 1',   6,  6),
-      ('Meio',         'Rota 1',   6,  6),
-      ('Entrada',      'Rota 2',  10, 10),
-      ('Nova',         'Rota 2',   6,  6),
-      ('Vila 1',       'Rota 3',  20, 20),
-      ('Choperia 1',   'Rota 3',   6,  6),
-      ('Choperia 2',   'Rota 3',   6,  6),
-      ('Vila 2 ma',    'Rota 4',  20, 20),
-      ('Vila 2 me',    'Rota 4',   6,  6),
-      ('Vila 3 ma',    'Rota 4',  10, 10),
-      ('Vila 3 me',    'Rota 4',   6,  6),
-      ('Núcleos',      'Rota 5',  10, 10),
-      ('Churrascaria', 'Rota 5',   6,  6)
-    ) AS t(nome, rota, ph, pa)
+      -- nomes_candidatos (array),                          rota,     padrao_H, padrao_A
+      (ARRAY['Fundo','Fundo (arquibancada)'],                'Rota 1',   6,  6),
+      (ARRAY['Meio','Meio (arquibancada)'],                  'Rota 1',   6,  6),
+      (ARRAY['Entrada','Entrada (arquibancada)'],             'Rota 2',  10, 10),
+      (ARRAY['Nova','Nova (arquibancada)'],                   'Rota 2',   6,  6),
+      (ARRAY['Vila 1'],                                       'Rota 3',  20, 20),
+      (ARRAY['Choperia 1','Choperia (1+2)'],                  'Rota 3',   6,  6),
+      (ARRAY['Choperia 2','Choperia (1+2)'],                  'Rota 3',   6,  6),
+      (ARRAY['Vila 2 ma','Vila 2 maior'],                     'Rota 4',  20, 20),
+      (ARRAY['Vila 2 me','Vila 2 menor'],                     'Rota 4',   6,  6),
+      (ARRAY['Vila 3 ma','Vila 3 maior'],                     'Rota 4',  10, 10),
+      (ARRAY['Vila 3 me','Vila 3 menor'],                     'Rota 4',   6,  6),
+      (ARRAY['Núcleos'],                                      'Rota 5',  10, 10),
+      (ARRAY['Churrascaria'],                                 'Rota 5',   6,  6)
+    ) AS t(nomes, rota, ph, pa)
   LOOP
-    -- resolve o bar por match EXATO (sem caixa/espaços). Sem fuzzy, para
-    -- nunca atribuir ao bar errado. Nomes não encontrados são reportados.
-    SELECT id INTO v_bar FROM public.bars
-      WHERE btrim(lower(name)) = btrim(lower(m.nome)) LIMIT 1;
+    v_bar := NULL;
+    FOREACH cand IN ARRAY m.nomes LOOP
+      SELECT id INTO v_bar FROM public.bars
+        WHERE btrim(lower(name)) = btrim(lower(cand)) LIMIT 1;
+      EXIT WHEN v_bar IS NOT NULL;
+    END LOOP;
 
     IF v_bar IS NULL THEN
-      faltando := faltando || m.nome || ', ';
-      RAISE NOTICE 'BAR NÃO ENCONTRADO (padrão/rota não aplicados): %', m.nome;
+      faltando := faltando || array_to_string(m.nomes, '/') || ', ';
+      RAISE NOTICE 'BAR NÃO ENCONTRADO (padrão/rota não aplicados): %', array_to_string(m.nomes, ' / ');
       CONTINUE;
     END IF;
 

@@ -10,8 +10,8 @@ import {
   Beer,
   LogOut,
   LayoutDashboard,
+  Gauge,
   Wrench,
-  BarChart3,
   TrendingUp,
   CreditCard,
   Warehouse,
@@ -47,6 +47,7 @@ import {
 
 type NavKey =
   | "dashboard"
+  | "operacao"
   | "bi"
   | "central"
   | "map"
@@ -73,22 +74,51 @@ type NavItem = {
   key: NavKey;
 };
 
-const NAV: NavItem[] = [
-  { key: "dashboard", to: "/app", label: "DASHBOARD", icon: LayoutDashboard, exact: true },
-  { key: "bi", to: "/app/bi", label: "BI BARRIS", icon: BarChart3 },
-  { key: "map", to: "/app/map", label: "MAPA", icon: MapPin },
-  { key: "inventarios", to: "/app/inventarios", label: "INVENTÁRIOS", icon: ClipboardCheck },
-  { key: "central", to: "/app/central", label: "CENTRAL DE ESTOQUE", icon: Warehouse },
-  { key: "equipe", to: "/app/equipe-bar", label: "EQUIPE DE BAR", icon: CreditCard },
-  { key: "consumo", to: "/app/consumo", label: "CONSUMO", icon: BarChart3 },
-  { key: "consumotempo", to: "/app/consumo-tempo", label: "CONSUMO × TEMPO", icon: TrendingUp },
-  { key: "consumobar", to: "/app/consumo-bar", label: "CONSUMO POR BAR", icon: BarChart3 },
-  { key: "vendas", to: "/app/abastecimento-meep", label: "ABASTECIMENTO MEEP", icon: CreditCard },
-  { key: "manutencao", to: "/app/manutencao", label: "MANUTENÇÃO", icon: Wrench },
-  { key: "relatorio", to: "/app/relatorio", label: "RELATÓRIO", icon: FileText },
-  { key: "backups", to: "/app/backups", label: "BACKUPS", icon: Archive },
-  { key: "governanca", to: "/app/governanca", label: "GOVERNANÇA", icon: ShieldCheck },
-  { key: "perfil", to: "/app/perfil", label: "MEU PERFIL", icon: UserIcon },
+type NavSection = { titulo: string; itens: NavItem[] };
+
+// Menu agrupado por intenção. Telas que compartilhavam informação viraram abas
+// de um mesmo destino (Consumo = ranking + por bar + tempo; Barris = cobertura
+// + contagem; Central de Estoque = estoque + entradas + notas + importar).
+// As rotas antigas continuam existindo — só saíram do menu.
+const NAV_SECTIONS: NavSection[] = [
+  {
+    titulo: "Operação",
+    itens: [
+      { key: "dashboard", to: "/app", label: "INÍCIO", icon: LayoutDashboard, exact: true },
+      { key: "operacao", to: "/app/operacao", label: "BARRIS", icon: Gauge },
+      { key: "inventarios", to: "/app/inventarios", label: "INVENTÁRIOS", icon: ClipboardCheck },
+      { key: "map", to: "/app/map", label: "MAPA", icon: MapPin },
+      { key: "manutencao", to: "/app/manutencao", label: "MANUTENÇÃO", icon: Wrench },
+      { key: "equipe", to: "/app/equipe-bar", label: "EQUIPE DE BAR", icon: CreditCard },
+    ],
+  },
+  {
+    titulo: "Estoque",
+    itens: [
+      { key: "central", to: "/app/central", label: "CENTRAL DE ESTOQUE", icon: Warehouse },
+      {
+        key: "vendas",
+        to: "/app/abastecimento-meep",
+        label: "ABASTECIMENTO MEEP",
+        icon: CreditCard,
+      },
+    ],
+  },
+  {
+    titulo: "Análise",
+    itens: [
+      { key: "consumo", to: "/app/consumo", label: "CONSUMO", icon: TrendingUp },
+      { key: "relatorio", to: "/app/relatorio", label: "RELATÓRIO", icon: FileText },
+    ],
+  },
+  {
+    titulo: "Sistema",
+    itens: [
+      { key: "backups", to: "/app/backups", label: "BACKUPS", icon: Archive },
+      { key: "governanca", to: "/app/governanca", label: "GOVERNANÇA", icon: ShieldCheck },
+      { key: "perfil", to: "/app/perfil", label: "MEU PERFIL", icon: UserIcon },
+    ],
+  },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -103,6 +133,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     switch (key) {
       case "dashboard":
         return perms.canAccessDashboard;
+      case "operacao":
+        return perms.isGestor || perms.isManutencao;
       case "bi":
         return perms.isGestor || perms.isManutencao;
       case "central":
@@ -141,7 +173,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         return !!user;
     }
   };
-  const visibleNav = NAV.filter((n) => canSee(n.key));
+  const visibleSections = NAV_SECTIONS.map((s) => ({
+    ...s,
+    itens: s.itens.filter((n) => canSee(n.key)),
+  })).filter((s) => s.itens.length > 0);
 
   const alertsEnabled = !perms.loading && !!user && (perms.isGestor || perms.isManutencao);
   const { unread, clear, latestAlert, dismissAlert } = useMaintenanceAlerts(alertsEnabled);
@@ -199,31 +234,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
           <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {visibleNav.map(({ to, label, icon: Icon, exact, key }) => (
-                    <SidebarMenuItem key={to}>
-                      <SidebarMenuButton asChild isActive={isActive(to, exact)}>
-                        <Link
-                          to={to}
-                          className="font-display text-[11px] tracking-[0.15em] relative"
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{label}</span>
-                          {key === "manutencao" && unread > 0 && (
-                            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold animate-pulse">
-                              {unread > 99 ? "99+" : unread}
-                            </span>
-                          )}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {visibleSections.map((section) => (
+              <SidebarGroup key={section.titulo}>
+                <SidebarGroupLabel>{section.titulo}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {section.itens.map(({ to, label, icon: Icon, exact, key }) => (
+                      <SidebarMenuItem key={to}>
+                        <SidebarMenuButton asChild isActive={isActive(to, exact)}>
+                          <Link
+                            to={to}
+                            className="font-display text-[11px] tracking-[0.15em] relative"
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span>{label}</span>
+                            {key === "manutencao" && unread > 0 && (
+                              <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold animate-pulse">
+                                {unread > 99 ? "99+" : unread}
+                              </span>
+                            )}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
 
             {(isGestor || perms.isManutencao) && (
               <SidebarGroup>

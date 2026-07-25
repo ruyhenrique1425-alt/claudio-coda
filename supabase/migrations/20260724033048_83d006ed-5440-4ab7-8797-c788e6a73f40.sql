@@ -1,0 +1,22 @@
+INSERT INTO public.meep_consumo_bar (bar_id, bar_nome, data, marca, barris) VALUES
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-23', 'amstel', 12),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-23', 'heineken', 11),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Vila 3 maior') LIMIT 1), 'Vila 3 maior', '2026-07-18', 'amstel', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Vila 3 maior') LIMIT 1), 'Vila 3 maior', '2026-07-18', 'heineken', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Vila 3 maior') LIMIT 1), 'Vila 3 maior', '2026-07-22', 'amstel', 3),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Vila 3 maior') LIMIT 1), 'Vila 3 maior', '2026-07-22', 'heineken', 4),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Vila 3 maior') LIMIT 1), 'Vila 3 maior', '2026-07-23', 'amstel', 21),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Vila 3 maior') LIMIT 1), 'Vila 3 maior', '2026-07-23', 'heineken', 19),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 3 menor') LIMIT 1), 'Villa 3 menor', '2026-07-18', 'amstel', 6),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 3 menor') LIMIT 1), 'Villa 3 menor', '2026-07-18', 'heineken', 6),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 3 menor') LIMIT 1), 'Villa 3 menor', '2026-07-23', 'amstel', 13),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 3 menor') LIMIT 1), 'Villa 3 menor', '2026-07-23', 'heineken', 12),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-18', 'amstel', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-18', 'heineken', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-19', 'amstel', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-19', 'heineken', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-22', 'amstel', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-22', 'heineken', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-23', 'amstel', 10),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Zelda café') LIMIT 1), 'Zelda café', '2026-07-23', 'heineken', 10)
+ON CONFLICT (bar_nome, data, marca) DO UPDATE SET barris = EXCLUDED.barris, bar_id = COALESCE(public.meep_consumo_bar.bar_id, EXCLUDED.bar_id);

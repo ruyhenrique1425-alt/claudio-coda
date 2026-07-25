@@ -1,0 +1,22 @@
+INSERT INTO public.meep_consumo_bar (bar_id, bar_nome, data, marca, barris) VALUES
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 1 autoatendimento') LIMIT 1), 'Villa 1 autoatendimento', '2026-07-22', 'amstel', 4),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 1 autoatendimento') LIMIT 1), 'Villa 1 autoatendimento', '2026-07-22', 'heineken', 9),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 1 autoatendimento') LIMIT 1), 'Villa 1 autoatendimento', '2026-07-23', 'amstel', 28),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 1 autoatendimento') LIMIT 1), 'Villa 1 autoatendimento', '2026-07-23', 'heineken', 21),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-18', 'amstel', 14),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-18', 'heineken', 14),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-19', 'amstel', 5),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-19', 'heineken', 4),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-20', 'amstel', 4),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-20', 'heineken', 4),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-22', 'amstel', 7),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-22', 'heineken', 5),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-23', 'amstel', 20),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 autoatendimento') LIMIT 1), 'Villa 2 autoatendimento', '2026-07-23', 'heineken', 19),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-18', 'amstel', 6),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-18', 'heineken', 6),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-21', 'amstel', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-21', 'heineken', 2),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-22', 'amstel', 3),
+  ((SELECT id FROM public.bars WHERE lower(btrim(name))=lower('Villa 2 menor') LIMIT 1), 'Villa 2 menor', '2026-07-22', 'heineken', 1)
+ON CONFLICT (bar_nome, data, marca) DO UPDATE SET barris = EXCLUDED.barris, bar_id = COALESCE(public.meep_consumo_bar.bar_id, EXCLUDED.bar_id);
