@@ -13,27 +13,132 @@ import { logAudit } from "@/lib/audit";
 export const Route = createFileRoute("/app/importar")({ component: ImportarPage });
 
 type Row = Record<string, any>;
-type Mode = "padroes" | "bares" | "abastecimento" | "estoque" | "meep" | "consumo" | "consumo_bruto";
+type Mode =
+  "padroes" | "bares" | "abastecimento" | "estoque" | "meep" | "consumo" | "consumo_bruto";
 
 // Mapa nome-na-MEEP → bar real, confirmado pelo gestor (ver SKILL.md).
 // Usado só para pré-preencher o seletor do modo "Consumo MEEP (.xls bruto)";
 // o nome final gravado é sempre o que estiver selecionado/editado no campo.
+// Mapa nome-MEEP (cabeçalho do .xls) → nome REAL do bar (bars.name, do backup),
+// para o import resolver bar_id. `origem` pode ter variações separadas por "/".
 const MEEP_BAR_MAP: { origem: string; bar: string }[] = [
-  { origem: "Villa 2 Bar 1", bar: "Vila 2 maior" },
-  { origem: "Villa 2 Bar 2", bar: "Vila 2 menor" },
+  { origem: "Villa 2 Bar 1", bar: "Villa 2 autoatendimento" },
+  { origem: "Villa 2 Bar 2", bar: "Villa 2 menor" },
   { origem: "Villa 3 Bar 1", bar: "Vila 3 maior" },
-  { origem: "Villa 3 Bar 2", bar: "Vila 3 menor" },
-  { origem: "Arquibancada 1", bar: "Nova (arquibancada)" },
-  { origem: "Arquibancada 2", bar: "Entrada (arquibancada)" },
-  { origem: "Arquibancada 3", bar: "Meio (arquibancada)" },
-  { origem: "Arquibancada 4", bar: "Fundo (arquibancada)" },
-  { origem: "Vila 1 / Villa 1", bar: "Vila 1" },
-  { origem: "Alameda dos núcleos", bar: "Núcleos" },
-  { origem: "Chopperia", bar: "Choperia (1+2)" },
-  { origem: "Churrascaria", bar: "Churrascaria" },
-  { origem: "Zel cafe", bar: "Zel Café" },
-  { origem: "Bar da pista", bar: "Bar da Pista" },
+  { origem: "Villa 3 Bar 2", bar: "Villa 3 menor" },
+  { origem: "Arquibancada 1", bar: "Nova arquibancada" },
+  { origem: "Arquibancada 2", bar: "Entrada arquibancada" },
+  { origem: "Arquibancada 3", bar: "Meio arquibancada" },
+  { origem: "Arquibancada 4", bar: "Fundo arquibancada" },
+  { origem: "Vila 1 / Villa 1", bar: "Villa 1 autoatendimento" },
+  { origem: "Alameda dos núcleos / Nucleos / Núcleos", bar: "Nucleos" },
+  { origem: "Chopperia / Choperia", bar: "Chopperia (1+2)" },
+  { origem: "Churrascaria", bar: "Churrascaria liberdade" },
+  { origem: "Zel cafe / Zelda café / Zelda cafe", bar: "Zelda café" },
+  { origem: "Bar da pista", bar: "Pista de areia" },
 ];
+
+// Normaliza para comparar nomes (minúsculas, sem acento, espaços colapsados).
+function normNome(s: string): string {
+  return String(s ?? "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Resolve o nome do cabeçalho MEEP para o nome real do bar (ou devolve o próprio).
+function resolveBarNome(headerName: string): string {
+  const n = normNome(headerName);
+  for (const { origem, bar } of MEEP_BAR_MAP) {
+    if (origem.split("/").some((o) => normNome(o) === n)) return bar;
+  }
+  return headerName.trim();
+}
+
+// Acha o nome do bar no cabeçalho do .xls de consumo (célula da coluna 1,
+// antes da linha "Produto", que não seja "Consumos"/data/local/resumo).
+function detectBarFromAoa(aoa: any[][], headerRow: number): string {
+  const limit = headerRow > 0 ? headerRow : aoa.length;
+  for (let i = 0; i < limit; i++) {
+    const v = String(aoa[i]?.[1] ?? "").trim();
+    if (!v) continue;
+    const low = v.toLowerCase();
+    if (
+      low === "consumos" ||
+      low.startsWith("consumo:") ||
+      /mangalarga|exportado|avenida|^\w+day,/i.test(v)
+    )
+      continue;
+    return v;
+  }
+  return "";
+}
+
+// Lê a planilha bruta de CONSUMO da MEEP e devolve o bar (do cabeçalho) e as
+// linhas agregadas por (data, marca) — só chopps, estornos somados com sinal.
+function parseConsumoBrutoSheet(
+  XLSX: any,
+  sheet: any,
+): { bar: string; rows: { data: string; marca: string; barris: number }[] } | null {
+  const aoa: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+  let headerRow = -1;
+  let colProduto = -1;
+  for (let i = 0; i < aoa.length; i++) {
+    const idx = (aoa[i] ?? []).findIndex(
+      (c: any) =>
+        String(c ?? "")
+          .trim()
+          .toLowerCase() === "produto",
+    );
+    if (idx >= 0) {
+      headerRow = i;
+      colProduto = idx;
+      break;
+    }
+  }
+  if (headerRow === -1) return null;
+  const headerCells = (aoa[headerRow] ?? []).map((c: any) =>
+    String(c ?? "")
+      .trim()
+      .toLowerCase(),
+  );
+  const colData = headerCells.findIndex((c: string) => c.includes("data"));
+  const bar = detectBarFromAoa(aoa, headerRow);
+
+  const acc = new Map<string, { data: string; marca: string; barris: number }>();
+  for (let i = headerRow + 1; i < aoa.length; i++) {
+    const row = aoa[i] ?? [];
+    const produtoCell = row[colProduto];
+    if (produtoCell == null || /^total/i.test(String(produtoCell).trim())) continue;
+    const parsed = parseProdutoQtd(String(produtoCell));
+    if (!parsed) continue;
+    if (!/chopp/i.test(parsed.nome)) continue; // só chopps
+    const marca = /heineken/i.test(parsed.nome)
+      ? "heineken"
+      : /amstel/i.test(parsed.nome)
+        ? "amstel"
+        : null;
+    if (!marca) continue;
+    let dataISO: string | null = null;
+    if (colData >= 0) {
+      const dv = row[colData];
+      if (typeof dv === "number") dataISO = excelSerialToISO(dv);
+      else if (dv) {
+        const s = String(dv).trim();
+        const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+        dataISO = br ? `${br[3]}-${br[2]}-${br[1]}` : s.slice(0, 10);
+      }
+    }
+    if (!dataISO) continue;
+    const key = `${dataISO}|${marca}`;
+    const cur = acc.get(key) ?? { data: dataISO, marca, barris: 0 };
+    cur.barris += parsed.qtd;
+    acc.set(key, cur);
+  }
+  return { bar, rows: Array.from(acc.values()) };
+}
 
 // Converte serial de data do Excel (base 1899-12-30) para "YYYY-MM-DD".
 function excelSerialToISO(serial: number): string {
@@ -73,91 +178,58 @@ export function ImportarPage() {
     );
   }
 
-  const onFile = async (f: File | null) => {
-    if (!f) return;
-    setFileName(f.name);
+  const onFile = async (files: FileList | null) => {
+    const list = files ? Array.from(files) : [];
+    if (!list.length) return;
     setResult(null);
     try {
-      const buf = await f.arrayBuffer();
       // xlsx é pesado (~560 kB); só carrega quando um arquivo é escolhido.
       const XLSX = await import("xlsx");
-      const wb = XLSX.read(buf, { type: "array" });
-      const sheetName = wb.SheetNames.find((n) => /consumo/i.test(n)) ?? wb.SheetNames[0];
-      const sheet = wb.Sheets[sheetName];
 
       if (mode === "consumo_bruto") {
-        if (!meepBarSelecionado) {
-          toast.error("Selecione o bar (nome MEEP) antes de escolher o arquivo");
-          return;
-        }
-        // Planilha bruta: cabeçalho variável no topo, tabela de produtos
-        // começa na linha "Produto". Lê como matriz para achar isso sem
-        // depender do número exato da linha.
-        const aoa: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
-        let headerRow = -1;
-        let colProduto = -1;
-        for (let i = 0; i < aoa.length; i++) {
-          const idx = (aoa[i] ?? []).findIndex(
-            (c) => String(c ?? "").trim().toLowerCase() === "produto",
-          );
-          if (idx >= 0) {
-            headerRow = i;
-            colProduto = idx;
-            break;
+        // Vários .xls de uma vez: detecta o bar pelo cabeçalho de cada arquivo.
+        const all: Row[] = [];
+        const ignorados: string[] = [];
+        const barsLidos = new Set<string>();
+        for (const f of list) {
+          const buf = await f.arrayBuffer();
+          const wb = XLSX.read(buf, { type: "array" });
+          const sheetName = wb.SheetNames.find((n) => /consumo/i.test(n)) ?? wb.SheetNames[0];
+          const parsed = parseConsumoBrutoSheet(XLSX, wb.Sheets[sheetName]);
+          if (!parsed || !parsed.rows.length) {
+            ignorados.push(f.name + " (sem chopp)");
+            continue;
           }
-        }
-        if (headerRow === -1) {
-          toast.error('Não encontrei a coluna "Produto" na planilha — confira o arquivo');
-          return;
-        }
-        const headerCells = (aoa[headerRow] ?? []).map((c) => String(c ?? "").trim().toLowerCase());
-        const colData = headerCells.findIndex((c) => c.includes("data"));
-
-        // Acumula por (data, marca) somando barris (estornos entram negativos).
-        const acc = new Map<string, { data: string; marca: string; barris: number }>();
-        for (let i = headerRow + 1; i < aoa.length; i++) {
-          const row = aoa[i] ?? [];
-          const produtoCell = row[colProduto];
-          if (produtoCell == null || /^total/i.test(String(produtoCell).trim())) continue;
-          const parsed = parseProdutoQtd(String(produtoCell));
-          if (!parsed) continue;
-          if (!/chopp/i.test(parsed.nome)) continue; // só chopps
-          const marca = /heineken/i.test(parsed.nome)
-            ? "heineken"
-            : /amstel/i.test(parsed.nome)
-              ? "amstel"
-              : null;
-          if (!marca) continue;
-          let dataISO: string | null = null;
-          if (colData >= 0) {
-            const dv = row[colData];
-            if (typeof dv === "number") dataISO = excelSerialToISO(dv);
-            else if (dv) {
-              const s = String(dv).trim();
-              const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-              dataISO = br ? `${br[3]}-${br[2]}-${br[1]}` : s.slice(0, 10);
-            }
+          // Bar: override manual (se escolhido) senão o do cabeçalho, resolvido
+          // para o nome real via MEEP_BAR_MAP.
+          const barNome = meepBarSelecionado || resolveBarNome(parsed.bar);
+          if (!barNome) {
+            ignorados.push(f.name + " (bar não detectado)");
+            continue;
           }
-          if (!dataISO) continue;
-          const key = `${dataISO}|${marca}`;
-          const cur = acc.get(key) ?? { data: dataISO, marca, barris: 0 };
-          cur.barris += parsed.qtd;
-          acc.set(key, cur);
+          barsLidos.add(barNome);
+          for (const r of parsed.rows) all.push({ bar: barNome, ...r });
         }
-        const aggregated = Array.from(acc.values()).map((v) => ({
-          bar: meepBarSelecionado,
-          data: v.data,
-          marca: v.marca,
-          barris: v.barris,
-        }));
-        if (!aggregated.length) {
-          toast.error("Nenhuma linha de chopp reconhecida nesse arquivo");
+        setFileName(
+          `${list.length} arquivo(s) · ${barsLidos.size} bar(es): ${[...barsLidos].join(", ") || "—"}`,
+        );
+        if (ignorados.length) toast.warning(`Ignorados: ${ignorados.join(" · ")}`);
+        if (!all.length) {
+          toast.error("Nenhuma linha de chopp reconhecida nos arquivos");
+          setRows([]);
           return;
         }
-        setRows(aggregated);
+        setRows(all);
         return;
       }
 
+      // Outros modos: um arquivo só (CSV/xlsx plano).
+      const f = list[0];
+      setFileName(f.name);
+      const buf = await f.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheetName = wb.SheetNames.find((n) => /consumo/i.test(n)) ?? wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
       const json = XLSX.utils.sheet_to_json<Row>(sheet, { defval: null });
       setRows(json);
     } catch (e: any) {
@@ -577,19 +649,20 @@ export function ImportarPage() {
         {mode === "consumo_bruto" ? (
           <div className="space-y-2 text-xs text-muted-foreground">
             <p>
-              Sobe o <b>.xls bruto</b> exportado da MEEP (sheet "Consumos"), um arquivo por bar —
-              sem precisar limpar/converter pra CSV antes. Escolha o bar correspondente ao arquivo
-              (o mapa nome-MEEP → bar já vem preenchido conforme confirmado com o gestor).
+              Sobe os <b>.xls brutos</b> exportados da MEEP (sheet "Consumos") — pode selecionar{" "}
+              <b>vários de uma vez</b>. O bar é <b>detectado automaticamente</b> pelo cabeçalho de
+              cada arquivo e mapeado para o nome real. Como o relatório é cumulativo, reimportar não
+              duplica (soma por bar/dia/marca é substituída).
             </p>
             <select
               className="w-full border rounded h-10 px-2 text-sm bg-background"
               value={meepBarSelecionado}
               onChange={(e) => setMeepBarSelecionado(e.target.value)}
             >
-              <option value="">— selecione o bar deste arquivo —</option>
+              <option value="">— detectar bar automaticamente (recomendado) —</option>
               {MEEP_BAR_MAP.map((m) => (
                 <option key={m.bar} value={m.bar}>
-                  {m.bar} (MEEP: {m.origem})
+                  Forçar: {m.bar} (MEEP: {m.origem})
                 </option>
               ))}
             </select>
@@ -605,8 +678,8 @@ export function ImportarPage() {
           <Input
             type="file"
             accept=".xlsx,.xls,.csv"
-            disabled={mode === "consumo_bruto" && !meepBarSelecionado}
-            onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+            multiple={mode === "consumo_bruto"}
+            onChange={(e) => onFile(e.target.files)}
           />
           {fileName && (
             <p className="text-xs mt-2 text-muted-foreground">
