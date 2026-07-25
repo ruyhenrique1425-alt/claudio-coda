@@ -314,3 +314,16 @@ coluna `code`, confirmado em `20260717202752_...sql`):
   `20260724140000_refills_photo_url_opcional.sql` relaxa essa constraint
   (aditivo, não destrutivo — reposições feitas pelo app continuam com foto no
   fluxo normal).
+
+## Notas Fiscais (entradas de estoque) — consolidadas no repo
+
+As 17 NFs da Heineken (Mangalarga) foram lidas e separadas em
+`docs/csv-notas-fiscais/` (guia: `GUIA-IMPORTACAO-NFS.md`):
+- `import-estoque-nfs.csv` — chopp líquido ("Draft Beer 50L", CFOP 5403) no
+  formato do modo **"Estoque"** do importador (warehouse_code,brand,quantidade,
+  direction,observacoes). É o que **sobe o saldo do DISPEL**.
+- `comodato-vasilhames.csv` — cascos (CFOP 5908), referência da conta de comodato.
+- `conferencia-nfs-completa.csv` — auditoria item a item de todas as NFs.
+⚠️ Importar só **depois** do fix `20260724150000_fix_move_type_invalido.sql`
+(senão a entrada falha no enum). Passo 4b do `LOVABLE_STEPS.md`. PDFs originais
+em `docs/` não versionados — vêm no pacote de entrega.

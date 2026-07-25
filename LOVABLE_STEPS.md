@@ -70,6 +70,17 @@ O consumo até hoje já vem no seed (Passo 1.4). Para novos relatórios:
 - **Como verificar:** **CONSUMO POR BAR** mostra os bares com Heineken/Amstel/Total
   e a aba "por dia".
 
+## Passo 4b — Importar entradas de estoque das Notas Fiscais
+As 17 NFs já foram lidas e separadas em `docs/csv-notas-fiscais/`
+(guia: `GUIA-IMPORTACAO-NFS.md`). **Só importe depois do fix do `move_type`
+(migration 20260724150000), senão a entrada falha.**
+1. **Central → Importar → modo "Estoque"** → suba `docs/csv-notas-fiscais/import-estoque-nfs.csv`
+   (chopp líquido "Draft Beer 50L", CFOP 5403 → entra no DISPEL).
+2. `comodato-vasilhames.csv` (cascos, CFOP 5908) e `conferencia-nfs-completa.csv`
+   são **referência/auditoria** — não precisam ser importados.
+- **Como verificar:** o saldo do **DISPEL sobe** após a importação; os movimentos
+  aparecem em `warehouse_movements` com `move_type='entrada'`.
+
 ## Passo 5 — Verificação funcional de cada tela (checklist)
 Abra e confirme que cada uma carrega **sem erro** e mostra dados coerentes:
 - [ ] **DASHBOARD (tela inicial)** — resumo executivo, alertas de reposição e:
