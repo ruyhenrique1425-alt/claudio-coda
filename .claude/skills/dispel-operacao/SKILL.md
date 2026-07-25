@@ -376,3 +376,12 @@ Migration `20260725150000_cartao_churrascaria.sql` corrige `bars.cartao_meep`.
 Detalhes e impacto no consumo histórico: `docs/PONTO-ATENCAO-CARTOES.md`.
 Consumo 25/07 pode ter churrascaria contada em "Chopperia (1+2)"; **reimportar a
 próxima exportação (cartão já trocado) corrige** — import é idempotente.
+
+## Rename churrascaria → Liberdade (25/07)
+A ex-"Churrascaria liberdade" agora se chama **"Liberdade"** (migration
+`20260725160000_renomeia_liberdade.sql`): renomeia o bar, mantém Rota 5 / padrão
+6-6 (por bar_id) e grava o consumo real da Liberdade da exportação nova
+(cartão `ab253e8e`): 23H/23A. Mapa MEEP: `Churrascaria`/`Liberdade` → **Liberdade**.
+⚠️ "Chopperia (1+2)" ainda pode conter parte da ex-churrascaria (cartão antigo
+estava como choperia) — reexportar a Chopperia e reimportar resolve. Ver
+`docs/PONTO-ATENCAO-CARTOES.md`.

@@ -33,7 +33,7 @@ const MEEP_BAR_MAP: { origem: string; bar: string }[] = [
   { origem: "Vila 1 / Villa 1", bar: "Villa 1 autoatendimento" },
   { origem: "Alameda dos núcleos / Nucleos / Núcleos", bar: "Nucleos" },
   { origem: "Chopperia / Choperia", bar: "Chopperia (1+2)" },
-  { origem: "Churrascaria", bar: "Churrascaria liberdade" },
+  { origem: "Churrascaria / Liberdade", bar: "Liberdade" },
   { origem: "Zel cafe / Zelda café / Zelda cafe", bar: "Zelda café" },
   { origem: "Bar da pista", bar: "Pista de areia" },
 ];
