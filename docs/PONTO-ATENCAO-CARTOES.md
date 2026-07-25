@@ -15,15 +15,13 @@
   cartão certo): **23 H / 23 A** (19, 21, 22 e 24/07). Remove o registro antigo
   de churrascaria.
 
-## ⚠️ Ainda pendente: CHOPPERIA
-Como o cartão da ex-churrascaria estava rotulado "choperia", **um dos arquivos
-antigos "Chopperia/Choperia" pode ser, na verdade, a churrascaria**. Não dá para
-saber qual só pelos arquivos. Então o total atual de **"Chopperia (1+2)" pode
-estar inflado** (contando parte da Liberdade).
-- **Como zerar essa dúvida:** reexporte o consumo da **Chopperia** (1º e 2º andar)
-  agora, com os cartões já corretos, e reimporte. Como o import é **idempotente**
-  (substitui por bar/dia/marca), o número da Chopperia se corrige.
+## ✅ CHOPPERIA — resolvido
+A Chopperia foi reexportada limpa (cartões corretos) = **43 H / 44 A**
+(18–24/07). Confirmou-se que um dos "Chopperia" antigos (23/23) era, na verdade,
+a churrascaria/Liberdade. Correção em `20260725170000_chopperia_definitivo.sql`
+(substitui o valor antigo inflado; idempotente).
 
 ## Go-forward
 - Cartão `ab253e8e` → **Liberdade** (abastecimento por cartão).
 - Nome do bar em tudo (lista, reposição, consumo): **Liberdade**.
+- Consumo 25/07 fechado: 15 bares, total **465 H / 467 A**.

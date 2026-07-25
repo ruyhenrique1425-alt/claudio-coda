@@ -385,3 +385,8 @@ A ex-"Churrascaria liberdade" agora se chama **"Liberdade"** (migration
 ⚠️ "Chopperia (1+2)" ainda pode conter parte da ex-churrascaria (cartão antigo
 estava como choperia) — reexportar a Chopperia e reimportar resolve. Ver
 `docs/PONTO-ATENCAO-CARTOES.md`.
+
+## Chopperia — fechado (25/07)
+Chopperia reexportada limpa = **43H/44A** (migration
+`20260725170000_chopperia_definitivo.sql`). O "Chopperia" antigo de 23/23 era a
+churrascaria/Liberdade. Consumo 25/07 definitivo: 15 bares, 465H/467A.
