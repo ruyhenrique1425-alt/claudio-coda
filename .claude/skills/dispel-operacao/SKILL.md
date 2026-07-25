@@ -327,3 +327,24 @@ As 17 NFs da Heineken (Mangalarga) foram lidas e separadas em
 ⚠️ Importar só **depois** do fix `20260724150000_fix_move_type_invalido.sql`
 (senão a entrada falha no enum). Passo 4b do `LOVABLE_STEPS.md`. PDFs originais
 em `docs/` não versionados — vêm no pacote de entrega.
+
+## Consolidação de consumo 25/07 + nomes REAIS (do backup de produção)
+
+Backup de produção deu os `bars.name` reais. Mapa MEEP (cabeçalho .xls) → real,
+usado em `MEEP_BAR_MAP` de `app.importar.tsx`:
+`Villa 2 Bar 1`→Villa 2 autoatendimento · `Villa 2 Bar 2`→Villa 2 menor ·
+`Villa 3 Bar 1`→Vila 3 maior · `Villa 3 Bar 2`→Villa 3 menor ·
+`Arquibancada 1/2/3/4`→Nova/Entrada/Meio/Fundo arquibancada ·
+`Vila 1/Villa 1`→Villa 1 autoatendimento · `Alameda dos núcleos`→Nucleos ·
+`Chopperia`+`Choperia`→Chopperia (1+2) [SÃO 2 arquivos/andares, SOMAR não dedup] ·
+`Churrascaria`→Churrascaria liberdade · `Zel cafe`→Zelda café (1 parceiro só) ·
+`Bar da pista`→Pista de areia. (`Hippos bar`, `Pista tambor` = pontos extra.)
+
+Correções do gestor: Zel cafe é 1 bar parceiro; **nós** abastecemos os parceiros
+(não a Allstar); **nem todo vazio é registrado** (aparecem só no estoque) — por
+isso consumo confiável vem da MEEP, não de empties_removed.
+
+Import melhorado (`app.importar` modo "Consumo MEEP (.xls bruto)"): aceita
+**vários .xls de uma vez**, detecta o bar pelo cabeçalho, e **soma por
+bar/dia/marca antes do upsert** (dois arquivos p/ o mesmo bar somam; relatório
+cumulativo reimportado não duplica). CSV de referência: `docs/consumo-25-07-consolidado.csv`.
