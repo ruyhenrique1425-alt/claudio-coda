@@ -348,3 +348,22 @@ Import melhorado (`app.importar` modo "Consumo MEEP (.xls bruto)"): aceita
 **vários .xls de uma vez**, detecta o bar pelo cabeçalho, e **soma por
 bar/dia/marca antes do upsert** (dois arquivos p/ o mesmo bar somam; relatório
 cumulativo reimportado não duplica). CSV de referência: `docs/consumo-25-07-consolidado.csv`.
+
+## Correções e handoff (25/07)
+
+- **Nome real: "Zel café"** (1 bar parceiro). O `bars.name` estava "Zelda café"
+  por tradução automática do site — migration `20260725110000_fix_nome_zel_cafe.sql`
+  corrige. Mapa MEEP: `Zel cafe` → **Zel café**.
+- Confirmados via backup de produção: `Arquibancada 3` = **Meio arquibancada**;
+  `Villa 2 Bar 1 / Vila2 B1` = **Villa 2 autoatendimento** (Vila 2 maior).
+- **Fluxo (gestor):** nós abastecemos parceiros + bares próprios; a **Allstar** manda
+  para haras/camarotes/stands, mas **não controlamos o abastecimento interno deles**,
+  só **quanto mandamos** (para controle). A fazer: rastrear essa saída sem dar
+  padrão/rota a cada ponto.
+- **Notas e consumo agora VIA CÓDIGO (seeds idempotentes):**
+  `20260725120000_seed_consumo_2507.sql` (15 bares, 25/07, nomes reais, Chopperia 1+2
+  somada) e `20260725130000_seed_nf_entradas.sql` (entradas de chopp no DISPEL via
+  `warehouse_movements` 'entrada' — o trigger sobe o saldo; idempotente). Aplicar o seed
+  de NF só depois do fix `20260724150000`.
+- Handoff para outra pessoa/Claude: **`HANDOFF-MICAELA.md`** (raiz) resume ordem de
+  leitura, migrations e decisões.
