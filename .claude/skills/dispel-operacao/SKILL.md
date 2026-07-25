@@ -367,3 +367,12 @@ cumulativo reimportado não duplica). CSV de referência: `docs/consumo-25-07-co
   de NF só depois do fix `20260724150000`.
 - Handoff para outra pessoa/Claude: **`HANDOFF-MICAELA.md`** (raiz) resume ordem de
   leitura, migrations e decisões.
+
+## ⚠️ Cartão MEEP: churrascaria (correção 25/07)
+
+Dois cartões estavam como "choperia"; o cartão `B5abb8897` era da **CHURRASCARIA**.
+Gestor trocou para **`ab253e8e`** (cartão oficial da churrascaria a partir de 25/07).
+Migration `20260725150000_cartao_churrascaria.sql` corrige `bars.cartao_meep`.
+Detalhes e impacto no consumo histórico: `docs/PONTO-ATENCAO-CARTOES.md`.
+Consumo 25/07 pode ter churrascaria contada em "Chopperia (1+2)"; **reimportar a
+próxima exportação (cartão já trocado) corrige** — import é idempotente.
