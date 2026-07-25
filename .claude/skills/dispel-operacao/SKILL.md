@@ -390,3 +390,21 @@ estava como choperia) — reexportar a Chopperia e reimportar resolve. Ver
 Chopperia reexportada limpa = **43H/44A** (migration
 `20260725170000_chopperia_definitivo.sql`). O "Chopperia" antigo de 23/23 era a
 churrascaria/Liberdade. Consumo 25/07 definitivo: 15 bares, 465H/467A.
+
+## ⚠️ Consumo — baseline definitivo (migration 20260725180000)
+Os seeds de consumo foram gravados em várias levas com **grafias diferentes de
+`bar_nome`** ("Nucleos"/"Núcleos", "Vila"/"Villa", "Choperia"/"Chopperia",
+"Entrada arquibancada"/"Entrada (arquibancada)"). Como a tela CONSUMO agrupa por
+`bar_nome` e o índice único é `(bar_nome,data,marca)`, cada variante virava uma
+**linha/‏bar duplicado** (chegou a 29 "bares", 805H/829A). A migration
+`20260725180000_consumo_definitivo_consolidado.sql` resolve de forma determinística:
+**`DELETE FROM meep_consumo_bar`** e regrava só o consolidado (`docs/consumo-25-07-consolidado.csv`),
+**15 bares / 465H / 467A / 119 linhas**, com `bar_id` resolvido por nome
+acento/caixa-insensível. É a **fonte única** do consumo até 25/07; importações novas
+pela tela acumulam normalmente depois dela. Reexecutar dá o mesmo estado (idempotente).
+
+> **Validação (25/07):** todas as **70 migrations** aplicadas numa cópia Postgres 16
+> limpa, em ordem, **sem nenhum erro**. Estado final conferido: 15 bares sem
+> duplicata (465H/467A), 5 rotas, entradas de NF no DISPEL (234H+219A). Stubs de
+> `storage`/`net`/`cron`/publication `supabase_realtime` só existem no ambiente de
+> teste — no Supabase da Lovable esses recursos são nativos.
