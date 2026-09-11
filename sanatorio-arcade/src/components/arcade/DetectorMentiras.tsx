@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { usePontosDoJogo } from "./usePontosDoJogo";
 
 type Fase = "pronto" | "lendo" | "resultado" | "indisponivel";
 
@@ -13,6 +14,7 @@ type OrientationEventCtor = typeof DeviceOrientationEvent & {
 };
 
 export function DetectorMentiras() {
+  const { aviso, creditar } = usePontosDoJogo("detector");
   const [fase, setFase] = useState<Fase>("pronto");
   const [progresso, setProgresso] = useState(0);
   const [tremor, setTremor] = useState(0);
@@ -80,6 +82,8 @@ export function DetectorMentiras() {
       setProgresso(1);
       setMentiu(acumulado.current > LIMITE_TREMOR);
       setFase("resultado");
+      // Interrogar também vale ficha: a graça é fazer a roda inteira passar.
+      void creditar(8);
     }, DURACAO);
   }
 
@@ -127,6 +131,7 @@ export function DetectorMentiras() {
             Tremor medido: {Math.round(tremor)} —{" "}
             {mentiu ? "mãos em pânico." : "pulso de cirurgião."}
           </p>
+          {aviso ? <p className="font-arcade text-[8px] text-neon">{aviso}</p> : null}
         </div>
       ) : null}
 

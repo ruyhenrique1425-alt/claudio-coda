@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Dices, Brain, Users, ScanFace } from "lucide-react";
+import { Dices, Brain, Users, ScanFace, Wind } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import {
@@ -11,9 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { RoletaEtilica } from "@/components/arcade/RoletaEtilica";
-import { GeniusManicomio } from "@/components/arcade/GeniusManicomio";
-import { DiagnosticoCruzado } from "@/components/arcade/DiagnosticoCruzado";
+import { TesteSobriedade } from "@/components/arcade/TesteSobriedade";
+import { TerapiaDeChoque } from "@/components/arcade/TerapiaDeChoque";
 import { DetectorMentiras } from "@/components/arcade/DetectorMentiras";
+import { BafometroDeDedo } from "@/components/arcade/BafometroDeDedo";
 
 export const Route = createFileRoute("/arcade")({
   head: () => ({
@@ -22,39 +23,50 @@ export const Route = createFileRoute("/arcade")({
       {
         name: "description",
         content:
-          "Roleta Russa Etílica, Genius do Manicômio e Diagnóstico Cruzado: os três minigames da festa Sanatório.",
+          "Cinco máquinas na ala: Roleta Etílica, Teste de Sobriedade, Bafômetro de Dedo, Terapia de Choque e Detector de Mentiras.",
       },
       { property: "og:title", content: "Arcade do Sanatório" },
       {
         property: "og:description",
-        content: "Três minigames caóticos para jogar direto do celular na festa.",
+        content: "Cinco minigames caóticos para jogar direto do celular na festa, valendo fichas.",
       },
     ],
   }),
   component: ArcadePage,
 });
 
-type JogoId = "roleta" | "genius" | "cruzado" | "detector";
+type JogoId = "roleta" | "sobriedade" | "bafometro" | "terapia" | "detector";
 
 const JOGOS = [
   {
-    id: "roleta" as JogoId,
-    titulo: "Roleta Russa Etílica",
-    resumo: "Gire e aceite o castigo líquido.",
-    icon: Dices,
-    tone: "neon" as const,
+    id: "bafometro" as JogoId,
+    titulo: "Bafômetro de Dedo",
+    resumo: "Dez segundos martelando a garrafa, três segurando firme.",
+    fichas: "até 50 fichas",
+    icon: Wind,
+    tone: "whisky" as const,
   },
   {
-    id: "genius" as JogoId,
-    titulo: "Genius do Manicômio",
-    resumo: "Repita a sequência antes que os reflexos te traiam.",
+    id: "sobriedade" as JogoId,
+    titulo: "Teste de Sobriedade",
+    resumo: "A sequência acelera até ficar impossível. Sempre acelera.",
+    fichas: "8 fichas por rodada",
     icon: Brain,
     tone: "purple" as const,
   },
   {
-    id: "cruzado" as JogoId,
-    titulo: "Diagnóstico Cruzado",
-    resumo: "Missões sociais obrigatórias com desconhecidos.",
+    id: "roleta" as JogoId,
+    titulo: "Roleta Russa Etílica",
+    resumo: "Gire e aceite o castigo. Duas fatias pagam fichas.",
+    fichas: "25 ou 50, se der sorte",
+    icon: Dices,
+    tone: "neon" as const,
+  },
+  {
+    id: "terapia" as JogoId,
+    titulo: "Terapia de Choque",
+    resumo: "Missão social com dois minutos no relógio. Você escolhe a dose.",
+    fichas: "10, 20 ou 35 fichas",
     icon: Users,
     tone: "whisky" as const,
   },
@@ -62,6 +74,7 @@ const JOGOS = [
     id: "detector" as JogoId,
     titulo: "Detector de Mentiras",
     resumo: "O giroscópio sente o tremor de quem mente.",
+    fichas: "8 fichas por análise",
     icon: ScanFace,
     tone: "neon" as const,
   },
@@ -78,12 +91,12 @@ function ArcadePage() {
           Arcade da ala
         </h1>
         <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-          Insira sua ficha imaginária e escolha um tratamento. Todos jogam do próprio celular.
+          Cinco máquinas, todas valendo fichas para o ranking. Cada um joga do próprio celular.
         </p>
       </header>
 
       <div className="mt-5 space-y-4">
-        {JOGOS.map(({ id, titulo, resumo, icon: Icon, tone }) => (
+        {JOGOS.map(({ id, titulo, resumo, fichas, icon: Icon, tone }) => (
           <ArcadeButton
             key={id}
             tone={tone}
@@ -100,6 +113,9 @@ function ArcadePage() {
                 </span>
                 <span className="mt-2 block text-[11px] leading-relaxed text-muted-foreground">
                   {resumo}
+                </span>
+                <span className="font-arcade mt-2 block text-[7px] uppercase text-whisky">
+                  {fichas}
                 </span>
               </span>
             </span>
@@ -120,8 +136,9 @@ function ArcadePage() {
 
           <div className="mt-2">
             {aberto === "roleta" ? <RoletaEtilica /> : null}
-            {aberto === "genius" ? <GeniusManicomio /> : null}
-            {aberto === "cruzado" ? <DiagnosticoCruzado /> : null}
+            {aberto === "sobriedade" ? <TesteSobriedade /> : null}
+            {aberto === "bafometro" ? <BafometroDeDedo /> : null}
+            {aberto === "terapia" ? <TerapiaDeChoque /> : null}
             {aberto === "detector" ? <DetectorMentiras /> : null}
           </div>
         </DialogContent>

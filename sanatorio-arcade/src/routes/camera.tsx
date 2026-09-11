@@ -7,6 +7,9 @@ import { Camera, FileWarning, ImagePlus, Loader2 } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
+import { FotoEmbargada } from "@/components/RegistroEmbargado";
+import { ContagemRegressiva } from "@/components/ContagemRegressiva";
+import { REVELACAO, jaRevelou } from "@/lib/datas";
 
 import { supabase } from "@/integrations/supabase/client";
 import { listarFotos, registrarFoto } from "@/lib/sanatorio.functions";
@@ -81,8 +84,8 @@ function CameraPage() {
           </h1>
         </div>
         <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
-          Registre as provas dos seus episódios. As fotos ficam guardadas na ala e todos os
-          pacientes conseguem ver.
+          Registre as provas dos seus episódios. Ninguém vê nada até 30/10 ao meio-dia — nem você.
+          Até lá aparece só quem registrou e o quê.
         </p>
       </header>
 
@@ -139,6 +142,19 @@ function CameraPage() {
         </div>
       )}
 
+      {!jaRevelou() ? (
+        <div className="mt-6 rounded-sm border-2 border-whisky/60 bg-whisky/10 p-3 text-center">
+          <p className="font-arcade text-[8px] uppercase leading-relaxed text-whisky">
+            Filme no laboratório
+          </p>
+          <ContagemRegressiva ate={REVELACAO} rotulo="REVELAÇÃO EM" className="mt-2 text-[11px]" />
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+            As fotos só abrem dia 30/10 ao meio-dia. Até lá aparece quem registrou e o quê — a
+            imagem nem sai do servidor.
+          </p>
+        </div>
+      ) : null}
+
       <div className="mt-6 space-y-4">
         {galeria.isPending ? (
           <p className="font-arcade py-8 text-center text-[8px] uppercase text-muted-foreground">
@@ -171,15 +187,26 @@ function CameraPage() {
               transition={{ duration: 0.25, delay: Math.min(i, 6) * 0.03 }}
               className="overflow-hidden rounded-sm border border-neon/25 bg-card/40"
             >
-              {f.url ? (
+              {/* Antes da revelação o servidor não manda URL nenhuma: o que
+                  aparece é o registro sem a foto. */}
+              {f.url === null ? (
+                <FotoEmbargada
+                  autor={f.autor}
+                  personagem={f.personagem}
+                  avatar={f.avatar}
+                  itens={f.itens}
+                  atividade={f.atividade}
+                  quando={f.created_at}
+                />
+              ) : (
                 <img
                   src={f.url}
                   alt={f.legenda ?? `Registro de ${f.autor}`}
                   loading="lazy"
                   className="w-full object-cover"
                 />
-              ) : null}
-              <figcaption className="p-3">
+              )}
+              <figcaption className={f.url === null ? "hidden" : "p-3"}>
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
                   <PixelAvatar
                     personagem={f.personagem}

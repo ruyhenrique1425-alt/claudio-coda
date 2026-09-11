@@ -6,6 +6,13 @@ import { AnimatePresence, motion } from "motion/react";
 import { ClipboardCheck, Gamepad2, RotateCcw, Stethoscope } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { AltaMedica } from "@/components/AltaMedica";
+import { Carteira } from "@/components/Carteira";
+import { Extrato } from "@/components/Extrato";
+import { Moldura, NomeDoPaciente } from "@/components/Moldura";
+import { RadarAtributos } from "@/components/RadarAtributos";
+import { laudoDe } from "@/lib/laudos";
+import { supabase } from "@/integrations/supabase/client";
 import { AttributeRow } from "@/components/AttributeRow";
 import { EditorAvatar } from "@/components/avatar/EditorAvatar";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
@@ -90,9 +97,22 @@ function Triagem() {
   const [etapa, setEtapa] = useState<"ficha" | "personagem">("ficha");
   const internar = useServerFn(internarPaciente);
 
+  const [itens, setItens] = useState<unknown>({});
+
   useEffect(() => {
-    setProntuario(lerProntuario());
+    const p = lerProntuario();
+    setProntuario(p);
     setHydrated(true);
+
+    // Molduras e adereços vivem no banco, não no localStorage.
+    if (p?.pacienteId) {
+      void supabase
+        .from("pacientes_publicos")
+        .select("itens")
+        .eq("id", p.pacienteId)
+        .maybeSingle()
+        .then(({ data }) => setItens(data?.itens ?? {}));
+    }
   }, []);
 
   const spent = useMemo(() => Object.values(stats).reduce((a, b) => a + b, 0), [stats]);
@@ -114,7 +134,7 @@ function Triagem() {
     setEnviando(true);
     setErro(null);
     try {
-      const { id } = await internar({
+      const { id, token } = await internar({
         data: {
           nome: nome.trim(),
           fator_coringa: stats.fatorCoringa,
@@ -131,6 +151,7 @@ function Triagem() {
         stats,
         internadoEm: new Date().toISOString(),
         pacienteId: id,
+        token,
         personagem: escolha.personagem,
         avatar: escolha.avatar,
       };
@@ -188,25 +209,45 @@ function Triagem() {
         >
           <div className="rounded-sm border-2 border-neon bg-card/60 p-5 text-center shadow-[0_0_28px_-10px_var(--neon)]">
             <div className="flex justify-center">
-              <PixelAvatar
-                personagem={prontuario.personagem}
-                avatar={prontuario.avatar}
-                size="lg"
-                glow
-                title={`Avatar de ${prontuario.nome}`}
-              />
+              <Moldura itens={itens}>
+                <PixelAvatar
+                  personagem={prontuario.personagem}
+                  avatar={prontuario.avatar}
+                  size="lg"
+                  glow
+                  title={`Avatar de ${prontuario.nome}`}
+                />
+              </Moldura>
             </div>
             <ClipboardCheck className="mx-auto mt-3 h-8 w-8 text-neon" />
 
             <h1 className="font-arcade mt-4 text-[11px] uppercase leading-relaxed text-neon text-glow">
-              Paciente internado
-              <br />
-              com sucesso
+              {prontuario.altaEm ? "Paciente com alta" : "Paciente internado"}
             </h1>
-            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Leito confirmado
+            <p className="font-arcade mt-3 text-[8px] uppercase tracking-[0.2em] text-muted-foreground">
+              Leito {prontuario.pacienteId?.slice(0, 4).toUpperCase() ?? "—"}
             </p>
-            <p className="font-arcade mt-2 break-words text-sm text-whisky">{prontuario.nome}</p>
+            <p className="font-arcade mt-2 break-words text-sm text-whisky">
+              <NomeDoPaciente nome={prontuario.nome} itens={itens} />
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Internado em {new Date(prontuario.internadoEm).toLocaleDateString("pt-BR")}
+            </p>
+          </div>
+
+          {prontuario.pacienteId ? (
+            <div className="mt-4">
+              <Carteira pacienteId={prontuario.pacienteId} />
+            </div>
+          ) : null}
+
+          <div className="mt-4 rounded-sm border-2 border-purple/70 bg-card/50 p-4">
+            <div className="flex justify-center">
+              <RadarAtributos stats={prontuario.stats} />
+            </div>
+            <p className="mt-3 rounded-sm border border-whisky/50 bg-whisky/10 px-3 py-3 text-center text-[12px] leading-relaxed text-whisky">
+              {laudoDe(prontuario.stats)}
+            </p>
           </div>
 
           <div className="mt-4 space-y-2">
@@ -234,6 +275,13 @@ function Triagem() {
               </div>
             ))}
           </div>
+
+          {prontuario.pacienteId ? <Extrato pacienteId={prontuario.pacienteId} /> : null}
+
+          <AltaMedica
+            jaTemAlta={Boolean(prontuario.altaEm)}
+            aoConcluir={() => setProntuario(lerProntuario())}
+          />
 
           <ArcadeButton
             onClick={() => navigate({ to: "/arcade" })}

@@ -21,8 +21,12 @@ export type Prontuario = {
   stats: Stats;
   internadoEm: string;
   pacienteId?: string;
+  /** Senha do paciente. Sai do banco na internação e nunca mais é lida de lá. */
+  token?: string;
   personagem: PersonagemId;
   avatar: Avatar;
+  /** Quando o paciente assinou a alta. Ausente enquanto ele estiver internado. */
+  altaEm?: string;
 };
 
 export function lerProntuario(): Prontuario | null {
@@ -36,6 +40,8 @@ export function lerProntuario(): Prontuario | null {
       stats: parsed.stats,
       internadoEm: parsed.internadoEm ?? new Date().toISOString(),
       ...(parsed.pacienteId ? { pacienteId: parsed.pacienteId } : {}),
+      ...(parsed.token ? { token: parsed.token } : {}),
+      ...(parsed.altaEm ? { altaEm: parsed.altaEm } : {}),
       personagem: normalizarPersonagem(parsed.personagem),
       avatar: normalizarAvatar(parsed.avatar),
     };
@@ -51,6 +57,21 @@ export function salvarProntuario(p: Prontuario) {
   } catch {
     /* armazenamento indisponível */
   }
+}
+
+/** Credenciais para as funções de pontos. Sem as duas, nada é gravado. */
+export function credenciais(): { pacienteId: string; token: string } | null {
+  const p = lerProntuario();
+  if (!p?.pacienteId || !p.token) return null;
+  return { pacienteId: p.pacienteId, token: p.token };
+}
+
+export function registrarAlta() {
+  const p = lerProntuario();
+  if (!p) return null;
+  const comAlta: Prontuario = { ...p, altaEm: new Date().toISOString() };
+  salvarProntuario(comAlta);
+  return comAlta;
 }
 
 export function limparProntuario() {

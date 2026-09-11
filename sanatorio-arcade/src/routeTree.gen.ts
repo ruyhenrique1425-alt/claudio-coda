@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as CameraRouteImport } from './routes/camera'
+import { Route as LojaRouteImport } from './routes/loja'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as MuralRouteImport } from './routes/mural'
 import { Route as PanicoRouteImport } from './routes/panico'
+import { Route as RankingRouteImport } from './routes/ranking'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,6 +31,11 @@ const ArcadeRoute = ArcadeRouteImport.update({
 const CameraRoute = CameraRouteImport.update({
   id: '/camera',
   path: '/camera',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LojaRoute = LojaRouteImport.update({
+  id: '/loja',
+  path: '/loja',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchRoute = MatchRouteImport.update({
@@ -46,47 +53,85 @@ const PanicoRoute = PanicoRouteImport.update({
   path: '/panico',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RankingRoute = RankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/camera': typeof CameraRoute
+  '/loja': typeof LojaRoute
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
   '/panico': typeof PanicoRoute
+  '/ranking': typeof RankingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/camera': typeof CameraRoute
+  '/loja': typeof LojaRoute
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
   '/panico': typeof PanicoRoute
+  '/ranking': typeof RankingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
   '/camera': typeof CameraRoute
+  '/loja': typeof LojaRoute
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
   '/panico': typeof PanicoRoute
+  '/ranking': typeof RankingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/arcade' | '/camera' | '/match' | '/mural' | '/panico'
+  fullPaths:
+    | '/'
+    | '/arcade'
+    | '/camera'
+    | '/loja'
+    | '/match'
+    | '/mural'
+    | '/panico'
+    | '/ranking'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/arcade' | '/camera' | '/match' | '/mural' | '/panico'
-  id: '__root__' | '/' | '/arcade' | '/camera' | '/match' | '/mural' | '/panico'
+  to:
+    | '/'
+    | '/arcade'
+    | '/camera'
+    | '/loja'
+    | '/match'
+    | '/mural'
+    | '/panico'
+    | '/ranking'
+  id:
+    | '__root__'
+    | '/'
+    | '/arcade'
+    | '/camera'
+    | '/loja'
+    | '/match'
+    | '/mural'
+    | '/panico'
+    | '/ranking'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArcadeRoute: typeof ArcadeRoute
   CameraRoute: typeof CameraRoute
+  LojaRoute: typeof LojaRoute
   MatchRoute: typeof MatchRoute
   MuralRoute: typeof MuralRoute
   PanicoRoute: typeof PanicoRoute
+  RankingRoute: typeof RankingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -112,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CameraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/loja': {
+      id: '/loja'
+      path: '/loja'
+      fullPath: '/loja'
+      preLoaderRoute: typeof LojaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/match': {
       id: '/match'
       path: '/match'
@@ -133,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PanicoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ranking': {
+      id: '/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -140,9 +199,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArcadeRoute: ArcadeRoute,
   CameraRoute: CameraRoute,
+  LojaRoute: LojaRoute,
   MatchRoute: MatchRoute,
   MuralRoute: MuralRoute,
   PanicoRoute: PanicoRoute,
+  RankingRoute: RankingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

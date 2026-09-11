@@ -1,21 +1,24 @@
 # Sanatório Arcade
 
 App de festa com tema de sanatório. O convidado preenche uma ficha de admissão,
-monta um avatar pixelado e é "internado" — daí em diante tem arcade, mural de
-recados, galeria de fotos, match entre pacientes e um botão do pânico coletivo.
+monta um avatar pixelado e é "internado". Daí em diante joga no arcade, ganha
+fichas, compra moldura, manda prenda para outro paciente, aposta em desafio,
+deixa recado no mural e registra fotos que ninguém vê antes da hora.
 
-Feito para rodar no celular, todo mundo do próprio aparelho.
+PWA instalável, feito para o celular. Todo mundo joga do próprio aparelho.
 
 ## Telas
 
-| Rota      | O que faz                                                                                        |
-| --------- | ------------------------------------------------------------------------------------------------ |
-| `/`       | Ficha de admissão: nome, 15 pontos entre 5 diagnósticos, escolha de personagem                   |
-| `/arcade` | Quatro minigames: Roleta Etílica, Genius do Manicômio, Diagnóstico Cruzado, Detector de Mentiras |
-| `/mural`  | Recados para Camarão, Recruta e Canela, com atualização automática                               |
-| `/camera` | Foto direto da câmera, enviada para a galeria da festa                                           |
-| `/match`  | Compatibilidade entre pacientes calculada sobre os cinco diagnósticos                            |
-| `/panico` | Contador coletivo ao vivo: 5.000 cliques disparam o alerta                                       |
+| Rota       | O que faz                                                                                                         |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| `/`        | Ficha de admissão, radar dos diagnósticos, laudo, extrato de fichas e alta médica                                 |
+| `/arcade`  | Cinco minigames: Bafômetro de Dedo, Teste de Sobriedade, Roleta Etílica, Terapia de Choque e Detector de Mentiras |
+| `/match`   | Compatibilidade, curtida com aviso ao vivo, prenda alcoólica e desafio valendo fichas                             |
+| `/ranking` | Placar ao vivo de fichas ganhas; o pódio congela às 3:33 do dia 30/10                                             |
+| `/loja`    | Molduras, adereços e efeitos de nome comprados com fichas                                                         |
+| `/camera`  | Foto direto da câmera; a imagem só é revelada em 30/10 ao meio-dia                                                |
+| `/mural`   | Recados para Camarão, Recruta e Canela, lacrados até a mesma hora                                                 |
+| `/panico`  | Contador coletivo ao vivo: 5.000 cliques disparam o alerta                                                        |
 
 ## Stack
 
@@ -35,12 +38,15 @@ Outros comandos: `npm run build`, `npm run lint`, `npm run format`.
 ## Banco
 
 As migrações ficam em `supabase/migrations/`. Tabelas: `pacientes`, `mural`,
-`fotos`, `botao_panico`; bucket de storage `galeria`; função
-`incrementar_panico(_qtd)` para o contador.
+`fotos`, `botao_panico`, `transacoes`, `gastos`, `curtidas`, `desafios`,
+`prendas` e `premiacao`; views `pacientes_publicos` e `saldo_pacientes`;
+bucket de storage `galeria`.
 
-Todas as tabelas estão com RLS ligado e políticas abertas para `anon` — é uma
-festa, não um banco. Se o app for ficar no ar depois do evento, veja
-`MELHORIAS.md`.
+Regra que vale para tudo que envolve fichas: o cliente não escreve pontos.
+A tabela `pacientes` não tem `SELECT` público, porque guarda o `token` de cada
+paciente, e toda movimentação passa por uma função `SECURITY DEFINER` que
+valida o par (`paciente_id`, `token`). `MELHORIAS.md` detalha os tetos e as
+regras antifraude.
 
 ## Segredos
 

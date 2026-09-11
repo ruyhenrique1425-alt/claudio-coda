@@ -87,8 +87,10 @@ export type Database = {
           id: string;
           imunidade_etilica: number;
           inimigo_do_fim: number;
+          itens: Json;
           nome: string;
           personagem: string;
+          token: string;
         };
         Insert: {
           amnesia_anterograda?: number;
@@ -99,8 +101,10 @@ export type Database = {
           id?: string;
           imunidade_etilica?: number;
           inimigo_do_fim?: number;
+          itens?: Json;
           nome: string;
           personagem?: string;
+          token?: string;
         };
         Update: {
           amnesia_anterograda?: number;
@@ -111,17 +115,291 @@ export type Database = {
           id?: string;
           imunidade_etilica?: number;
           inimigo_do_fim?: number;
+          itens?: Json;
           nome?: string;
           personagem?: string;
+          token?: string;
+        };
+        Relationships: [];
+      };
+      transacoes: {
+        Row: {
+          created_at: string;
+          de_paciente: string | null;
+          id: string;
+          motivo: string;
+          para_paciente: string;
+          pontos: number;
+          referencia: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          de_paciente?: string | null;
+          id?: string;
+          motivo: string;
+          para_paciente: string;
+          pontos: number;
+          referencia?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          de_paciente?: string | null;
+          id?: string;
+          motivo?: string;
+          para_paciente?: string;
+          pontos?: number;
+          referencia?: string | null;
+        };
+        Relationships: [];
+      };
+      gastos: {
+        Row: {
+          created_at: string;
+          id: string;
+          item: string;
+          paciente_id: string;
+          pontos: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          item: string;
+          paciente_id: string;
+          pontos: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          item?: string;
+          paciente_id?: string;
+          pontos?: number;
+        };
+        Relationships: [];
+      };
+      curtidas: {
+        Row: {
+          created_at: string;
+          de_paciente: string;
+          id: string;
+          para_paciente: string;
+        };
+        Insert: {
+          created_at?: string;
+          de_paciente: string;
+          id?: string;
+          para_paciente: string;
+        };
+        Update: {
+          created_at?: string;
+          de_paciente?: string;
+          id?: string;
+          para_paciente?: string;
+        };
+        Relationships: [];
+      };
+      desafios: {
+        Row: {
+          created_at: string;
+          de_paciente: string;
+          escolha_de: number | null;
+          escolha_para: number | null;
+          id: string;
+          para_paciente: string;
+          pontos: number;
+          resolvido_em: string | null;
+          status: string;
+          vencedor: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          de_paciente: string;
+          escolha_de?: number | null;
+          escolha_para?: number | null;
+          id?: string;
+          para_paciente: string;
+          pontos: number;
+          resolvido_em?: string | null;
+          status?: string;
+          vencedor?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          de_paciente?: string;
+          escolha_de?: number | null;
+          escolha_para?: number | null;
+          id?: string;
+          para_paciente?: string;
+          pontos?: number;
+          resolvido_em?: string | null;
+          status?: string;
+          vencedor?: string | null;
+        };
+        Relationships: [];
+      };
+      prendas: {
+        Row: {
+          created_at: string;
+          de_paciente: string;
+          id: string;
+          para_paciente: string;
+          respondida_em: string | null;
+          segundos: number;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          de_paciente: string;
+          id?: string;
+          para_paciente: string;
+          respondida_em?: string | null;
+          segundos: number;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          de_paciente?: string;
+          id?: string;
+          para_paciente?: string;
+          respondida_em?: string | null;
+          segundos?: number;
+          status?: string;
+        };
+        Relationships: [];
+      };
+      premiacao: {
+        Row: {
+          apurado_em: string;
+          ganhos_total: number;
+          id: string;
+          nome: string;
+          paciente_id: string;
+          posicao: number;
+        };
+        Insert: {
+          apurado_em?: string;
+          ganhos_total: number;
+          id?: string;
+          nome: string;
+          paciente_id: string;
+          posicao: number;
+        };
+        Update: {
+          apurado_em?: string;
+          ganhos_total?: number;
+          id?: string;
+          nome?: string;
+          paciente_id?: string;
+          posicao?: number;
         };
         Relationships: [];
       };
     };
     Views: {
-      [_ in never]: never;
+      pacientes_publicos: {
+        Row: {
+          amnesia_anterograda: number | null;
+          aptidao_audio: number | null;
+          avatar: Json | null;
+          created_at: string | null;
+          fator_coringa: number | null;
+          id: string | null;
+          imunidade_etilica: number | null;
+          inimigo_do_fim: number | null;
+          itens: Json | null;
+          nome: string | null;
+          personagem: string | null;
+        };
+        Relationships: [];
+      };
+      saldo_pacientes: {
+        Row: {
+          avatar: Json | null;
+          created_at: string | null;
+          ganhos_total: number | null;
+          itens: Json | null;
+          nome: string | null;
+          paciente_id: string | null;
+          personagem: string | null;
+          saldo: number | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       incrementar_panico: { Args: { _qtd?: number }; Returns: number };
+      internar_paciente: {
+        Args: {
+          _amnesia_anterograda: number;
+          _aptidao_audio: number;
+          _avatar: Json;
+          _fator_coringa: number;
+          _imunidade_etilica: number;
+          _inimigo_do_fim: number;
+          _nome: string;
+          _personagem: string;
+        };
+        Returns: { id: string; token: string }[];
+      };
+      creditar_pontos: {
+        Args: {
+          _motivo: string;
+          _paciente: string;
+          _pontos: number;
+          _referencia?: string | null;
+          _token: string;
+        };
+        Returns: number;
+      };
+      transferir_pontos: {
+        Args: {
+          _de: string;
+          _motivo?: string;
+          _para: string;
+          _pontos: number;
+          _token: string;
+        };
+        Returns: number;
+      };
+      gastar_pontos: {
+        Args: { _item: string; _paciente: string; _pontos: number; _token: string };
+        Returns: number;
+      };
+      equipar_item: {
+        Args: { _item: string | null; _paciente: string; _slot: string; _token: string };
+        Returns: Json;
+      };
+      curtir: { Args: { _de: string; _para: string; _token: string }; Returns: boolean };
+      mandar_prenda: {
+        Args: { _de: string; _para: string; _token: string };
+        Returns: { id: string; segundos: number }[];
+      };
+      responder_prenda: {
+        Args: { _cumpriu: boolean; _paciente: string; _prenda: string; _token: string };
+        Returns: number;
+      };
+      criar_desafio: {
+        Args: { _de: string; _para: string; _pontos: number; _token: string };
+        Returns: string;
+      };
+      responder_desafio: {
+        Args: { _aceita: boolean; _desafio: string; _paciente: string; _token: string };
+        Returns: string;
+      };
+      jogar_desafio: {
+        Args: { _desafio: string; _escolha: number; _paciente: string; _token: string };
+        Returns: string;
+      };
+      apurar_premiacao: {
+        Args: { _momento: string };
+        Returns: {
+          apurado_em: string;
+          ganhos_total: number;
+          id: string;
+          nome: string;
+          paciente_id: string;
+          posicao: number;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -140,12 +418,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -165,12 +443,13 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -189,12 +468,13 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -213,12 +493,13 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
@@ -229,12 +510,13 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }

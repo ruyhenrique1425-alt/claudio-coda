@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "../components/AppShell";
+import { InstalarPwa } from "../components/InstalarPwa";
 
 function NotFoundComponent() {
   return (
@@ -81,13 +82,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover",
       },
-      { title: "Sanatório — Ala de Festas" },
+      { title: "República Sanatório — Ala de Festas" },
       {
         name: "description",
         content:
           "O app da festa Sanatório: prontuário de admissão, mural dos internos, câmera e arcade.",
       },
       { name: "theme-color", content: "#000000" },
+      // Sem estas três o iPhone insiste em abrir o app dentro do Safari.
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Sanatório" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { property: "og:title", content: "Sanatório — Ala de Festas" },
       {
         property: "og:description",
@@ -108,6 +114,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icone-192.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -139,6 +147,7 @@ function RootComponent() {
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </AppShell>
+      <InstalarPwa />
     </QueryClientProvider>
   );
 }

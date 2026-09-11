@@ -7,6 +7,10 @@ import { FileWarning, Loader2, Send } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
+import { Moldura, NomeDoPaciente } from "@/components/Moldura";
+import { RecadoEmbargado } from "@/components/RegistroEmbargado";
+import { ContagemRegressiva } from "@/components/ContagemRegressiva";
+import { REVELACAO, jaRevelou } from "@/lib/datas";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listarMural, postarNoMural, MORADORES, type Morador } from "@/lib/sanatorio.functions";
@@ -120,6 +124,15 @@ function Feed({
         <p className="font-arcade mt-3 text-[7px] uppercase tracking-widest text-muted-foreground">
           Arquivo confidencial · {feed.data?.length ?? 0} registros
         </p>
+
+        {!jaRevelou() ? (
+          <div className="mt-3 rounded-sm border border-whisky/50 bg-whisky/10 px-3 py-2 text-center">
+            <p className="font-arcade text-[7px] uppercase leading-relaxed text-whisky">
+              Recados lacrados até 30/10 ao meio-dia
+            </p>
+            <ContagemRegressiva ate={REVELACAO} rotulo="ABRE EM" className="mt-1 text-[10px]" />
+          </div>
+        ) : null}
       </header>
 
       <div className="mt-4 space-y-3 pb-24">
@@ -155,13 +168,17 @@ function Feed({
               className="rounded-sm border border-neon/25 bg-card/40 p-3"
             >
               <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
-                <PixelAvatar
-                  personagem={r.personagem}
-                  avatar={r.avatar}
-                  size="sm"
-                  title={`Avatar de ${r.autor}`}
-                />
-                <p className="font-arcade truncate text-[8px] uppercase text-whisky">{r.autor}</p>
+                <Moldura itens={r.itens}>
+                  <PixelAvatar
+                    personagem={r.personagem}
+                    avatar={r.avatar}
+                    size="sm"
+                    title={`Avatar de ${r.autor}`}
+                  />
+                </Moldura>
+                <p className="font-arcade truncate text-[8px] uppercase text-whisky">
+                  <NomeDoPaciente nome={r.autor} itens={r.itens} />
+                </p>
                 <time className="shrink-0 text-[10px] text-muted-foreground">
                   {new Date(r.created_at).toLocaleString("pt-BR", {
                     day: "2-digit",
@@ -172,9 +189,18 @@ function Feed({
                 </time>
               </div>
 
-              <p className="mt-2 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground">
-                {r.mensagem}
-              </p>
+              {r.mensagem === null ? (
+                <div className="mt-2">
+                  <RecadoEmbargado tamanho={r.tamanho ?? 40} />
+                  <p className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    deixou um recado para {morador}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground">
+                  {r.mensagem}
+                </p>
+              )}
             </motion.article>
           ))
         )}
