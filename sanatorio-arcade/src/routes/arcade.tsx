@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Dices, Brain, Users, ScanFace, Wind } from "lucide-react";
+import { Dices, Brain, Users, ScanFace, Wind, Spade } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import {
@@ -15,6 +15,7 @@ import { TesteSobriedade } from "@/components/arcade/TesteSobriedade";
 import { TerapiaDeChoque } from "@/components/arcade/TerapiaDeChoque";
 import { DetectorMentiras } from "@/components/arcade/DetectorMentiras";
 import { BafometroDeDedo } from "@/components/arcade/BafometroDeDedo";
+import { Sueca } from "@/components/arcade/Sueca";
 
 export const Route = createFileRoute("/arcade")({
   head: () => ({
@@ -23,21 +24,29 @@ export const Route = createFileRoute("/arcade")({
       {
         name: "description",
         content:
-          "Cinco máquinas na ala: Roleta Etílica, Teste de Sobriedade, Bafômetro de Dedo, Terapia de Choque e Detector de Mentiras.",
+          "Seis máquinas na ala: Sueca Bêbada, Bafômetro de Dedo, Teste de Sobriedade, Roleta Etílica, Terapia de Choque e Detector de Mentiras.",
       },
       { property: "og:title", content: "Arcade do Sanatório" },
       {
         property: "og:description",
-        content: "Cinco minigames caóticos para jogar direto do celular na festa, valendo fichas.",
+        content: "Seis minigames caóticos para jogar direto do celular na festa, valendo fichas.",
       },
     ],
   }),
   component: ArcadePage,
 });
 
-type JogoId = "roleta" | "sobriedade" | "bafometro" | "terapia" | "detector";
+type JogoId = "sueca" | "roleta" | "sobriedade" | "bafometro" | "terapia" | "detector";
 
 const JOGOS = [
+  {
+    id: "sueca" as JogoId,
+    titulo: "Sueca Bêbada",
+    resumo: "Dois baralhos, 104 cartas. Cada valor manda uma coisa na roda.",
+    fichas: "3 fichas por carta",
+    icon: Spade,
+    tone: "purple" as const,
+  },
   {
     id: "bafometro" as JogoId,
     titulo: "Bafômetro de Dedo",
@@ -91,7 +100,8 @@ function ArcadePage() {
           Arcade da ala
         </h1>
         <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-          Cinco máquinas, todas valendo fichas para o ranking. Cada um joga do próprio celular.
+          Seis máquinas, todas valendo fichas para o ranking. A Sueca é de mesa: um celular no meio
+          da roda e todo mundo joga junto.
         </p>
       </header>
 
@@ -135,6 +145,7 @@ function ArcadePage() {
           </DialogHeader>
 
           <div className="mt-2">
+            {aberto === "sueca" ? <Sueca /> : null}
             {aberto === "roleta" ? <RoletaEtilica /> : null}
             {aberto === "sobriedade" ? <TesteSobriedade /> : null}
             {aberto === "bafometro" ? <BafometroDeDedo /> : null}

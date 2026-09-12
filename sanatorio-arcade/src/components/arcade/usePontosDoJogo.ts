@@ -22,8 +22,9 @@ export function usePontosDoJogo(jogo: string) {
 
       setCreditando(true);
       try {
-        await creditarJogo(pontos, jogo);
-        setAviso(`+${pontos} fichas`);
+        const subiu = await creditarJogo(pontos, jogo);
+        // Sem sinal a ficha não some: fica na fila e sobe na próxima brecha.
+        setAviso(subiu ? `+${pontos} fichas` : `+${pontos} fichas · na fila`);
       } catch (e) {
         setAviso(e instanceof Error ? e.message : "As fichas não entraram.");
       } finally {

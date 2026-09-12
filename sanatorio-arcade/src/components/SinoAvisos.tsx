@@ -3,6 +3,7 @@ import { Bell } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 import { ouvirAvisos, pendencias, type Aviso } from "@/lib/avisos";
+import { ouvirRede, realtimeVale, online } from "@/lib/rede";
 import { responderPrenda, responderDesafio } from "@/lib/pontos";
 
 const ICONES: Record<Aviso["tipo"], string> = {

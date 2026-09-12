@@ -21,7 +21,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { listarPacientes } from "@/lib/sanatorio.functions";
 import { lerProntuario, type Prontuario } from "@/lib/paciente-local";
 import { calcularAfinidade, diagnosticosIguais, tierDeAfinidade } from "@/lib/afinidade";
-import { criarDesafio, curtir, mandarPrenda } from "@/lib/pontos";
+import { criarDesafio, curtirOffline, mandarPrenda } from "@/lib/pontos";
+import { online } from "@/lib/rede";
+import { intervaloConsciente } from "@/lib/realtime";
 
 export const Route = createFileRoute("/match")({
   head: () => ({
@@ -93,7 +95,7 @@ function MatchPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["pacientes"],
     queryFn: () => buscar(),
-    refetchInterval: 20_000,
+    refetchInterval: intervaloConsciente(20_000, 180_000),
     refetchOnWindowFocus: true,
   });
 
@@ -117,9 +119,11 @@ function MatchPage() {
     setOcupado(alvo.id);
     setErro(null);
     try {
-      const mutuo = await curtir(alvo.id);
+      // A curtida entra na fila: sem sinal ela sobe depois. O match mútuo só
+      // dá para saber com o servidor respondendo, então vem no próximo carregamento.
+      const subiu = await curtirOffline(alvo.id);
       setCurtidos((c) => ({ ...c, [alvo.id]: true }));
-      if (mutuo) setMeusMatches((m) => new Set(m).add(alvo.id));
+      if (subiu && eu?.pacienteId) await carregarMatches(eu.pacienteId);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "A curtida não foi.");
     } finally {
@@ -128,6 +132,10 @@ function MatchPage() {
   }
 
   async function aoMandarPrenda(alvo: Alvo) {
+    if (!online()) {
+      setErro("Prenda precisa de sinal: a pessoa recebe o aviso na hora.");
+      return;
+    }
     setOcupado(alvo.id);
     setErro(null);
     try {
@@ -141,6 +149,11 @@ function MatchPage() {
   }
 
   async function aoDesafiar(alvo: Alvo, pontos: number) {
+    if (!online()) {
+      setErro("Desafio precisa de sinal: ele expira em 60 segundos.");
+      setDesafio(null);
+      return;
+    }
     setOcupado(alvo.id);
     setErro(null);
     try {

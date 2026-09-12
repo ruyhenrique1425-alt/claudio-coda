@@ -8,6 +8,8 @@ import { Camera, FileWarning, ImagePlus, Loader2 } from "lucide-react";
 import { ArcadeButton } from "@/components/ArcadeButton";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
 import { FotoEmbargada } from "@/components/RegistroEmbargado";
+import { comprimir } from "@/lib/imagem";
+import { enfileirar } from "@/lib/fila";
 import { ContagemRegressiva } from "@/components/ContagemRegressiva";
 import { REVELACAO, jaRevelou } from "@/lib/datas";
 
@@ -41,6 +43,7 @@ function CameraPage() {
   const [hydrated, setHydrated] = useState(false);
   const [legenda, setLegenda] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [naFila, setNaFila] = useState(false);
 
   useEffect(() => {
     setAutor(lerProntuario()?.nome ?? null);
@@ -51,27 +54,26 @@ function CameraPage() {
 
   const envio = useMutation({
     mutationFn: async (file: File) => {
-      const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase().slice(0, 5);
-      const path = `${crypto.randomUUID()}.${ext}`;
-      const up = await supabase.storage.from("galeria").upload(path, file, {
-        contentType: file.type || "image/jpeg",
-        upsert: false,
-      });
-      if (up.error) throw up.error;
-      await registrar({
-        data: {
-          path,
-          autor: autor ?? "Anônimo",
-          ...(legenda.trim() ? { legenda: legenda.trim() } : {}),
-        },
+      // Comprime antes de tudo: é o que decide se a foto sobe ou não no sítio.
+      const comprimida = await comprimir(file);
+      const path = `${crypto.randomUUID()}.jpg`;
+
+      // Vai para a fila. Com sinal sobe agora; sem sinal fica guardada no
+      // aparelho e sobe sozinha depois, sem o paciente precisar lembrar.
+      return enfileirar("foto", {
+        arquivo: comprimida,
+        path,
+        autor: autor ?? "Anônimo",
+        legenda: legenda.trim() || null,
       });
     },
-    onSuccess: () => {
+    onSuccess: (subiu) => {
       setLegenda("");
       setErro(null);
+      setNaFila(!subiu);
       queryClient.invalidateQueries({ queryKey: ["fotos"] });
     },
-    onError: () => setErro("Não deu para enviar a foto. Tente de novo."),
+    onError: () => setErro("Não deu para preparar a foto. Tente de novo."),
   });
 
   return (
@@ -137,6 +139,11 @@ function CameraPage() {
           {erro ? (
             <p role="alert" className="text-center text-[11px] text-destructive">
               {erro}
+            </p>
+          ) : null}
+          {naFila ? (
+            <p className="text-center text-[11px] text-whisky">
+              Foto guardada no aparelho. Sobe sozinha quando pegar sinal.
             </p>
           ) : null}
         </div>

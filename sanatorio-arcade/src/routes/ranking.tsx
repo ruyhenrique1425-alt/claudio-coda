@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { APURACAO, jaApurou } from "@/lib/datas";
 import { apurarPremiacao, lerRanking, type LinhaRanking, type Podio } from "@/lib/pontos";
 import { lerProntuario } from "@/lib/paciente-local";
+import { canalQuandoDerVerifica } from "@/lib/realtime";
 
 export const Route = createFileRoute("/ranking")({
   head: () => ({
@@ -61,15 +62,17 @@ function RankingPage() {
     puxar();
     conferirApuracao();
 
-    // O placar se mexe sozinho: qualquer ficha nova reordena a lista.
-    const canal = supabase
-      .channel("ranking")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(canal);
-    };
+    // O placar se mexe sozinho quando o sinal permite; com sinal fraco, o
+    // realtime sai de cena e a lista recarrega de minuto em minuto.
+    return canalQuandoDerVerifica(
+      () =>
+        supabase
+          .channel(`ranking-${crypto.randomUUID()}`)
+          .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
+          .subscribe(),
+      (canal) => void supabase.removeChannel(canal),
+      puxar,
+    );
   }, [puxar, conferirApuracao]);
 
   const congelado = podio.length > 0;

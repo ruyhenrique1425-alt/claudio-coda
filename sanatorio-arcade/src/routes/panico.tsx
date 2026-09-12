@@ -4,6 +4,8 @@ import { motion } from "motion/react";
 import { Siren } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { canalQuandoDerVerifica } from "@/lib/realtime";
+import { comPrazo, online } from "@/lib/rede";
 
 export const Route = createFileRoute("/panico")({
   head: () => ({
@@ -55,39 +57,86 @@ function PanicoPage() {
         if (total >= META) setAlerta(true);
       });
 
-    const channel = supabase
-      .channel("botao_panico")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "botao_panico" },
-        (payload) => {
-          const total = (payload.new as { cliques?: number } | null)?.cliques;
-          if (typeof total !== "number") return;
+    const consultar = () => {
+      if (!online()) return;
+      void supabase
+        .from("botao_panico")
+        .select("cliques")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data }) => {
+          const total = data?.cliques;
+          if (!ativo || typeof total !== "number") return;
           setCliques(total);
           if (total >= META) setAlerta(true);
-        },
-      )
-      .subscribe();
+        });
+    };
+
+    const pararCanal = canalQuandoDerVerifica(
+      () =>
+        supabase
+          .channel(`botao_panico-${crypto.randomUUID()}`)
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "botao_panico" },
+            (payload) => {
+              const total = (payload.new as { cliques?: number } | null)?.cliques;
+              if (typeof total !== "number") return;
+              setCliques(total);
+              if (total >= META) setAlerta(true);
+            },
+          )
+          .subscribe(),
+      (canal) => void supabase.removeChannel(canal),
+      consultar,
+      30_000,
+    );
 
     return () => {
       ativo = false;
-      void supabase.removeChannel(channel);
+      pararCanal();
     };
   }, []);
 
+  /**
+   * Os cliques sobem em lotes de até 10, e só quando há sinal. Sem isso, mil
+   * dedos num sinal de sítio viram mil requisições que não chegam.
+   *
+   * O contador da tela anda na hora de qualquer jeito: o paciente vê que o
+   * clique contou, e o número real se acerta no próximo lote que passar.
+   */
   const descarregar = useCallback(async () => {
     if (enviando.current || pendentes.current === 0) return;
+    if (!online()) return;
+
     enviando.current = true;
     const qtd = Math.min(pendentes.current, 10);
-    pendentes.current -= qtd;
-    const { data } = await supabase.rpc("incrementar_panico", { _qtd: qtd });
-    if (typeof data === "number") {
-      setCliques(data);
-      if (data >= META) setAlerta(true);
+    try {
+      const { data } = await comPrazo(
+        Promise.resolve(supabase.rpc("incrementar_panico", { _qtd: qtd })),
+      );
+      pendentes.current -= qtd;
+      if (typeof data === "number") {
+        setCliques(data);
+        if (data >= META) setAlerta(true);
+      }
+    } catch {
+      // Falhou: os cliques continuam pendentes e vão no próximo lote.
+    } finally {
+      enviando.current = false;
     }
-    enviando.current = false;
-    if (pendentes.current > 0) void descarregar();
+
+    if (pendentes.current > 0 && online()) void descarregar();
   }, []);
+
+  // Enquanto houver clique pendente, tenta de tempos em tempos.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (pendentes.current > 0) void descarregar();
+    }, 8000);
+    return () => clearInterval(id);
+  }, [descarregar]);
 
   function clicar() {
     pendentes.current += 1;
@@ -121,7 +170,11 @@ function PanicoPage() {
           {cliques === null ? "----" : cliques.toLocaleString("pt-BR")}
         </motion.p>
         <p className="mt-3 text-[11px] text-muted-foreground">
-          {restante === null ? "Conectando..." : `Faltam ${restante.toLocaleString("pt-BR")}`}
+          {restante === null
+            ? online()
+              ? "Conectando..."
+              : "Sem sinal — seus cliques estão guardados"
+            : `Faltam ${restante.toLocaleString("pt-BR")}`}
         </p>
 
         <div className="mx-auto mt-4 h-3 w-full max-w-xs overflow-hidden rounded-sm border-2 border-purple/70">

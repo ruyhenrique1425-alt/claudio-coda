@@ -5,6 +5,8 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { credenciais } from "@/lib/paciente-local";
+import { enfileirar } from "@/lib/fila";
+import { comPrazo, online } from "@/lib/rede";
 
 export type Carteira = { saldo: number; ganhos: number };
 
@@ -48,22 +50,32 @@ function explicar(erro: { message?: string } | null): never {
 }
 
 export async function lerCarteira(pacienteId: string): Promise<Carteira> {
-  const { data, error } = await supabase
-    .from("saldo_pacientes")
-    .select("saldo, ganhos_total")
-    .eq("paciente_id", pacienteId)
-    .maybeSingle();
+  if (!online()) throw new Error("Sem sinal.");
+  const { data, error } = await comPrazo(
+    Promise.resolve(
+      supabase
+        .from("saldo_pacientes")
+        .select("saldo, ganhos_total")
+        .eq("paciente_id", pacienteId)
+        .maybeSingle(),
+    ),
+  );
 
   if (error) explicar(error);
   return { saldo: Number(data?.saldo ?? 0), ganhos: Number(data?.ganhos_total ?? 0) };
 }
 
 export async function lerRanking(limite = 50): Promise<LinhaRanking[]> {
-  const { data, error } = await supabase
-    .from("saldo_pacientes")
-    .select("paciente_id, nome, personagem, avatar, itens, ganhos_total, saldo")
-    .order("ganhos_total", { ascending: false })
-    .limit(limite);
+  if (!online()) throw new Error("Sem sinal.");
+  const { data, error } = await comPrazo(
+    Promise.resolve(
+      supabase
+        .from("saldo_pacientes")
+        .select("paciente_id, nome, personagem, avatar, itens, ganhos_total, saldo")
+        .order("ganhos_total", { ascending: false })
+        .limit(limite),
+    ),
+  );
 
   if (error) explicar(error);
   return (data ?? []) as LinhaRanking[];
@@ -81,18 +93,43 @@ export async function lerExtrato(pacienteId: string, limite = 10): Promise<Movim
   return (data ?? []) as Movimento[];
 }
 
-/** Pontos ganhos num minigame. O servidor tem teto por hora e por jogo. */
-export async function creditarJogo(pontos: number, jogo: string): Promise<number> {
+/**
+ * Pontos ganhos num minigame.
+ *
+ * Passa pela fila em vez de ir direto ao servidor: sem sinal, a ficha fica
+ * guardada e sobe sozinha depois. O teto por hora continua sendo do servidor,
+ * e a chave de idempotência impede que o reenvio credite duas vezes.
+ */
+export async function creditarJogo(pontos: number, jogo: string): Promise<boolean> {
   const { pacienteId, token } = exigirCredenciais();
-  const { data, error } = await supabase.rpc("creditar_pontos", {
-    _paciente: pacienteId,
-    _token: token,
-    _pontos: pontos,
-    _motivo: "jogo",
-    _referencia: jogo,
+  return enfileirar("pontos", {
+    paciente: pacienteId,
+    token,
+    pontos,
+    motivo: "jogo",
+    referencia: jogo,
   });
-  if (error) explicar(error);
-  return Number(data);
+}
+
+/**
+ * Conquista de QR code. O servidor recusa a segunda leitura do mesmo código
+ * pelo mesmo paciente, então escanear duas vezes não paga duas vezes.
+ */
+export async function creditarQrCode(pontos: number, codigo: string): Promise<boolean> {
+  const { pacienteId, token } = exigirCredenciais();
+  return enfileirar("pontos", {
+    paciente: pacienteId,
+    token,
+    pontos,
+    motivo: "qrcode",
+    referencia: codigo,
+  });
+}
+
+/** Curtida no Match: idem, sobe agora ou depois. */
+export async function curtirOffline(para: string): Promise<boolean> {
+  const { pacienteId, token } = exigirCredenciais();
+  return enfileirar("curtida", { de: pacienteId, token, para });
 }
 
 export async function doarPontos(para: string, pontos: number): Promise<number> {

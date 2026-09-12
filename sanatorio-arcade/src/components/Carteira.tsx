@@ -3,6 +3,7 @@ import { Coins } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lerCarteira, type Carteira as Saldo } from "@/lib/pontos";
+import { canalQuandoDerVerifica } from "@/lib/realtime";
 
 /**
  * Saldo e ganhos do paciente. Ouve a tabela de transações para o número se
@@ -26,15 +27,20 @@ export function Carteira({
     };
     puxar();
 
-    const canal = supabase
-      .channel(`carteira-${pacienteId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "gastos" }, puxar)
-      .subscribe();
+    const pararCanal = canalQuandoDerVerifica(
+      () =>
+        supabase
+          .channel(`carteira-${pacienteId}-${crypto.randomUUID()}`)
+          .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
+          .on("postgres_changes", { event: "INSERT", schema: "public", table: "gastos" }, puxar)
+          .subscribe(),
+      (canal) => void supabase.removeChannel(canal),
+      puxar,
+    );
 
     return () => {
       ativo = false;
-      void supabase.removeChannel(canal);
+      pararCanal();
     };
   }, [pacienteId]);
 

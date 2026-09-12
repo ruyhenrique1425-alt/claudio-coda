@@ -33,7 +33,7 @@ export function ouvirAvisos({ pacienteId }: Alvo, aoChegar: (aviso: Aviso) => vo
   }
 
   const canal = supabase
-    .channel(`avisos-${pacienteId}`)
+    .channel(`avisos-${pacienteId}-${crypto.randomUUID()}`)
     .on(
       "postgres_changes",
       {

@@ -1,6 +1,8 @@
 # O que foi construído
 
-Todas as 11 melhorias do plano estão no código, mais um quinto minigame.
+Todas as 11 melhorias do plano estão no código, mais dois minigames novos, as
+cinco quests de QR code e o modo sítio, que faz o app funcionar com pouco ou
+nenhum sinal.
 `npx tsc --noEmit`, `npm run lint` e `npm run build` passam.
 
 ## Identidade e carteira de pontos
@@ -29,7 +31,75 @@ pontua uma vez por paciente, uma prenda a cada 15 minutos para o mesmo alvo,
 prenda de no máximo 3 segundos, e nenhum desafio sem que os dois lados tenham
 saldo.
 
-## Os cinco jogos
+## Modo sítio: o app no meio do mato
+
+A festa é longe da cidade e o sinal vai e volta. O app parte dessa premissa em
+vez de tratar a falta de sinal como erro.
+
+**Nada se perde sem sinal.** Toda ação que muda dado no servidor passa antes
+por uma fila no IndexedDB (`src/lib/fila.ts`): ficha de jogo, recado do mural,
+foto e curtida. Com sinal, sobe na hora e o paciente nem percebe a fila. Sem
+sinal, fica guardada no aparelho e sobe sozinha na próxima brecha: ao voltar o
+sinal, ao abrir o app e a cada 45 segundos.
+
+**Reenvio não duplica.** Cada item da fila leva uma chave de idempotência
+gerada no celular. O banco tem índice único nessa chave, então o "timeout" que
+na verdade chegou não vira ponto creditado duas vezes quando a fila tentar de
+novo. É o que a migração `20260912090000` faz.
+
+**O app abre sem sinal.** O service worker guarda o casco (HTML, JS, CSS,
+fontes e ícones) e serve do cache. Na navegação ele tenta a rede com prazo de 8
+segundos e cai para a cópia da rota; offline, nem tenta. Cada rota é guardada
+sob a própria URL: servir o HTML da home numa URL de `/arcade` fazia o React
+descartar a página inteira e desenhar do zero.
+
+**As fontes viajam junto.** Press Start 2P e Inter são servidas pelo próprio
+app (`src/fontes.css`, 164 KB nos subsets latin). Uma requisição ao Google que
+falha no sítio é meia tela sem tipografia.
+
+**O que já foi lido continua na tela.** As respostas de cada consulta são
+copiadas para o IndexedDB e devolvidas na abertura seguinte, mesmo sem sinal
+(`src/lib/cache-consultas.ts`). Abrir o app offline mostra o último ranking e o
+último mural em vez de tela vazia.
+
+**Sinal fraco desliga o que não aguenta.** Websocket em 2G não entrega e ainda
+fica tentando reconectar, comendo bateria numa festa que vai até o sol raiar.
+Com sinal fraco o app fecha os canais de realtime e troca por consulta
+espaçada; quando o sinal melhora, religa sozinho (`src/lib/realtime.ts`). Os
+intervalos de recarga do mural e do match também mudam com o sinal, e sem sinal
+nem tentam.
+
+**Foto comprimida antes de sair.** A foto crua passa de 4 MB e num sinal de
+sítio é uma fila que nunca anda. Reduzida para 1280px e JPEG 0.7 fica em torno
+de 200 KB (`src/lib/imagem.ts`).
+
+**O pânico manda em lotes.** Até 10 cliques por requisição, e só com sinal. O
+contador da tela anda na hora de qualquer jeito; o número real se acerta no
+próximo lote.
+
+**A faixa de estado só aparece quando importa.** Com sinal bom e nada na fila,
+não há o que avisar. Sem sinal ela diz o que está guardado, e com sinal fraco
+mostra quantos itens estão subindo, com botão de tentar agora.
+
+Duas coisas continuam exigindo sinal, e a tela diz isso: a prenda alcoólica e o
+desafio de cachaça. Os dois são interativos e com prazo — a pessoa do outro
+lado precisa receber o aviso na hora.
+
+## Os seis jogos
+
+**Sueca Bêbada** (novo). Dois baralhos sem coringa, 104 cartas, um celular no
+meio da mesa. Vira a carta e todo mundo lê a regra do valor: ás a 3 escolhem
+quem bebe, 4 é Stop, 5 é o jogo da memória, 7 é o jogo do Pi, 10 é cafofo, J
+pega quem está à esquerda, Q e K pegam a mesa inteira. O 8 abre um campo para a
+mesa escrever a Regra Geral, que fica fixa na tela até outro 8 aparecer. O 6 e
+o 9 vão para a sua mão e ficam lá até você usar o gesto. Roda inteira sem
+sinal.
+
+Uma nota sobre as regras: a fonte descreve o 6 e o 9 como a mesma continência,
+e a explicação do 9 está truncada no original. Aqui o 6 é a continência na
+testa e o 9 é o dedo no nariz, para as duas cartas guardadas não fazerem a
+mesma coisa. Se a mesa de vocês joga diferente, está tudo em
+`src/components/arcade/sueca.ts`.
 
 **Bafômetro de Dedo** (novo). Dez segundos martelando a garrafa e três
 segurando o dedo parado no alvo. A agulha do mostrador sobe com a velocidade;
@@ -52,6 +122,34 @@ dois minutos e o paciente escolhe o nível: Ambulatorial (10 fichas),
 Internação (20) ou Eletrochoque (35). Dezesseis missões escritas.
 
 **Detector de Mentiras**. Mantido, agora pagando 8 fichas por análise.
+
+## As cinco quests de QR code
+
+Cada código vive num lugar e abre uma cena animada do Coringa, desenhada em
+blocos e animada por transformação — nenhuma imagem para baixar, e roda com o
+app offline.
+
+| Código     | Onde fica                            | A cena                                         | Fichas |
+| ---------- | ------------------------------------ | ---------------------------------------------- | ------ |
+| `bemvindo` | Instagram da Sanatório, um dia antes | Portões abrindo e cartas caindo                | 40     |
+| `van`      | Dentro da van dos convidados         | Ele ao volante, van balançando, poste passando | 30     |
+| `bar`      | No bar                               | Virando o copo até o fim, espuma transbordando | 30     |
+| `xeque`    | Na mesa de xadrez                    | A peça caindo e a coroa piscando               | 30     |
+| `privada`  | No banheiro                          | Porta da cabine abrindo, papel desenrolando    | 30     |
+
+O QR aponta para `/q/<codigo>`. A rota **não exige ficha**: quem lê o código
+antes de se internar vê a cena na hora e a conquista fica guardada no aparelho,
+creditada assim que o prontuário existir. É o caso do primeiro código, que sai
+no Instagram um dia antes da festa.
+
+Ler o mesmo código duas vezes não paga duas vezes: o banco tem índice único por
+(paciente, código).
+
+Para imprimir, a rota `/qrcodes` desenha os cinco no navegador, com correção de
+erro alta — papel de bar amassa e molha. Ela não aparece na barra de navegação.
+
+O inventário no prontuário mostra os cinco espaços, os achados acesos e os que
+faltam esmaecidos, com a dica de onde procurar.
 
 ## Ranking e premiação
 
@@ -122,8 +220,12 @@ de 68px, e a barra rola na horizontal porque oito abas não cabem numa linha de
 maskable) e as metatags que fazem o iPhone abrir em tela cheia. Banner de
 instalação com o caminho certo em cada sistema.
 
-## O que ficou de fora
+## Um defeito corrigido
 
-O QR code do bar tem a coluna e a regra no banco (`motivo = 'qrcode'`, uma
-leitura por paciente), mas a rota `/scan` com leitor de câmera não foi feita.
-É o próximo pedaço natural.
+Quem tinha prontuário salvo e recarregava a página caía na tela de erro e
+precisava se cadastrar de novo — o que desanima qualquer um que esteja juntando
+fichas. O localStorage estava certo; o que quebrava era o Supabase: ele devolve
+o canal existente quando o nome se repete, e chamar `.on()` num canal já
+inscrito levanta exceção, derrubando a página inteira. Agora cada inscrição usa
+um nome único, e uma falha de canal cai para consulta em vez de derrubar a
+tela.

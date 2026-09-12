@@ -16,6 +16,7 @@ import { CrtOverlay } from "./CrtOverlay";
 import { Logo } from "./Logo";
 import { SinoAvisos } from "./SinoAvisos";
 import { Carteira } from "./Carteira";
+import { StatusRede } from "./StatusRede";
 import { DesafioEmJogo } from "./DesafioEmJogo";
 import { lerProntuario } from "@/lib/paciente-local";
 
@@ -50,6 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {pacienteId ? <SinoAvisos pacienteId={pacienteId} /> : null}
           </div>
         </div>
+        <StatusRede />
       </header>
 
       {/* O padding inferior acompanha a barra maior e a safe area do iPhone. */}

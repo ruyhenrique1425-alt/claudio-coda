@@ -16,7 +16,9 @@ import { Route as LojaRouteImport } from './routes/loja'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as MuralRouteImport } from './routes/mural'
 import { Route as PanicoRouteImport } from './routes/panico'
+import { Route as QrcodesRouteImport } from './routes/qrcodes'
 import { Route as RankingRouteImport } from './routes/ranking'
+import { Route as QCodigoRouteImport } from './routes/q.$codigo'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -53,9 +55,19 @@ const PanicoRoute = PanicoRouteImport.update({
   path: '/panico',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QrcodesRoute = QrcodesRouteImport.update({
+  id: '/qrcodes',
+  path: '/qrcodes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RankingRoute = RankingRouteImport.update({
   id: '/ranking',
   path: '/ranking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QCodigoRoute = QCodigoRouteImport.update({
+  id: '/q/$codigo',
+  path: '/q/$codigo',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -67,7 +79,9 @@ export interface FileRoutesByFullPath {
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
   '/panico': typeof PanicoRoute
+  '/qrcodes': typeof QrcodesRoute
   '/ranking': typeof RankingRoute
+  '/q/$codigo': typeof QCodigoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -77,7 +91,9 @@ export interface FileRoutesByTo {
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
   '/panico': typeof PanicoRoute
+  '/qrcodes': typeof QrcodesRoute
   '/ranking': typeof RankingRoute
+  '/q/$codigo': typeof QCodigoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -88,7 +104,9 @@ export interface FileRoutesById {
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
   '/panico': typeof PanicoRoute
+  '/qrcodes': typeof QrcodesRoute
   '/ranking': typeof RankingRoute
+  '/q/$codigo': typeof QCodigoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -100,7 +118,9 @@ export interface FileRouteTypes {
     | '/match'
     | '/mural'
     | '/panico'
+    | '/qrcodes'
     | '/ranking'
+    | '/q/$codigo'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -110,7 +130,9 @@ export interface FileRouteTypes {
     | '/match'
     | '/mural'
     | '/panico'
+    | '/qrcodes'
     | '/ranking'
+    | '/q/$codigo'
   id:
     | '__root__'
     | '/'
@@ -120,7 +142,9 @@ export interface FileRouteTypes {
     | '/match'
     | '/mural'
     | '/panico'
+    | '/qrcodes'
     | '/ranking'
+    | '/q/$codigo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -131,7 +155,9 @@ export interface RootRouteChildren {
   MatchRoute: typeof MatchRoute
   MuralRoute: typeof MuralRoute
   PanicoRoute: typeof PanicoRoute
+  QrcodesRoute: typeof QrcodesRoute
   RankingRoute: typeof RankingRoute
+  QCodigoRoute: typeof QCodigoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -185,11 +211,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PanicoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/qrcodes': {
+      id: '/qrcodes'
+      path: '/qrcodes'
+      fullPath: '/qrcodes'
+      preLoaderRoute: typeof QrcodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ranking': {
       id: '/ranking'
       path: '/ranking'
       fullPath: '/ranking'
       preLoaderRoute: typeof RankingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/q/$codigo': {
+      id: '/q/$codigo'
+      path: '/q/$codigo'
+      fullPath: '/q/$codigo'
+      preLoaderRoute: typeof QCodigoRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -203,7 +243,9 @@ const rootRouteChildren: RootRouteChildren = {
   MatchRoute: MatchRoute,
   MuralRoute: MuralRoute,
   PanicoRoute: PanicoRoute,
+  QrcodesRoute: QrcodesRoute,
   RankingRoute: RankingRoute,
+  QCodigoRoute: QCodigoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

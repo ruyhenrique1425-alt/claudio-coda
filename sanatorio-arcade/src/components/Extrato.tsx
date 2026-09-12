@@ -3,6 +3,7 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lerExtrato, type Movimento } from "@/lib/pontos";
+import { canalQuandoDerVerifica } from "@/lib/realtime";
 
 const MOTIVOS: Record<string, string> = {
   jogo: "Arcade",
@@ -24,14 +25,15 @@ export function Extrato({ pacienteId }: { pacienteId: string }) {
 
   useEffect(() => {
     puxar();
-    const canal = supabase
-      .channel(`extrato-${pacienteId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(canal);
-    };
+    return canalQuandoDerVerifica(
+      () =>
+        supabase
+          .channel(`extrato-${pacienteId}-${crypto.randomUUID()}`)
+          .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
+          .subscribe(),
+      (canal) => void supabase.removeChannel(canal),
+      puxar,
+    );
   }, [pacienteId, puxar]);
 
   if (linhas.length === 0) return null;

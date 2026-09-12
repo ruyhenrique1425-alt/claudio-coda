@@ -13,7 +13,9 @@ import { ContagemRegressiva } from "@/components/ContagemRegressiva";
 import { REVELACAO, jaRevelou } from "@/lib/datas";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { listarMural, postarNoMural, MORADORES, type Morador } from "@/lib/sanatorio.functions";
+import { listarMural, MORADORES, type Morador } from "@/lib/sanatorio.functions";
+import { enfileirar } from "@/lib/fila";
+import { intervaloConsciente } from "@/lib/realtime";
 import { lerProntuario } from "@/lib/paciente-local";
 
 export const Route = createFileRoute("/mural")({
@@ -83,23 +85,26 @@ function Feed({
   hydrated: boolean;
 }) {
   const carregar = useServerFn(listarMural);
-  const postar = useServerFn(postarNoMural);
   const queryClient = useQueryClient();
   const [mensagem, setMensagem] = useState("");
+  const [naFila, setNaFila] = useState(false);
 
   const feed = useQuery({
     queryKey: ["mural", morador],
     queryFn: () => carregar({ data: { destinatario: morador } }),
-    // Recados chegam durante a festa: atualiza sozinho sem recarregar a página.
-    refetchInterval: 15_000,
+    // Recados chegam durante a festa. Com sinal bom, de 15 em 15 segundos;
+    // com sinal fraco, de dois em dois minutos; sem sinal, nem tenta.
+    refetchInterval: intervaloConsciente(15_000, 120_000),
     refetchOnWindowFocus: true,
   });
 
   const envio = useMutation({
+    // Pela fila: sem sinal o recado fica guardado e sobe depois.
     mutationFn: (texto: string) =>
-      postar({ data: { destinatario: morador, mensagem: texto, autor: autor ?? "Anônimo" } }),
-    onSuccess: () => {
+      enfileirar("recado", { destinatario: morador, mensagem: texto, autor: autor ?? "Anônimo" }),
+    onSuccess: (subiu) => {
       setMensagem("");
+      setNaFila(!subiu);
       queryClient.invalidateQueries({ queryKey: ["mural", morador] });
     },
   });
@@ -249,6 +254,11 @@ function Feed({
           {envio.isError ? (
             <p role="alert" className="mt-2 text-center text-[11px] text-destructive">
               Não deu para enviar. Tente novamente.
+            </p>
+          ) : null}
+          {naFila ? (
+            <p className="mt-2 text-center text-[11px] text-whisky">
+              Recado guardado. Sobe sozinho quando pegar sinal.
             </p>
           ) : null}
         </div>

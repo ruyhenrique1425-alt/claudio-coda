@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "../components/AppShell";
 import { InstalarPwa } from "../components/InstalarPwa";
+import { ModoSitio } from "../components/ModoSitio";
 
 function NotFoundComponent() {
   return (
@@ -107,11 +108,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // As fontes são servidas pelo próprio app (src/fontes.css). Nada de
+      // Google Fonts: no sítio, é uma requisição a menos que pode falhar.
       {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap",
+        rel: "preload",
+        href: "/fontes/press-start-2p-latin.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "preload",
+        href: "/fontes/inter-latin.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "manifest", href: "/manifest.webmanifest" },
@@ -143,6 +154,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ModoSitio />
       <AppShell>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />

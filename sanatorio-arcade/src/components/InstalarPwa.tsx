@@ -32,10 +32,7 @@ export function InstalarPwa() {
   const [mostrarIos, setMostrarIos] = useState(false);
 
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
-    }
-
+    // O service worker é registrado pelo ModoSitio, que também cuida do cache.
     let dispensado = false;
     try {
       dispensado = localStorage.getItem(DISPENSADO) === "1";

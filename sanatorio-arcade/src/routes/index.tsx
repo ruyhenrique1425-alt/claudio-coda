@@ -11,6 +11,9 @@ import { Carteira } from "@/components/Carteira";
 import { Extrato } from "@/components/Extrato";
 import { Moldura, NomeDoPaciente } from "@/components/Moldura";
 import { RadarAtributos } from "@/components/RadarAtributos";
+import { Inventario } from "@/components/conquistas/Inventario";
+import { conquistaPor, lerPendentes, limparPendentes } from "@/lib/conquistas";
+import { creditarQrCode } from "@/lib/pontos";
 import { laudoDe } from "@/lib/laudos";
 import { supabase } from "@/integrations/supabase/client";
 import { AttributeRow } from "@/components/AttributeRow";
@@ -157,6 +160,19 @@ function Triagem() {
       };
       salvarProntuario(salvo);
       setProntuario(salvo);
+
+      // Quem escaneou um QR antes de se internar recebe agora. O prontuário já
+      // existe, então as fichas têm dono.
+      const pendentes = lerPendentes();
+      if (pendentes.length > 0) {
+        await Promise.allSettled(
+          pendentes.map((codigo) => {
+            const c = conquistaPor(codigo);
+            return c ? creditarQrCode(c.fichas, c.codigo) : Promise.resolve(false);
+          }),
+        );
+        limparPendentes();
+      }
       setTimeout(() => navigate({ to: "/arcade" }), 1100);
     } catch {
       setErro("Não deu para registrar sua ficha. Tente novamente.");
@@ -275,6 +291,8 @@ function Triagem() {
               </div>
             ))}
           </div>
+
+          {prontuario.pacienteId ? <Inventario pacienteId={prontuario.pacienteId} /> : null}
 
           {prontuario.pacienteId ? <Extrato pacienteId={prontuario.pacienteId} /> : null}
 

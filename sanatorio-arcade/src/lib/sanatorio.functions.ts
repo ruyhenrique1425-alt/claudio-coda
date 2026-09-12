@@ -127,7 +127,12 @@ export const postarNoMural = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const { error } = await client().from("mural").insert(data);
+    const { error } = await client().rpc("postar_recado", {
+      _destinatario: data.destinatario,
+      _mensagem: data.mensagem,
+      _autor: data.autor,
+      _chave: null,
+    });
     if (error) throw new Error("Não foi possível enviar o recado.");
     return { ok: true };
   });

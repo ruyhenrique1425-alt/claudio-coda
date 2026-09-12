@@ -5,6 +5,8 @@ import { Swords } from "lucide-react";
 import { ArcadeButton } from "./ArcadeButton";
 import { supabase } from "@/integrations/supabase/client";
 import { jogarDesafio } from "@/lib/pontos";
+import { canalQuandoDerVerifica } from "@/lib/realtime";
+import { online } from "@/lib/rede";
 
 type Desafio = {
   id: string;
@@ -28,6 +30,7 @@ export function DesafioEmJogo({ pacienteId }: { pacienteId: string }) {
   const [erro, setErro] = useState<string | null>(null);
 
   const puxar = useCallback(async () => {
+    if (!online()) return;
     const { data } = await supabase
       .from("desafios")
       .select("id, de_paciente, para_paciente, pontos, status, escolha_de, escolha_para, vencedor")
@@ -49,16 +52,18 @@ export function DesafioEmJogo({ pacienteId }: { pacienteId: string }) {
 
   useEffect(() => {
     void puxar();
-    const canal = supabase
-      .channel(`desafio-jogo-${pacienteId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "desafios" }, () => {
-        void puxar();
-      })
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(canal);
-    };
+    return canalQuandoDerVerifica(
+      () =>
+        supabase
+          .channel(`desafio-jogo-${pacienteId}-${crypto.randomUUID()}`)
+          .on("postgres_changes", { event: "*", schema: "public", table: "desafios" }, () => {
+            void puxar();
+          })
+          .subscribe(),
+      (canal) => void supabase.removeChannel(canal),
+      () => void puxar(),
+      30_000,
+    );
   }, [pacienteId, puxar]);
 
   if (!desafio) return null;
