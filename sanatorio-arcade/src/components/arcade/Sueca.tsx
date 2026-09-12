@@ -208,7 +208,7 @@ export function Sueca() {
                 onClick={fixarRegra}
                 disabled={!rascunho.trim()}
                 aria-label="Fixar regra"
-                className="grid h-11 w-12 place-items-center"
+                className="canto-pequeno grid h-11 w-12 place-items-center"
               >
                 <Plus className="h-4 w-4" />
               </ArcadeButton>

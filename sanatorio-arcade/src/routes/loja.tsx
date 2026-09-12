@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Check, Lock, ShoppingBag } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
 import { Moldura, NomeDoPaciente } from "@/components/Moldura";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -101,7 +102,7 @@ function LojaPage() {
 
   return (
     <section>
-      <header className="rounded-sm border-2 border-whisky bg-card/50 p-4">
+      <CartaoPixel tom="whisky">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="font-arcade text-[10px] uppercase text-whisky text-glow">Loja da ala</h1>
@@ -124,7 +125,7 @@ function LojaPage() {
             <NomeDoPaciente nome={eu.nome} itens={itens} />
           </span>
         </div>
-      </header>
+      </CartaoPixel>
 
       {erro ? (
         <p role="alert" className="mt-3 text-center text-[11px] text-destructive">

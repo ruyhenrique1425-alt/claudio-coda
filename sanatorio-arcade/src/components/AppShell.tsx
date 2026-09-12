@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       {/* O padding inferior acompanha a barra maior e a safe area do iPhone. */}
-      <main className="mx-auto min-h-screen max-w-md px-4 pb-[calc(104px+env(safe-area-inset-bottom))] pt-[92px]">
+      <main className="mx-auto min-h-screen max-w-md px-4 pb-[calc(112px+env(safe-area-inset-bottom))] pt-[96px]">
         <motion.div
           key={pathname}
           initial={{ opacity: 0, y: 12 }}
@@ -78,17 +78,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               <li key={to} className="shrink-0 basis-[20%] snap-start">
                 <Link
                   to={to}
-                  className={`flex h-[68px] min-w-[64px] flex-col items-center justify-center gap-1 transition-colors ${
+                  className={`flex h-[76px] min-w-[70px] flex-col items-center justify-center gap-1.5 transition-colors ${
                     active ? "text-neon" : "text-muted-foreground"
                   }`}
                 >
                   <Icon
-                    className={`h-[26px] w-[26px] ${active ? "drop-shadow-[0_0_8px_var(--neon)]" : ""}`}
+                    strokeWidth={active ? 2.4 : 2}
+                    className={`h-8 w-8 ${active ? "drop-shadow-[0_0_10px_var(--neon)]" : ""}`}
                   />
                   <span className="font-arcade text-[8px] uppercase">{label}</span>
                   <span
-                    className={`h-0.5 w-7 rounded-full transition-all ${
-                      active ? "bg-neon shadow-[0_0_8px_var(--neon)]" : "bg-transparent"
+                    className={`h-1 w-8 transition-all ${
+                      active ? "bg-neon shadow-[0_0_10px_var(--neon)]" : "bg-transparent"
                     }`}
                   />
                 </Link>

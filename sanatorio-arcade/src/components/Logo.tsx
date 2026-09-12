@@ -1,35 +1,45 @@
 /**
- * Emblema da República Sanatório: o símbolo fica alinhado na vertical com o
- * nome e encostado na base do texto. Um bloco só, sem nada flutuando.
+ * A marca da casa.
+ *
+ * O brasão é o da própria república — arco "REPÚBLICA", o caminhante roxo com
+ * a bengala, os ramos e a fita "SANATÓRIO". A versão escura tem o preto virado
+ * em creme, senão a fita some na tela preta do app.
  */
-export function Logo() {
+export function Logo({ tamanho = "barra" }: { tamanho?: "barra" | "grande" }) {
+  if (tamanho === "grande") {
+    return (
+      <div className="flex flex-col items-center">
+        <img
+          src="/marca/brasao-escuro.png"
+          alt="Brasão da República Sanatório"
+          width={220}
+          height={178}
+          className="w-[min(220px,62vw)]"
+        />
+        <p className="font-arcade mt-3 text-[8px] uppercase tracking-[0.3em] text-whisky">
+          Mariana · MG · desde 2009
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-w-0 items-end gap-2">
-      <span className="shrink-0" aria-hidden>
-        <svg width="30" height="34" viewBox="0 0 30 34" className="block">
-          {/* Escudo da casa */}
-          <path
-            d="M15 2 L27 9 V21 L15 32 L3 21 V9 Z"
-            fill="color-mix(in oklab, var(--purple) 50%, transparent)"
-            stroke="var(--neon)"
-            strokeWidth="2"
-            strokeLinejoin="miter"
-          />
-          {/* Cruz do hospício, em amarelo de rótulo */}
-          <g fill="var(--whisky)">
-            <rect x="13" y="10" width="4" height="14" />
-            <rect x="8" y="15" width="14" height="4" />
-          </g>
-        </svg>
-      </span>
-      <span className="flex min-w-0 flex-col justify-end">
-        <span className="font-arcade truncate text-[8px] uppercase tracking-[0.3em] text-whisky">
+    <div className="flex min-w-0 items-center gap-2.5">
+      <img
+        src="/marca/brasao-96.png"
+        alt=""
+        width={44}
+        height={44}
+        className="h-11 w-11 shrink-0"
+        aria-hidden
+      />
+      <span className="flex min-w-0 flex-col justify-center">
+        <span className="font-arcade truncate text-[8px] uppercase tracking-[0.28em] text-whisky">
           República
         </span>
         <span className="font-arcade truncate text-[15px] leading-none text-neon text-glow">
           SANATÓRIO
         </span>
-        <span className="mt-1 h-px w-full bg-neon/60" />
       </span>
     </div>
   );

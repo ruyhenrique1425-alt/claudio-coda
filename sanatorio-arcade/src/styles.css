@@ -151,7 +151,7 @@
 :root {
   --radius: 0.25rem;
   --background: oklch(0 0 0);
-  --foreground: oklch(0.97 0.01 120);
+  --foreground: oklch(0.985 0.008 120);
   --card: oklch(0.16 0.03 150);
   --card-foreground: oklch(0.97 0.01 120);
   --popover: oklch(0.14 0.03 150);
@@ -161,13 +161,15 @@
   --secondary: oklch(0.35 0.16 305);
   --secondary-foreground: oklch(0.97 0.01 120);
   --muted: oklch(0.22 0.02 150);
-  --muted-foreground: oklch(0.68 0.05 140);
+  /* Subido de 0.68 para 0.82: no escuro da pista, com a tela no brilho baixo
+     e o olho cansado, o cinza antigo sumia contra o preto. */
+  --muted-foreground: oklch(0.82 0.03 140);
   --accent: oklch(0.86 0.18 92);
   --accent-foreground: oklch(0.14 0.04 90);
   --destructive: oklch(0.62 0.24 25);
   --destructive-foreground: oklch(0.98 0.01 120);
-  --border: oklch(0.42 0.13 148);
-  --input: oklch(0.3 0.06 150);
+  --border: oklch(0.52 0.14 148);
+  --input: oklch(0.38 0.06 150);
   --ring: oklch(0.85 0.27 143);
   --neon: oklch(0.85 0.27 143);
   --purple: oklch(0.45 0.2 302);
@@ -243,4 +245,136 @@
     transparent 1px,
     transparent 4px
   );
+}
+
+/* ============================================================
+   Leitura no escuro e cantos pixelados
+   ============================================================ */
+
+/*
+ * Arredondamento em degraus.
+ *
+ * O canto é cortado em três degraus de 3px: de longe parece arredondado, de
+ * perto continua sendo pixel. Como o clip-path corta a borda junto, a moldura
+ * é desenhada por baixo, num pseudo-elemento com o mesmo recorte — assim o
+ * contorno acompanha o degrau em vez de ficar com o canto aberto.
+ */
+@utility canto-pixel {
+  --degrau: 3px;
+  --canto: 9px;
+  clip-path: polygon(
+    var(--canto) 0,
+    calc(100% - var(--canto)) 0,
+    calc(100% - var(--canto)) var(--degrau),
+    calc(100% - var(--degrau) * 2) var(--degrau),
+    calc(100% - var(--degrau) * 2) calc(var(--degrau) * 2),
+    calc(100% - var(--degrau)) calc(var(--degrau) * 2),
+    calc(100% - var(--degrau)) var(--canto),
+    100% var(--canto),
+    100% calc(100% - var(--canto)),
+    calc(100% - var(--degrau)) calc(100% - var(--canto)),
+    calc(100% - var(--degrau)) calc(100% - var(--degrau) * 2),
+    calc(100% - var(--degrau) * 2) calc(100% - var(--degrau) * 2),
+    calc(100% - var(--degrau) * 2) calc(100% - var(--degrau)),
+    calc(100% - var(--canto)) calc(100% - var(--degrau)),
+    calc(100% - var(--canto)) 100%,
+    var(--canto) 100%,
+    var(--canto) calc(100% - var(--degrau)),
+    calc(var(--degrau) * 2) calc(100% - var(--degrau)),
+    calc(var(--degrau) * 2) calc(100% - var(--degrau) * 2),
+    var(--degrau) calc(100% - var(--degrau) * 2),
+    var(--degrau) calc(100% - var(--canto)),
+    0 calc(100% - var(--canto)),
+    0 var(--canto),
+    var(--degrau) var(--canto),
+    var(--degrau) calc(var(--degrau) * 2),
+    calc(var(--degrau) * 2) calc(var(--degrau) * 2),
+    calc(var(--degrau) * 2) var(--degrau),
+    var(--canto) var(--degrau)
+  );
+}
+
+/*
+ * Caixa com moldura pixelada. A cor da moldura vem de --moldura, o fundo de
+ * --fundo. Dois planos recortados, sem precisar de elemento a mais no HTML.
+ */
+@utility caixa-pixel {
+  position: relative;
+  border: 0;
+  background: transparent;
+  isolation: isolate;
+}
+
+@utility caixa-pixel-plano {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.caixa-pixel::before,
+.caixa-pixel::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  --degrau: 3px;
+  --canto: 9px;
+  clip-path: polygon(
+    var(--canto) 0,
+    calc(100% - var(--canto)) 0,
+    calc(100% - var(--canto)) var(--degrau),
+    calc(100% - var(--degrau) * 2) var(--degrau),
+    calc(100% - var(--degrau) * 2) calc(var(--degrau) * 2),
+    calc(100% - var(--degrau)) calc(var(--degrau) * 2),
+    calc(100% - var(--degrau)) var(--canto),
+    100% var(--canto),
+    100% calc(100% - var(--canto)),
+    calc(100% - var(--degrau)) calc(100% - var(--canto)),
+    calc(100% - var(--degrau)) calc(100% - var(--degrau) * 2),
+    calc(100% - var(--degrau) * 2) calc(100% - var(--degrau) * 2),
+    calc(100% - var(--degrau) * 2) calc(100% - var(--degrau)),
+    calc(100% - var(--canto)) calc(100% - var(--degrau)),
+    calc(100% - var(--canto)) 100%,
+    var(--canto) 100%,
+    var(--canto) calc(100% - var(--degrau)),
+    calc(var(--degrau) * 2) calc(100% - var(--degrau)),
+    calc(var(--degrau) * 2) calc(100% - var(--degrau) * 2),
+    var(--degrau) calc(100% - var(--degrau) * 2),
+    var(--degrau) calc(100% - var(--canto)),
+    0 calc(100% - var(--canto)),
+    0 var(--canto),
+    var(--degrau) var(--canto),
+    var(--degrau) calc(var(--degrau) * 2),
+    calc(var(--degrau) * 2) calc(var(--degrau) * 2),
+    calc(var(--degrau) * 2) var(--degrau),
+    var(--canto) var(--degrau)
+  );
+}
+
+/* A moldura */
+.caixa-pixel::before {
+  inset: 0;
+  z-index: -2;
+  background: var(--moldura, var(--neon));
+}
+
+/*
+ * A superfície, recuada pela espessura da moldura.
+ *
+ * Opaca de propósito: com fundo translúcido, a cor da moldura atravessava e
+ * inundava o cartão inteiro de amarelo ou roxo.
+ */
+.caixa-pixel::after {
+  inset: var(--espessura, 2px);
+  z-index: -1;
+  background: var(--fundo, oklch(0.17 0.028 150));
+}
+
+/*
+ * Canto menor para botões pequenos. Num quadrado de 44px, o degrau de 9px come
+ * quase todo o canto e o botão vira um octógono.
+ */
+.canto-pequeno::before,
+.canto-pequeno::after {
+  --degrau: 2px;
+  --canto: 5px;
 }

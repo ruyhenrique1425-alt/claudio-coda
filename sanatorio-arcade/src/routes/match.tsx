@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { Beer, HeartCrack, Swords } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
 import { Moldura, NomeDoPaciente } from "@/components/Moldura";
 import { DadoPrenda } from "@/components/DadoPrenda";
@@ -168,7 +169,7 @@ function MatchPage() {
 
   return (
     <section>
-      <header className="rounded-sm border-2 border-purple/70 bg-card/50 p-4 text-center">
+      <CartaoPixel tom="purple" className="text-center">
         <h1 className="font-arcade text-[11px] uppercase leading-relaxed text-neon text-glow">
           Match de Manicômio
         </h1>
@@ -188,7 +189,7 @@ function MatchPage() {
             {somenteMatches ? "Ver todos os pacientes" : `Meus matches (${meusMatches.size})`}
           </button>
         ) : null}
-      </header>
+      </CartaoPixel>
 
       {erro ? (
         <p role="alert" className="mt-3 text-center text-[11px] text-destructive">

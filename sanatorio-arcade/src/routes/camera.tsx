@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { Camera, FileWarning, ImagePlus, Loader2 } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
 import { FotoEmbargada } from "@/components/RegistroEmbargado";
 import { comprimir } from "@/lib/imagem";
@@ -78,7 +79,7 @@ function CameraPage() {
 
   return (
     <section>
-      <header className="rounded-sm border-2 border-neon/50 bg-card/50 p-4">
+      <CartaoPixel tom="neon">
         <div className="flex items-center gap-2">
           <Camera className="h-4 w-4 shrink-0 text-neon" />
           <h1 className="font-arcade text-[10px] uppercase text-neon text-glow">
@@ -89,7 +90,7 @@ function CameraPage() {
           Registre as provas dos seus episódios. Ninguém vê nada até 30/10 ao meio-dia — nem você.
           Até lá aparece só quem registrou e o quê.
         </p>
-      </header>
+      </CartaoPixel>
 
       {hydrated && !autor ? (
         <p className="mt-4 text-center text-[12px] text-muted-foreground">

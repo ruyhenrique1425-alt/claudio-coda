@@ -31,6 +31,34 @@ pontua uma vez por paciente, uma prenda a cada 15 minutos para o mesmo alvo,
 prenda de no máximo 3 segundos, e nenhum desafio sem que os dois lados tenham
 saldo.
 
+## A marca e a leitura no escuro
+
+**O brasão de verdade.** A logo da república entrou no lugar do símbolo que eu
+tinha desenhado: o arco REPÚBLICA, o caminhante roxo com a bengala, os ramos e
+a fita SANATÓRIO. Ela foi recortada da arte original, teve o fundo branco
+removido e ganhou uma versão para tela preta, com o preto virado em creme —
+senão a fita sumiria no fundo do app. Está em `public/marca/`, e os ícones do
+PWA e o favicon saem dela.
+
+O brasão grande abre a ficha de admissão, que é a primeira tela; no cabeçalho
+fica a versão compacta de 44px ao lado do nome.
+
+**Contraste para o escuro da pista.** O cinza do texto secundário subiu de
+0.68 para 0.82 de luminosidade. Com o brilho baixo, o olho cansado e a tela
+suja, o tom anterior desaparecia contra o preto. As bordas e os campos também
+subiram.
+
+**Ícones maiores.** A barra inferior foi de 26px para 32px, com alvo de toque
+de 76px de altura e 70px de largura, e o traço do item ativo engrossou. É a
+diferença entre acertar a aba em pé, segurando um copo, e errar.
+
+**Canto pixelado.** Botões e cartões de seção passaram a ter o canto cortado em
+três degraus de 3px: de longe parece arredondado, de perto continua sendo
+pixel. Como o `clip-path` corta a borda junto, a moldura é desenhada por baixo
+num pseudo-elemento com o mesmo recorte, então o contorno acompanha o degrau em
+vez de deixar o canto aberto. Botões pequenos usam degrau de 2px, senão um
+quadrado de 44px vira octógono.
+
 ## Modo sítio: o app no meio do mato
 
 A festa é longe da cidade e o sinal vai e volta. O app parte dessa premissa em

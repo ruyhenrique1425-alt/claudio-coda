@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Siren } from "lucide-react";
@@ -149,14 +150,14 @@ function PanicoPage() {
 
   return (
     <section>
-      <header className="rounded-sm border-2 border-neon/50 bg-card/50 p-4 text-center">
+      <CartaoPixel tom="vermelho" className="text-center">
         <h1 className="font-arcade text-[11px] uppercase leading-relaxed text-neon text-glow">
           Botão do Pânico
         </h1>
         <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
           Todo mundo da festa clica no mesmo botão. Aos 5.000 cliques o Coringa escapa.
         </p>
-      </header>
+      </CartaoPixel>
 
       <div className="mt-6 text-center">
         <p className="font-arcade text-[9px] uppercase text-whisky">Cliques coletivos</p>

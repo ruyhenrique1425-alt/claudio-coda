@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
 
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { Moldura, NomeDoPaciente } from "@/components/Moldura";
 import { ContagemRegressiva } from "@/components/ContagemRegressiva";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,7 +80,7 @@ function RankingPage() {
 
   return (
     <section>
-      <header className="rounded-sm border-2 border-whisky bg-card/50 p-4 text-center">
+      <CartaoPixel tom="whisky" className="text-center">
         <Trophy className="mx-auto h-7 w-7 text-whisky" />
         <h1 className="font-arcade mt-3 text-[11px] uppercase leading-relaxed text-whisky text-glow">
           Paciente mais insano
@@ -102,7 +103,7 @@ function RankingPage() {
           O ranking usa <span className="text-neon">fichas ganhas</span>, não o saldo. Doar fichas
           para um amigo não tira você da disputa.
         </p>
-      </header>
+      </CartaoPixel>
 
       {congelado ? (
         <div className="mt-4 rounded-sm border-2 border-neon bg-neon/10 p-4">

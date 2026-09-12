@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { ClipboardCheck, Gamepad2, RotateCcw, Stethoscope } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
+import { Logo } from "@/components/Logo";
 import { AltaMedica } from "@/components/AltaMedica";
 import { Carteira } from "@/components/Carteira";
 import { Extrato } from "@/components/Extrato";
@@ -326,7 +328,11 @@ function Triagem() {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <div className="rounded-sm border-2 border-purple bg-card/50 p-4">
+          <div className="mb-5 flex justify-center">
+            <Logo tamanho="grande" />
+          </div>
+
+          <CartaoPixel tom="purple">
             <div className="flex items-center gap-2">
               <Stethoscope className="h-4 w-4 shrink-0 text-whisky" />
               <h1 className="font-arcade text-[10px] uppercase text-whisky text-glow">
@@ -348,7 +354,7 @@ function Triagem() {
               placeholder="DIGITE AQUI"
               className="tap-44 mt-2 w-full rounded-sm border-2 border-neon/50 bg-background px-3 py-3 font-mono text-sm uppercase text-foreground outline-none placeholder:text-muted-foreground focus:border-neon focus:shadow-[0_0_14px_-4px_var(--neon)]"
             />
-          </div>
+          </CartaoPixel>
 
           <div className="sticky top-[86px] z-30 mt-4 rounded-sm border-2 border-whisky bg-background/95 px-4 py-3 backdrop-blur">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">

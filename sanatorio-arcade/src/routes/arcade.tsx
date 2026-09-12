@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Dices, Brain, Users, ScanFace, Wind, Spade } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import {
   Dialog,
   DialogContent,
@@ -95,7 +96,7 @@ function ArcadePage() {
 
   return (
     <section>
-      <header className="rounded-sm border-2 border-neon/50 bg-card/50 p-4 text-center">
+      <CartaoPixel tom="neon" className="text-center">
         <h1 className="font-arcade text-[11px] uppercase leading-relaxed text-neon text-glow">
           Arcade da ala
         </h1>
@@ -103,7 +104,7 @@ function ArcadePage() {
           Seis máquinas, todas valendo fichas para o ranking. A Sueca é de mesa: um celular no meio
           da roda e todo mundo joga junto.
         </p>
-      </header>
+      </CartaoPixel>
 
       <div className="mt-5 space-y-4">
         {JOGOS.map(({ id, titulo, resumo, fichas, icon: Icon, tone }) => (

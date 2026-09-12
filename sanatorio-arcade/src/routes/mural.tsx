@@ -241,7 +241,7 @@ function Feed({
                 type="submit"
                 disabled={!podeEnviar}
                 aria-label="Enviar recado"
-                className="grid h-11 w-14 shrink-0 place-items-center"
+                className="canto-pequeno grid h-11 w-14 shrink-0 place-items-center"
               >
                 {envio.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

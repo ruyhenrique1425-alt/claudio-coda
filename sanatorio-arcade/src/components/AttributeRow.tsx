@@ -32,7 +32,7 @@ export function AttributeRow({
             aria-label={`Diminuir ${label}`}
             disabled={value <= 0}
             onClick={() => onChange(-1)}
-            className="grid h-11 w-11 place-items-center"
+            className="canto-pequeno grid h-11 w-11 place-items-center"
           >
             <Minus className="h-4 w-4" />
           </ArcadeButton>
@@ -41,7 +41,7 @@ export function AttributeRow({
             aria-label={`Aumentar ${label}`}
             disabled={!canIncrease || value >= max}
             onClick={() => onChange(1)}
-            className="grid h-11 w-11 place-items-center"
+            className="canto-pequeno grid h-11 w-11 place-items-center"
           >
             <Plus className="h-4 w-4" />
           </ArcadeButton>
