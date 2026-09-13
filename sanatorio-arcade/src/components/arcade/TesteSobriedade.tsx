@@ -38,13 +38,19 @@ type Fase = "pronto" | "mostrando" | "repetindo" | "gameover";
 
 /* --------------------------- curva de dificuldade -------------------------- */
 
-const ACESO_INICIAL = 700;
-const PAUSA_INICIAL = 350;
-const FATOR = 0.88;
-const PISO_ACESO = 140;
-const PISO_PAUSA = 70;
+const ACESO_INICIAL = 680;
+const PAUSA_INICIAL = 320;
+const FATOR = 0.84;
+const PISO_ACESO = 105;
+const PISO_PAUSA = 50;
 
-/** A cada rodada vencida os dois tempos encolhem 12%, até o piso. */
+/**
+ * A cada rodada vencida os dois tempos encolhem 16%, até o piso.
+ *
+ * Com 12% o jogo ainda era confortável na rodada 10; agora a rodada 8 já está
+ * em 200ms por cor e a 12 encosta no piso de 105ms, que é mais rápido do que
+ * a mão acompanha. É para ser quase impossível — o nome do jogo promete isso.
+ */
 function ritmoDaRodada(rodada: number) {
   const escala = Math.pow(FATOR, Math.max(0, rodada - 1));
   return {
@@ -53,9 +59,9 @@ function ritmoDaRodada(rodada: number) {
   };
 }
 
-/** Da rodada 8 em diante a tela treme e a cor apaga antes da hora. */
+/** Da rodada 6 em diante a tela treme e a cor apaga antes da hora. */
 function fasePesada(rodada: number) {
-  return rodada >= 8;
+  return rodada >= 6;
 }
 
 const LAUDOS: { ate: number; texto: string }[] = [
@@ -98,7 +104,7 @@ export function TesteSobriedade() {
 
       // Na fase pesada a cor some um pouco antes do previsto, então não dá
       // para contar com o ritmo — tem que olhar.
-      const duracaoAceso = pesada ? Math.max(90, tAceso - 60) : tAceso;
+      const duracaoAceso = pesada ? Math.max(70, tAceso - 75) : tAceso;
       const ciclo = tAceso + pausa;
 
       seq.forEach((pad, i) => {
@@ -234,7 +240,7 @@ export function TesteSobriedade() {
 
       <p className="mt-4 min-h-[36px] text-[12px] leading-relaxed text-muted-foreground">
         {fase === "pronto"
-          ? "A sequência acelera a cada rodada. Da oitava em diante, boa sorte."
+          ? "A sequência acelera 16% por rodada. Da sexta em diante ela treme, e lá pela décima segunda vira sorte."
           : fase === "mostrando"
             ? fasePesada(rodadaAtual)
               ? "Acelerou. Olhe, não conte."

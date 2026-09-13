@@ -15,7 +15,7 @@ import { ContagemRegressiva } from "@/components/ContagemRegressiva";
 import { REVELACAO, jaRevelou } from "@/lib/datas";
 
 import { supabase } from "@/integrations/supabase/client";
-import { listarFotos, registrarFoto } from "@/lib/sanatorio.functions";
+import { listarFotos } from "@/lib/sanatorio.functions";
 import { lerProntuario } from "@/lib/paciente-local";
 
 export const Route = createFileRoute("/camera")({
@@ -36,7 +36,6 @@ export const Route = createFileRoute("/camera")({
 
 function CameraPage() {
   const carregar = useServerFn(listarFotos);
-  const registrar = useServerFn(registrarFoto);
   const queryClient = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
 
