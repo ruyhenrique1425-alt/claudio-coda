@@ -131,7 +131,6 @@ export const postarNoMural = createServerFn({ method: "POST" })
       _destinatario: data.destinatario,
       _mensagem: data.mensagem,
       _autor: data.autor,
-      _chave: null,
     });
     if (error) throw new Error("Não foi possível enviar o recado.");
     return { ok: true };
@@ -148,13 +147,13 @@ export const registrarFoto = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const { error } = await client()
-      .from("fotos")
-      .insert({
-        path: data.path,
-        autor: data.autor,
-        legenda: data.legenda ?? null,
-      });
+    // Pela função, não por insert: a migração do modo sítio revogou o INSERT
+    // direto em `fotos` para que a chave de idempotência seja sempre aplicada.
+    const { error } = await client().rpc("registrar_foto", {
+      _path: data.path,
+      _autor: data.autor,
+      ...(data.legenda ? { _legenda: data.legenda } : {}),
+    });
     if (error) throw new Error("Não foi possível registrar a foto.");
     return { ok: true };
   });

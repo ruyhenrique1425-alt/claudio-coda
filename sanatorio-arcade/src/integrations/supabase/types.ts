@@ -344,21 +344,21 @@ export type Database = {
       };
       creditar_pontos: {
         Args: {
-          _chave?: string | null;
+          _chave?: string;
           _motivo: string;
           _paciente: string;
           _pontos: number;
-          _referencia?: string | null;
+          _referencia?: string;
           _token: string;
         };
         Returns: number;
       };
       postar_recado: {
-        Args: { _autor: string; _chave?: string | null; _destinatario: string; _mensagem: string };
+        Args: { _autor: string; _chave?: string; _destinatario: string; _mensagem: string };
         Returns: boolean;
       };
       registrar_foto: {
-        Args: { _autor: string; _chave?: string | null; _legenda?: string | null; _path: string };
+        Args: { _autor: string; _chave?: string; _legenda?: string; _path: string };
         Returns: boolean;
       };
       transferir_pontos: {
@@ -376,7 +376,7 @@ export type Database = {
         Returns: number;
       };
       equipar_item: {
-        Args: { _item: string | null; _paciente: string; _slot: string; _token: string };
+        Args: { _item?: string; _paciente: string; _slot: string; _token: string };
         Returns: Json;
       };
       curtir: { Args: { _de: string; _para: string; _token: string }; Returns: boolean };

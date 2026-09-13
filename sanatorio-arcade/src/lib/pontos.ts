@@ -159,11 +159,13 @@ export async function comprarItem(itemId: string, preco: number): Promise<number
 
 export async function equiparItem(slot: string, itemId: string | null): Promise<unknown> {
   const { pacienteId, token } = exigirCredenciais();
+  // Desequipar omite o item: o Postgres aplica o DEFAULT NULL da função, que
+  // é o mesmo efeito de mandar null — e o tipo gerado não aceita null aqui.
   const { data, error } = await supabase.rpc("equipar_item", {
     _paciente: pacienteId,
     _token: token,
     _slot: slot,
-    _item: itemId,
+    ...(itemId ? { _item: itemId } : {}),
   });
   if (error) explicar(error);
   return data;

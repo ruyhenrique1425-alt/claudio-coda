@@ -99,7 +99,9 @@ async function enviar(envio: Envio): Promise<void> {
           _token: d.token,
           _pontos: d.pontos,
           _motivo: d.motivo,
-          _referencia: d.referencia,
+          // Chave omitida em vez de undefined: o projeto usa
+          // exactOptionalPropertyTypes, e o Postgres aplica o DEFAULT.
+          ...(d.referencia ? { _referencia: d.referencia } : {}),
           _chave: envio.id,
         }),
       ),
@@ -154,7 +156,7 @@ async function enviar(envio: Envio): Promise<void> {
         supabase.rpc("registrar_foto", {
           _path: d.path,
           _autor: d.autor,
-          _legenda: d.legenda,
+          ...(d.legenda ? { _legenda: d.legenda } : {}),
           _chave: envio.id,
         }),
       ),

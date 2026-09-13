@@ -31,6 +31,31 @@ pontua uma vez por paciente, uma prenda a cada 15 minutos para o mesmo alvo,
 prenda de no máximo 3 segundos, e nenhum desafio sem que os dois lados tenham
 saldo.
 
+## Dois defeitos corrigidos
+
+**A barra inferior escondia metade do app.** Ao entrar Ranking e Loja, a barra
+passou a ter oito abas e eu a fiz rolar na horizontal. Numa tela de 390px isso
+empurrava Câmera, Mural e Pânico para fora do campo de visão: do lado de quem
+usa, essas telas tinham sumido. Nenhum arquivo foi apagado — a navegação é que
+escondia. Agora são sete colunas iguais, ocupando a largura inteira sem
+rolagem: os seis destinos originais na ordem de sempre (Ficha, Mural, Câmera,
+Match, Arcade, Pânico) mais um botão "Mais" que abre Ranking e Loja numa
+gaveta, com nome e explicação. Em 360px a barra mede exatos 360px.
+
+**Foto registrada por insert direto.** A migração do modo sítio revogou o
+INSERT em `fotos` para obrigar a chave de idempotência, mas `registrarFoto`
+continuou fazendo insert direto — ia falhar por permissão na hora de enviar
+foto. Agora chama a função `registrar_foto`, como o resto.
+
+**Tipos alinhados com o gerador do Supabase.** O gerador declara argumento
+opcional de função como `nome?: tipo`, sem `| null`. Onde o código mandava
+`null` (referência do jogo, legenda da foto, chave do recado, item a
+desequipar), a chave passa a ser omitida: o Postgres aplica o DEFAULT, o efeito
+é o mesmo e a compilação fecha mesmo depois de o Supabase regenerar os tipos.
+Para desequipar continuar funcionando com a chave omitida, a função
+`equipar_item` ganhou `DEFAULT NULL` no argumento do item (migração
+`20260913080000`).
+
 ## A marca e a leitura no escuro
 
 **O brasão de verdade.** A logo da república entrou no lugar do símbolo que eu
@@ -248,12 +273,11 @@ de 68px, e a barra rola na horizontal porque oito abas não cabem numa linha de
 maskable) e as metatags que fazem o iPhone abrir em tela cheia. Banner de
 instalação com o caminho certo em cada sistema.
 
-## Um defeito corrigido
+## O perfil que sumia
 
 Quem tinha prontuário salvo e recarregava a página caía na tela de erro e
-precisava se cadastrar de novo — o que desanima qualquer um que esteja juntando
-fichas. O localStorage estava certo; o que quebrava era o Supabase: ele devolve
-o canal existente quando o nome se repete, e chamar `.on()` num canal já
-inscrito levanta exceção, derrubando a página inteira. Agora cada inscrição usa
-um nome único, e uma falha de canal cai para consulta em vez de derrubar a
-tela.
+precisava se cadastrar de novo. O localStorage estava certo; o que quebrava era
+o Supabase, que devolve o canal existente quando o nome se repete, e chamar
+`.on()` num canal já inscrito levanta exceção, derrubando a página inteira.
+Cada inscrição usa nome único, e falha de canal cai para consulta em vez de
+derrubar a tela.
