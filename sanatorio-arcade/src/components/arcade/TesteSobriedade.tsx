@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { Skull } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { usePontosDoJogo, vibrar } from "./usePontosDoJogo";
 
 type PadId = 0 | 1 | 2 | 3;
@@ -175,25 +176,23 @@ export function TesteSobriedade() {
   if (fase === "gameover") {
     const alcancada = Math.max(0, sequencia.length - 1);
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="rounded-sm border-2 border-destructive bg-destructive/10 p-6 text-center"
-      >
-        <Skull className="mx-auto h-10 w-10 text-destructive" />
-        <p className="font-arcade mt-4 text-[12px] uppercase text-destructive text-glow">
-          Reprovado
-        </p>
-        <p className="mt-4 text-[14px] leading-relaxed text-foreground">
-          {laudoDaRodada(alcancada)}
-        </p>
-        <p className="font-arcade mt-4 text-[8px] uppercase text-whisky">
-          Rodada alcançada: {alcancada} · Recorde: {recorde}
-        </p>
-        {aviso ? <p className="font-arcade mt-2 text-[8px] text-neon">{aviso}</p> : null}
-        <ArcadeButton onClick={iniciar} className="mt-6 w-full py-4 text-[10px] uppercase">
-          Novo teste
-        </ArcadeButton>
+      <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}>
+        <CartaoPixel tom="vermelho" padding="p-6" className="text-center">
+          <Skull className="mx-auto h-10 w-10 text-destructive" />
+          <p className="font-arcade mt-4 text-[12px] uppercase text-destructive text-glow">
+            Reprovado
+          </p>
+          <p className="mt-4 text-[14px] leading-relaxed text-foreground">
+            {laudoDaRodada(alcancada)}
+          </p>
+          <p className="font-arcade mt-4 text-[8px] uppercase text-whisky">
+            Rodada alcançada: {alcancada} · Recorde: {recorde}
+          </p>
+          {aviso ? <p className="font-arcade mt-2 text-[8px] text-neon">{aviso}</p> : null}
+          <ArcadeButton onClick={iniciar} className="mt-6 w-full py-4 text-[10px] uppercase">
+            Novo teste
+          </ArcadeButton>
+        </CartaoPixel>
       </motion.div>
     );
   }

@@ -177,6 +177,7 @@ function Feed({
                   <PixelAvatar
                     personagem={r.personagem}
                     avatar={r.avatar}
+                    itens={r.itens}
                     size="sm"
                     title={`Avatar de ${r.autor}`}
                   />

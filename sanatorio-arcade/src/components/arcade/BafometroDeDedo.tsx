@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { Wind } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { usePontosDoJogo, vibrar } from "./usePontosDoJogo";
 
 /**
@@ -149,32 +150,30 @@ export function BafometroDeDedo() {
   if (fase === "resultado") {
     const l = laudo(nota);
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="rounded-sm border-2 border-whisky bg-card/60 p-6 text-center"
-      >
-        <p className="font-arcade text-[8px] uppercase text-muted-foreground">Teor apurado</p>
-        <p className="font-arcade mt-2 text-3xl text-whisky text-glow">{nota}</p>
-        <p className="font-arcade mt-3 text-[11px] uppercase text-neon text-glow">{l.titulo}</p>
-        <p className="mt-4 text-[13px] leading-relaxed text-foreground">{l.texto}</p>
+      <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }}>
+        <CartaoPixel tom="whisky" padding="p-6" className="text-center">
+          <p className="font-arcade text-[8px] uppercase text-muted-foreground">Teor apurado</p>
+          <p className="font-arcade mt-2 text-3xl text-whisky text-glow">{nota}</p>
+          <p className="font-arcade mt-3 text-[11px] uppercase text-neon text-glow">{l.titulo}</p>
+          <p className="mt-4 text-[13px] leading-relaxed text-foreground">{l.texto}</p>
 
-        <div className="mt-5 grid grid-cols-2 gap-2 text-left">
-          <div className="rounded-sm border border-neon/40 bg-background/60 p-2">
-            <p className="font-arcade text-[7px] uppercase text-muted-foreground">Toques</p>
-            <p className="font-arcade mt-1 text-sm text-neon">{toques}</p>
+          <div className="mt-5 grid grid-cols-2 gap-2 text-left">
+            <div className="rounded-sm border border-neon/40 bg-background/60 p-2">
+              <p className="font-arcade text-[7px] uppercase text-muted-foreground">Toques</p>
+              <p className="font-arcade mt-1 text-sm text-neon">{toques}</p>
+            </div>
+            <div className="rounded-sm border border-purple/60 bg-background/60 p-2">
+              <p className="font-arcade text-[7px] uppercase text-muted-foreground">Firmeza</p>
+              <p className="font-arcade mt-1 text-sm text-whisky">{firmeza}%</p>
+            </div>
           </div>
-          <div className="rounded-sm border border-purple/60 bg-background/60 p-2">
-            <p className="font-arcade text-[7px] uppercase text-muted-foreground">Firmeza</p>
-            <p className="font-arcade mt-1 text-sm text-whisky">{firmeza}%</p>
-          </div>
-        </div>
 
-        {aviso ? <p className="font-arcade mt-3 text-[8px] text-neon">{aviso}</p> : null}
+          {aviso ? <p className="font-arcade mt-3 text-[8px] text-neon">{aviso}</p> : null}
 
-        <ArcadeButton onClick={iniciar} className="mt-6 w-full py-4 text-[10px] uppercase">
-          Soprar de novo
-        </ArcadeButton>
+          <ArcadeButton onClick={iniciar} className="mt-6 w-full py-4 text-[10px] uppercase">
+            Soprar de novo
+          </ArcadeButton>
+        </CartaoPixel>
       </motion.div>
     );
   }

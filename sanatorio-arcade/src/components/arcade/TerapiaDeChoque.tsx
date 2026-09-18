@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { CheckCircle2, Shuffle, Timer, XCircle } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { usePontosDoJogo, vibrar } from "./usePontosDoJogo";
 
 /**
@@ -126,14 +127,10 @@ export function TerapiaDeChoque() {
         ))}
       </div>
 
-      <div
-        className={`mt-4 grid min-h-[160px] place-items-center rounded-sm border-2 p-5 transition-colors ${
-          fase === "concluida"
-            ? "border-neon bg-neon/10"
-            : fase === "estourou"
-              ? "border-destructive bg-destructive/10"
-              : "border-purple bg-card/50"
-        }`}
+      <CartaoPixel
+        tom={fase === "concluida" ? "neon" : fase === "estourou" ? "vermelho" : "purple"}
+        padding="p-5"
+        className="mt-4 grid min-h-[160px] place-items-center transition-colors"
       >
         {missao === null ? (
           <p className="text-[13px] leading-relaxed text-muted-foreground">
@@ -167,7 +164,7 @@ export function TerapiaDeChoque() {
             ) : null}
           </motion.div>
         )}
-      </div>
+      </CartaoPixel>
 
       {fase === "valendo" ? (
         <>

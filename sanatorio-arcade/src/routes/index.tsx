@@ -231,6 +231,7 @@ function Triagem() {
                 <PixelAvatar
                   personagem={prontuario.personagem}
                   avatar={prontuario.avatar}
+                  itens={itens}
                   size="lg"
                   glow
                   title={`Avatar de ${prontuario.nome}`}

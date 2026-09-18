@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Trophy } from "lucide-react";
 
@@ -43,10 +43,23 @@ function RankingPage() {
   const [podio, setPodio] = useState<Podio[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [eu, setEu] = useState<string | null>(null);
+  // Quando o placar mexe a sua linha, ela pisca por alguns segundos.
+  const [piscar, setPiscar] = useState(false);
+  const posicaoAnterior = useRef<number | null>(null);
 
   const puxar = useCallback(() => {
     void lerRanking()
-      .then(setLinhas)
+      .then((novas) => {
+        setLinhas(novas);
+        const meu = lerProntuario()?.pacienteId ?? null;
+        const i = meu ? novas.findIndex((l) => l.paciente_id === meu) : -1;
+        const pos = i >= 0 ? i + 1 : null;
+        if (pos !== null && posicaoAnterior.current !== null && pos !== posicaoAnterior.current) {
+          setPiscar(true);
+          setTimeout(() => setPiscar(false), 4000);
+        }
+        posicaoAnterior.current = pos;
+      })
       .catch(() => undefined)
       .finally(() => setCarregando(false));
   }, []);
@@ -144,7 +157,18 @@ function RankingPage() {
             <motion.li
               key={l.paciente_id}
               layout
-              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              transition={{
+                type: "spring",
+                stiffness: 320,
+                damping: 30,
+                boxShadow: { repeat: 3, duration: 1 },
+              }}
+              animate={{
+                boxShadow:
+                  l.paciente_id === eu && piscar
+                    ? ["0 0 0px var(--neon)", "0 0 26px var(--neon)", "0 0 0px var(--neon)"]
+                    : "0 0 0px var(--neon)",
+              }}
               className={`grid grid-cols-[auto_auto_minmax(0,1fr)_auto] items-center gap-3 rounded-sm border-2 px-3 py-2 ${medalha} ${
                 l.paciente_id === eu ? "ring-1 ring-neon" : ""
               }`}
@@ -161,6 +185,7 @@ function RankingPage() {
                 <PixelAvatar
                   personagem={l.personagem}
                   avatar={l.avatar}
+                  itens={l.itens}
                   size="sm"
                   title={`Avatar de ${l.nome}`}
                 />

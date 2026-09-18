@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Layers, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { usePontosDoJogo, vibrar } from "./usePontosDoJogo";
 import { montarMonte, naipeDe, REGRAS, type Carta, type Regra } from "./sueca";
 
@@ -14,11 +15,18 @@ import { montarMonte, naipeDe, REGRAS, type Carta, type Regra } from "./sueca";
  * o que também resolve a mesa montada no fundo do sítio.
  */
 
-const CORES_EFEITO: Record<Regra["efeito"], string> = {
-  beber: "border-destructive text-destructive",
-  brincadeira: "border-neon text-neon",
-  guardar: "border-whisky text-whisky",
-  regra: "border-purple text-foreground",
+const TOM_EFEITO: Record<Regra["efeito"], "vermelho" | "neon" | "whisky" | "purple"> = {
+  beber: "vermelho",
+  brincadeira: "neon",
+  guardar: "whisky",
+  regra: "purple",
+};
+
+const TEXTO_EFEITO: Record<Regra["efeito"], string> = {
+  beber: "text-destructive",
+  brincadeira: "text-neon",
+  guardar: "text-whisky",
+  regra: "text-foreground",
 };
 
 const ROTULO_EFEITO: Record<Regra["efeito"], string> = {
@@ -168,61 +176,68 @@ export function Sueca() {
           key={"regra-" + atual.id}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`mt-4 rounded-sm border-2 bg-card/60 p-4 ${CORES_EFEITO[regra.efeito]}`}
         >
-          <p className="font-arcade text-[7px] uppercase text-muted-foreground">
-            {ROTULO_EFEITO[regra.efeito]}
-          </p>
-          <p className="font-arcade mt-2 text-[11px] uppercase leading-relaxed">{regra.titulo}</p>
-          <p className="mt-3 text-[13px] leading-relaxed text-foreground">{regra.comoJoga}</p>
-          {regra.exemplo ? (
-            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-              {regra.exemplo}
+          <CartaoPixel
+            tom={TOM_EFEITO[regra.efeito]}
+            className={`mt-4 ${TEXTO_EFEITO[regra.efeito]}`}
+          >
+            <p className="font-arcade text-[7px] uppercase text-muted-foreground">
+              {ROTULO_EFEITO[regra.efeito]}
             </p>
-          ) : null}
+            <p className="font-arcade mt-2 text-[11px] uppercase leading-relaxed">{regra.titulo}</p>
+            <p className="mt-3 text-[13px] leading-relaxed text-foreground">{regra.comoJoga}</p>
+            {regra.exemplo ? (
+              <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                {regra.exemplo}
+              </p>
+            ) : null}
 
-          {regra.efeito === "guardar" ? (
-            <ArcadeButton
-              tone="whisky"
-              onClick={guardarCarta}
-              className="mt-4 w-full py-3 text-[9px] uppercase"
-            >
-              Guardar esta carta
-            </ArcadeButton>
-          ) : null}
-
-          {regra.efeito === "regra" ? (
-            <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-              <label className="sr-only" htmlFor="regra-geral">
-                Regra geral da mesa
-              </label>
-              <input
-                id="regra-geral"
-                value={rascunho}
-                onChange={(e) => setRascunho(e.target.value)}
-                maxLength={80}
-                placeholder="Digite a regra da mesa"
-                className="tap-44 min-w-0 rounded-sm border-2 border-purple bg-background px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-neon"
-              />
+            {regra.efeito === "guardar" ? (
               <ArcadeButton
-                onClick={fixarRegra}
-                disabled={!rascunho.trim()}
-                aria-label="Fixar regra"
-                className="canto-pequeno grid h-11 w-12 place-items-center"
+                tone="whisky"
+                onClick={guardarCarta}
+                className="mt-4 w-full py-3 text-[9px] uppercase"
               >
-                <Plus className="h-4 w-4" />
+                Guardar esta carta
               </ArcadeButton>
-            </div>
-          ) : null}
+            ) : null}
 
-          {aviso ? <p className="font-arcade mt-3 text-[7px] text-neon">{aviso}</p> : null}
+            {regra.efeito === "regra" ? (
+              <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <label className="sr-only" htmlFor="regra-geral">
+                  Regra geral da mesa
+                </label>
+                <input
+                  id="regra-geral"
+                  value={rascunho}
+                  onChange={(e) => setRascunho(e.target.value)}
+                  maxLength={80}
+                  placeholder="Digite a regra da mesa"
+                  className="tap-44 min-w-0 rounded-sm border-2 border-purple bg-background px-3 py-2 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-neon"
+                />
+                <ArcadeButton
+                  onClick={fixarRegra}
+                  disabled={!rascunho.trim()}
+                  aria-label="Fixar regra"
+                  className="canto-pequeno grid h-11 w-12 place-items-center"
+                >
+                  <Plus className="h-4 w-4" />
+                </ArcadeButton>
+              </div>
+            ) : null}
+
+            {aviso ? <p className="font-arcade mt-3 text-[7px] text-neon">{aviso}</p> : null}
+          </CartaoPixel>
         </motion.div>
       ) : null}
 
       {acabou ? (
-        <p className="mt-4 rounded-sm border-2 border-whisky bg-whisky/10 p-4 text-center text-[13px] leading-relaxed text-whisky">
+        <CartaoPixel
+          tom="whisky"
+          className="mt-4 text-center text-[13px] leading-relaxed text-whisky"
+        >
           Acabaram as 104 cartas. Se ainda tem alguém de pé, embaralhe de novo.
-        </p>
+        </CartaoPixel>
       ) : null}
 
       <ArcadeButton
@@ -235,7 +250,7 @@ export function Sueca() {
 
       {/* Cartas guardadas (6 e 9) */}
       {guardadas.length > 0 ? (
-        <div className="mt-5 rounded-sm border-2 border-whisky/60 bg-card/40 p-3">
+        <CartaoPixel tom="whisky" padding="p-3" className="mt-5">
           <p className="font-arcade text-[7px] uppercase text-muted-foreground">
             Na sua mão · use quando quiser
           </p>
@@ -262,12 +277,12 @@ export function Sueca() {
           <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
             Toque na carta depois de fazer o gesto, para tirá-la da mão.
           </p>
-        </div>
+        </CartaoPixel>
       ) : null}
 
       {/* Regra geral em vigor */}
       {regrasAtivas.length > 0 ? (
-        <div className="mt-4 rounded-sm border-2 border-purple bg-purple/15 p-3">
+        <CartaoPixel tom="purple" padding="p-3" className="mt-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="font-arcade text-[7px] uppercase text-muted-foreground">
@@ -287,7 +302,7 @@ export function Sueca() {
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
-        </div>
+        </CartaoPixel>
       ) : null}
 
       <button

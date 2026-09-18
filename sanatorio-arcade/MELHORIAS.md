@@ -281,3 +281,55 @@ o Supabase, que devolve o canal existente quando o nome se repete, e chamar
 `.on()` num canal já inscrito levanta exceção, derrubando a página inteira.
 Cada inscrição usa nome único, e falha de canal cai para consulta em vez de
 derrubar a tela.
+
+## Rodada de refino (setembro/2026)
+
+**Avisos entre pacientes.** Match, desafios, prendas, doações e ranking agora
+avisam: um sino com toast e vibração quando alguém curte de volta, dá match,
+manda ou responde uma prenda, aceita ou recusa um desafio, doa fichas, ou
+quando a sua posição no ranking muda (pódio, ultrapassagem, marco de fichas).
+O ranking pisca a linha de quem subiu ou caiu. Todo o histórico de decisão
+desse recurso está em `.lovable/plan/avisos-entre-pacientes-match-e-ranking-2026-09-15.md`.
+
+**Navegação.** A Ficha foi para dentro do menu "Mais", junto com Ranking e
+Loja: é a tela que se visita uma vez para internar e pouco depois — cede lugar
+para as cinco telas de uso diário (Mural, Câmera, Match, Arcade, Pânico), que
+ficam sempre a um toque.
+
+**Ordem do arcade.** Roleta Russa Etílica e Terapia de Choque foram para o
+topo da lista: são os dois jogos de entrada mais fácil (giro de roleta, missão
+social), os que a mesa costuma pedir primeiro quando ninguém sabe por onde
+começar.
+
+**Fichas e XP num só relance.** A carteira compacta (a que aparece no topo das
+telas) só mostrava fichas — o mesmo número que também é gasto na loja. Ela
+ganhou um segundo indicador ao lado, com o ícone de estrela, mostrando o XP
+(`ganhos_total`): o número que vale para o ranking e só sobe, mesmo quando o
+saldo de fichas cai por uma compra ou aposta perdida.
+
+**Avatar com relevo.** Os pixel-arts dos personagens ganharam contorno de 1px
+ao redor de toda a silhueta e um bisel sutil (luz num canto, sombra no outro)
+nos tamanhos médio e grande — sem imagem nova, só CSS em cima da mesma grade
+14x16. O sorriso padrão, que lia como um traço reto (bigode), agora tem os
+cantos levantados. A expressão de surpresa ganhou sobrancelhas arqueadas.
+
+**Adereços da loja passaram a aparecer no avatar.** Cone de trânsito, copo
+americano, óculos escuros e sorriso do Coringa — comprados na loja no slot
+"adereço" — eram cosméticos sem efeito visual nenhum. Agora sobrepõem pixels
+no boneco (cabeça, mão ou boca, conforme o item) em toda tela que mostra o
+avatar do paciente: perfil, mural, câmera, match, ranking e loja.
+
+**Realtime com filtro por paciente.** Carteira, extrato e desafios em jogo
+escutavam a tabela inteira: a transação de qualquer pessoa na festa recarregava
+a tela de todo mundo. Cada assinatura agora tem `filter` pelo `paciente_id` do
+dono da tela, o que importa numa festa com dezenas de celulares abertos ao
+mesmo tempo.
+
+**Refino estético nos seis jogos.** Os painéis de resultado (Roleta, Terapia
+de Choque, Teste de Sobriedade, Bafômetro, Detector de Mentiras e as regras da
+Sueca) passaram a usar o mesmo `CartaoPixel` de canto em degraus do resto do
+app, em vez de caixas com `border-2` reto — o Detector de Mentiras, que não
+tinha nenhum cartão no resultado, ganhou um.
+
+**CSS morto removido.** `.canto-pixel` e `.caixa-pixel-plano`, utilitários sem
+nenhuma referência no código, saíram de `styles.css`.

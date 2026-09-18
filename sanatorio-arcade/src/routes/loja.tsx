@@ -119,7 +119,13 @@ function LojaPage() {
         {/* Prévia ao vivo com o que já está equipado. */}
         <div className="mt-4 flex items-center gap-3 rounded-sm border border-neon/40 bg-background/60 p-3">
           <Moldura itens={itens}>
-            <PixelAvatar personagem={eu.personagem} avatar={eu.avatar} size="md" glow />
+            <PixelAvatar
+              personagem={eu.personagem}
+              avatar={eu.avatar}
+              itens={itens}
+              size="md"
+              glow
+            />
           </Moldura>
           <span className="font-arcade min-w-0 truncate text-[10px] uppercase text-foreground">
             <NomeDoPaciente nome={eu.nome} itens={itens} />
@@ -178,7 +184,12 @@ function LojaPage() {
                 >
                   <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
                     <Moldura itens={usando || comprado ? itens : {}}>
-                      <PixelAvatar personagem={eu.personagem} avatar={eu.avatar} size="sm" />
+                      <PixelAvatar
+                        personagem={eu.personagem}
+                        avatar={eu.avatar}
+                        itens={usando || comprado ? itens : {}}
+                        size="sm"
+                      />
                     </Moldura>
 
                     <div className="min-w-0">

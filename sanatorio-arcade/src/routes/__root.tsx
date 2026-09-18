@@ -15,6 +15,7 @@ import { AppShell } from "../components/AppShell";
 import { InstalarPwa } from "../components/InstalarPwa";
 import { ModoSitio } from "../components/ModoSitio";
 import { ReativarFicha } from "../components/ReativarFicha";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -162,6 +163,8 @@ function RootComponent() {
         <Outlet />
       </AppShell>
       <InstalarPwa />
+      {/* Faixa rápida dos avisos: some sozinha, sem tirar ninguém do jogo. */}
+      <Toaster position="top-center" />
     </QueryClientProvider>
   );
 }

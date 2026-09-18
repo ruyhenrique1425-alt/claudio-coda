@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { motion } from "motion/react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { usePontosDoJogo, vibrar } from "./usePontosDoJogo";
 
 /**
@@ -111,10 +112,9 @@ export function RoletaEtilica() {
         {girando ? "Girando…" : giros === 0 ? "Girar" : "Girar de novo"}
       </ArcadeButton>
 
-      <div
-        className={`mt-4 min-h-[84px] rounded-sm border-2 p-4 transition-colors ${
-          resultado?.tom === "premio" ? "border-whisky bg-whisky/10" : "border-neon/30 bg-card/50"
-        }`}
+      <CartaoPixel
+        tom={resultado?.tom === "premio" ? "whisky" : "neon"}
+        className="mt-4 min-h-[84px] transition-colors"
       >
         {resultado === null ? (
           <p className="text-[12px] text-muted-foreground">
@@ -138,7 +138,7 @@ export function RoletaEtilica() {
             ) : null}
           </motion.div>
         )}
-      </div>
+      </CartaoPixel>
 
       {giros > 0 ? (
         <p className="font-arcade mt-3 text-[7px] uppercase text-muted-foreground">

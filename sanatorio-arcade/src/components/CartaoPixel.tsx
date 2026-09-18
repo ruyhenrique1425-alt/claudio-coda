@@ -27,11 +27,14 @@ const BRILHOS: Record<Tom, string> = {
  */
 export function CartaoPixel({
   tom = "purple",
+  padding = "p-4",
   className = "",
   style,
   children,
 }: {
   tom?: Tom;
+  /** Classe de padding do cartão. Os jogos usam menos respiro que o resto do app. */
+  padding?: string;
   className?: string;
   style?: CSSProperties;
   children: ReactNode;
@@ -39,7 +42,7 @@ export function CartaoPixel({
   return (
     <div
       style={{ "--moldura": MOLDURAS[tom], ...style } as CSSProperties}
-      className={`caixa-pixel p-4 ${BRILHOS[tom]} ${className}`}
+      className={`caixa-pixel ${padding} ${BRILHOS[tom]} ${className}`}
     >
       {children}
     </div>

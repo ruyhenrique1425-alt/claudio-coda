@@ -52,13 +52,32 @@ export function DesafioEmJogo({ pacienteId }: { pacienteId: string }) {
 
   useEffect(() => {
     void puxar();
+    // Filtrado por este paciente, nos dois sentidos: sem isso, o desafio de
+    // qualquer dupla na festa acordava a tela de todo mundo.
     return canalQuandoDerVerifica(
       () =>
         supabase
           .channel(`desafio-jogo-${pacienteId}-${crypto.randomUUID()}`)
-          .on("postgres_changes", { event: "*", schema: "public", table: "desafios" }, () => {
-            void puxar();
-          })
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "desafios",
+              filter: `de_paciente=eq.${pacienteId}`,
+            },
+            () => void puxar(),
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "desafios",
+              filter: `para_paciente=eq.${pacienteId}`,
+            },
+            () => void puxar(),
+          )
           .subscribe(),
       (canal) => void supabase.removeChannel(canal),
       () => void puxar(),

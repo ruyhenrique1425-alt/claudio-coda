@@ -218,6 +218,7 @@ function CameraPage() {
                   <PixelAvatar
                     personagem={f.personagem}
                     avatar={f.avatar}
+                    itens={f.itens}
                     size="sm"
                     title={`Avatar de ${f.autor}`}
                   />

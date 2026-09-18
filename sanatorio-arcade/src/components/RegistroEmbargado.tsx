@@ -39,7 +39,7 @@ export function FotoEmbargada({
 
         <div className="absolute inset-0 grid place-items-center">
           <Moldura itens={itens}>
-            <PixelAvatar personagem={personagem} avatar={avatar} size="md" glow />
+            <PixelAvatar personagem={personagem} avatar={avatar} itens={itens} size="md" glow />
           </Moldura>
         </div>
       </div>

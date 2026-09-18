@@ -1,27 +1,52 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { toast } from "sonner";
 
 import { ouvirAvisos, pendencias, type Aviso } from "@/lib/avisos";
-import { ouvirRede, realtimeVale, online } from "@/lib/rede";
-import { responderPrenda, responderDesafio } from "@/lib/pontos";
+import { avisosDoRanking } from "@/lib/avisos-ranking";
+import { online } from "@/lib/rede";
+import { responderPrenda, responderDesafio, lerRanking } from "@/lib/pontos";
+import { canalQuandoDerVerifica } from "@/lib/realtime";
+import { supabase } from "@/integrations/supabase/client";
 
 const ICONES: Record<Aviso["tipo"], string> = {
   curtida: "♥",
   match: "★",
   prenda: "🍺",
   desafio: "⚔",
+  resultado: "🎲",
+  doacao: "🪙",
+  podio: "🏆",
+  ultrapassado: "⚠",
+  marco: "💥",
 };
+
+/** Vibração curta quando o aparelho deixa. iPhone ignora em silêncio. */
+function vibrar() {
+  try {
+    navigator.vibrate?.(60);
+  } catch {
+    /* aparelho sem vibração */
+  }
+}
 
 export function SinoAvisos({ pacienteId }: { pacienteId: string }) {
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [aberto, setAberto] = useState(false);
   const [match, setMatch] = useState<Aviso | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const vistos = useRef<Set<string>>(new Set());
+  const ultimaConferida = useRef(0);
 
   const adicionar = useCallback((aviso: Aviso) => {
     setAvisos((atuais) => [aviso, ...atuais.filter((a) => a.id !== aviso.id)].slice(0, 20));
     if (aviso.tipo === "match") setMatch(aviso);
+    if (vistos.current.has(aviso.id)) return;
+    vistos.current.add(aviso.id);
+    // Faixa rápida na tela: quem está com o celular na mão não abre o sino.
+    toast(aviso.texto, { duration: 5000 });
+    vibrar();
   }, []);
 
   useEffect(() => {
@@ -30,6 +55,37 @@ export function SinoAvisos({ pacienteId }: { pacienteId: string }) {
       .catch(() => undefined);
     return ouvirAvisos({ pacienteId }, adicionar);
   }, [pacienteId, adicionar]);
+
+  // Movimentação do placar: cada ficha nova pode mudar o pódio, então o app
+  // relê o ranking (no máximo a cada 10s) e compara com o retrato anterior.
+  const conferirRanking = useCallback(() => {
+    if (!online()) return;
+    if (Date.now() - ultimaConferida.current < 10_000) return;
+    ultimaConferida.current = Date.now();
+
+    void lerRanking(50)
+      .then((linhas) => {
+        for (const aviso of avisosDoRanking(linhas, pacienteId)) adicionar(aviso);
+      })
+      .catch(() => undefined);
+  }, [pacienteId, adicionar]);
+
+  useEffect(() => {
+    conferirRanking();
+    return canalQuandoDerVerifica(
+      () =>
+        supabase
+          .channel(`placar-avisos-${crypto.randomUUID()}`)
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "transacoes" },
+            conferirRanking,
+          )
+          .subscribe(),
+      (canal) => void supabase.removeChannel(canal),
+      conferirRanking,
+    );
+  }, [conferirRanking]);
 
   const naoLidos = avisos.filter((a) => !a.lido).length;
 

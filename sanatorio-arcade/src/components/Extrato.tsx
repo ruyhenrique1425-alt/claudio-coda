@@ -25,11 +25,32 @@ export function Extrato({ pacienteId }: { pacienteId: string }) {
 
   useEffect(() => {
     puxar();
+    // Filtrado por este paciente, nos dois sentidos: sem isso, a transação de
+    // qualquer pessoa na festa recarregava o extrato de todo mundo.
     return canalQuandoDerVerifica(
       () =>
         supabase
           .channel(`extrato-${pacienteId}-${crypto.randomUUID()}`)
-          .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "transacoes",
+              filter: `para_paciente=eq.${pacienteId}`,
+            },
+            puxar,
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "transacoes",
+              filter: `de_paciente=eq.${pacienteId}`,
+            },
+            puxar,
+          )
           .subscribe(),
       (canal) => void supabase.removeChannel(canal),
       puxar,

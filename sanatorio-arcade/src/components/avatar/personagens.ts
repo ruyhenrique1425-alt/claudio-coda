@@ -130,13 +130,15 @@ export const EXPRESSOES = [
       [4, 4],
       [9, 4],
     ],
+    // Cantos sobem um pixel para virar sorriso de verdade, em vez da barra
+    // reta que lia como bigode.
     boca: [
-      [4, 6],
+      [4, 5],
+      [9, 5],
       [5, 6],
       [6, 6],
       [7, 6],
       [8, 6],
-      [9, 6],
     ],
   },
   {
@@ -156,7 +158,11 @@ export const EXPRESSOES = [
   {
     id: "surpresa",
     label: "Surpresa",
+    // Sobrancelhas arqueadas uma linha acima dos olhos, para o susto não
+    // depender só da boca aberta.
     olhos: [
+      [4, 3],
+      [9, 3],
       [4, 4],
       [9, 4],
     ],
@@ -439,6 +445,73 @@ export function avatarAleatorio(): { personagem: PersonagemId; avatar: Avatar } 
       item: pick(ITENS).id,
     },
   };
+}
+
+/* --------------------------- adereços da loja ------------------------------ */
+
+/**
+ * Pixels dos adereços comprados na loja (slot "adereco" de `ITENS_LOJA`),
+ * sobrepostos por cima do boneco já montado. Ficam aqui, e não em `lib/loja.ts`,
+ * porque só este módulo conhece a grade 14x16 e as cores de pixel-art.
+ */
+const ADERECOS_LOJA: Record<string, Pixels> = {
+  "adereco-cone": [
+    [6, 0],
+    [7, 0],
+    [5, 1],
+    [6, 1],
+    [7, 1],
+    [8, 1],
+  ],
+  "adereco-copo": [
+    [12, 8],
+    [13, 8],
+    [12, 9],
+    [13, 9],
+    [12, 10],
+    [13, 10],
+  ],
+  "adereco-oculos": [
+    [3, 4],
+    [4, 4],
+    [5, 4],
+    [6, 4],
+    [7, 4],
+    [8, 4],
+    [9, 4],
+    [10, 4],
+  ],
+  "adereco-sorriso": [
+    [4, 5],
+    [9, 5],
+    [4, 6],
+    [5, 6],
+    [6, 6],
+    [7, 6],
+    [8, 6],
+    [9, 6],
+  ],
+};
+
+const CORES_ADERECOS_LOJA: Record<string, string> = {
+  "adereco-cone": "var(--whisky)",
+  "adereco-copo": "var(--destructive)",
+  "adereco-oculos": INK,
+  "adereco-sorriso": "var(--destructive)",
+};
+
+/** Sobrepõe o adereço da loja (se houver) na grade já montada por `montarPixels`. */
+export function aplicarAderecoDaLoja(
+  grid: (string | null)[][],
+  adornoId: string | null | undefined,
+): void {
+  if (!adornoId) return;
+  const pixels = ADERECOS_LOJA[adornoId];
+  const c = CORES_ADERECOS_LOJA[adornoId];
+  if (!pixels || !c) return;
+  for (const [x, y] of pixels) {
+    if (y >= 0 && y < GRID_H && x >= 0 && x < GRID_W) grid[y]![x] = c;
+  }
 }
 
 /** Monta a matriz final de cores (null = pixel transparente). */

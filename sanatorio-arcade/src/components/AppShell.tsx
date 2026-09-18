@@ -25,16 +25,12 @@ import { lerProntuario } from "@/lib/paciente-local";
 /*
  * A barra inferior ocupa a largura inteira, em colunas iguais.
  *
- * Cheguei a deixá-la rolando na horizontal para caber oito abas, e numa tela
- * de 390px isso empurrou Câmera, Mural e Pânico para fora do campo de visão:
- * do lado de quem usa, essas telas tinham sumido. Barra que rola é navegação
- * escondida, e navegação escondida não existe.
- *
- * Os seis destinos originais voltam fixos, na ordem de sempre. As duas telas
- * que entraram depois (Ranking e Loja) ficam no sétimo slot, a um toque.
+ * Cinco destinos fixos + o botão "Mais" = seis ícones. A Ficha mora no
+ * "Mais" junto com Ranking e Loja: é a tela que se visita uma vez para
+ * internar e revisita pouco, então ela cede o lugar para as telas de uso
+ * diário, que precisam estar sempre a um toque.
  */
 const FIXAS = [
-  { to: "/", label: "Ficha", icon: User },
   { to: "/mural", label: "Mural", icon: MessageSquare },
   { to: "/camera", label: "Câmera", icon: Camera },
   { to: "/match", label: "Match", icon: HeartCrack },
@@ -43,6 +39,12 @@ const FIXAS = [
 ] as const;
 
 const NO_MAIS = [
+  {
+    to: "/",
+    label: "Ficha",
+    icon: User,
+    resumo: "Sua internação, atributos e avatar",
+  },
   {
     to: "/ranking",
     label: "Ranking",
@@ -161,10 +163,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-neon/30 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        {/* Sete colunas iguais. Em 360px dá 51px por coluna, que ainda cabe o
-            ícone de 26px e o rótulo sem cortar — e a barra ocupa a largura
-            toda, sem sobra nem rolagem. */}
-        <ul className="mx-auto grid max-w-md grid-cols-7">
+        {/* Seis colunas iguais: cinco telas fixas + "Mais". Em 360px dá
+            60px por coluna, folgado para ícone e rótulo. */}
+        <ul className="mx-auto grid max-w-md grid-cols-6">
           {FIXAS.map(({ to, label, icon: Icon }) => {
             const active = pathname === to;
             return (
@@ -194,7 +195,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button
               onClick={() => setMaisAberto((v) => !v)}
               aria-expanded={maisAberto}
-              aria-label="Mais telas: ranking e loja"
+              aria-label="Mais telas: ficha, ranking e loja"
               className={`flex h-[74px] w-full flex-col items-center justify-center gap-1.5 transition-colors ${
                 maisAberto || emMais ? "text-neon" : "text-muted-foreground"
               }`}

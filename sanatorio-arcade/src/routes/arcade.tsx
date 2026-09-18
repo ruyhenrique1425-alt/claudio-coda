@@ -39,7 +39,26 @@ export const Route = createFileRoute("/arcade")({
 
 type JogoId = "sueca" | "roleta" | "sobriedade" | "bafometro" | "terapia" | "detector";
 
+// Roleta e Terapia abrem a lista: são os dois jogos de entrada mais fácil
+// (giro de roleta, missão social), o que a mesa costuma pedir primeiro
+// quando ninguém sabe por onde começar.
 const JOGOS = [
+  {
+    id: "roleta" as JogoId,
+    titulo: "Roleta Russa Etílica",
+    resumo: "Gire e aceite o castigo. Duas fatias pagam fichas.",
+    fichas: "25 ou 50, se der sorte",
+    icon: Dices,
+    tone: "neon" as const,
+  },
+  {
+    id: "terapia" as JogoId,
+    titulo: "Terapia de Choque",
+    resumo: "Missão social com dois minutos no relógio. Você escolhe a dose.",
+    fichas: "10, 20 ou 35 fichas",
+    icon: Users,
+    tone: "whisky" as const,
+  },
   {
     id: "sueca" as JogoId,
     titulo: "Sueca Bêbada",
@@ -63,22 +82,6 @@ const JOGOS = [
     fichas: "8 fichas por rodada",
     icon: Brain,
     tone: "purple" as const,
-  },
-  {
-    id: "roleta" as JogoId,
-    titulo: "Roleta Russa Etílica",
-    resumo: "Gire e aceite o castigo. Duas fatias pagam fichas.",
-    fichas: "25 ou 50, se der sorte",
-    icon: Dices,
-    tone: "neon" as const,
-  },
-  {
-    id: "terapia" as JogoId,
-    titulo: "Terapia de Choque",
-    resumo: "Missão social com dois minutos no relógio. Você escolhe a dose.",
-    fichas: "10, 20 ou 35 fichas",
-    icon: Users,
-    tone: "whisky" as const,
   },
   {
     id: "detector" as JogoId,

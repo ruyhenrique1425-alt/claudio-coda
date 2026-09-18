@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Coins } from "lucide-react";
+import { Coins, Sparkles } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lerCarteira, type Carteira as Saldo } from "@/lib/pontos";
@@ -27,12 +27,44 @@ export function Carteira({
     };
     puxar();
 
+    // Cada listener filtrado por este paciente: sem o filtro, a ficha de
+    // qualquer pessoa na festa reabria a consulta de saldo de todo mundo ao
+    // mesmo tempo — dezenas de celulares relendo a carteira a cada clique
+    // alheio.
     const pararCanal = canalQuandoDerVerifica(
       () =>
         supabase
           .channel(`carteira-${pacienteId}-${crypto.randomUUID()}`)
-          .on("postgres_changes", { event: "INSERT", schema: "public", table: "transacoes" }, puxar)
-          .on("postgres_changes", { event: "INSERT", schema: "public", table: "gastos" }, puxar)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "transacoes",
+              filter: `para_paciente=eq.${pacienteId}`,
+            },
+            puxar,
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "transacoes",
+              filter: `de_paciente=eq.${pacienteId}`,
+            },
+            puxar,
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "gastos",
+              filter: `paciente_id=eq.${pacienteId}`,
+            },
+            puxar,
+          )
           .subscribe(),
       (canal) => void supabase.removeChannel(canal),
       puxar,
@@ -45,10 +77,25 @@ export function Carteira({
   }, [pacienteId]);
 
   if (compacta) {
+    // Mesma dupla de baixo: moedas (o que dá para gastar) e XP (o que conta
+    // para o ranking). A cor de cada uma é a mesma da versão cheia — quem já
+    // olhou a ficha reconhece na hora qual é qual.
     return (
-      <span className="font-arcade inline-flex items-center gap-1 text-[9px] text-whisky">
-        <Coins className="h-3.5 w-3.5" aria-hidden />
-        {saldo?.saldo ?? "--"}
+      <span className="flex items-center gap-2">
+        <span
+          className="font-arcade inline-flex items-center gap-1 text-[9px] text-whisky"
+          title="Fichas — o que você pode gastar na loja e nos desafios"
+        >
+          <Coins className="h-3.5 w-3.5" aria-hidden />
+          {saldo?.saldo ?? "--"}
+        </span>
+        <span
+          className="font-arcade inline-flex items-center gap-1 text-[9px] text-neon"
+          title="XP — o mesmo número que aparece no ranking"
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden />
+          {saldo?.ganhos ?? "--"}
+        </span>
       </span>
     );
   }

@@ -29,9 +29,177 @@ export type Database = {
         };
         Relationships: [];
       };
+      curtidas: {
+        Row: {
+          created_at: string;
+          de_paciente: string;
+          id: string;
+          para_paciente: string;
+        };
+        Insert: {
+          created_at?: string;
+          de_paciente: string;
+          id?: string;
+          para_paciente: string;
+        };
+        Update: {
+          created_at?: string;
+          de_paciente?: string;
+          id?: string;
+          para_paciente?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "curtidas_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "curtidas_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "curtidas_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+          {
+            foreignKeyName: "curtidas_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "curtidas_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "curtidas_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+        ];
+      };
+      desafios: {
+        Row: {
+          created_at: string;
+          de_paciente: string;
+          escolha_de: number | null;
+          escolha_para: number | null;
+          id: string;
+          para_paciente: string;
+          pontos: number;
+          resolvido_em: string | null;
+          status: string;
+          vencedor: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          de_paciente: string;
+          escolha_de?: number | null;
+          escolha_para?: number | null;
+          id?: string;
+          para_paciente: string;
+          pontos: number;
+          resolvido_em?: string | null;
+          status?: string;
+          vencedor?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          de_paciente?: string;
+          escolha_de?: number | null;
+          escolha_para?: number | null;
+          id?: string;
+          para_paciente?: string;
+          pontos?: number;
+          resolvido_em?: string | null;
+          status?: string;
+          vencedor?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "desafios_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "desafios_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "desafios_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+          {
+            foreignKeyName: "desafios_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "desafios_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "desafios_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+          {
+            foreignKeyName: "desafios_vencedor_fkey";
+            columns: ["vencedor"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "desafios_vencedor_fkey";
+            columns: ["vencedor"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "desafios_vencedor_fkey";
+            columns: ["vencedor"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+        ];
+      };
       fotos: {
         Row: {
           autor: string;
+          chave_idempotencia: string | null;
           created_at: string;
           id: string;
           legenda: string | null;
@@ -39,6 +207,7 @@ export type Database = {
         };
         Insert: {
           autor: string;
+          chave_idempotencia?: string | null;
           created_at?: string;
           id?: string;
           legenda?: string | null;
@@ -46,6 +215,7 @@ export type Database = {
         };
         Update: {
           autor?: string;
+          chave_idempotencia?: string | null;
           created_at?: string;
           id?: string;
           legenda?: string | null;
@@ -53,9 +223,56 @@ export type Database = {
         };
         Relationships: [];
       };
+      gastos: {
+        Row: {
+          created_at: string;
+          id: string;
+          item: string;
+          paciente_id: string;
+          pontos: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          item: string;
+          paciente_id: string;
+          pontos: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          item?: string;
+          paciente_id?: string;
+          pontos?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "gastos_paciente_id_fkey";
+            columns: ["paciente_id"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "gastos_paciente_id_fkey";
+            columns: ["paciente_id"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "gastos_paciente_id_fkey";
+            columns: ["paciente_id"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+        ];
+      };
       mural: {
         Row: {
           autor: string;
+          chave_idempotencia: string | null;
           created_at: string;
           destinatario: string;
           id: string;
@@ -63,6 +280,7 @@ export type Database = {
         };
         Insert: {
           autor: string;
+          chave_idempotencia?: string | null;
           created_at?: string;
           destinatario: string;
           id?: string;
@@ -70,6 +288,7 @@ export type Database = {
         };
         Update: {
           autor?: string;
+          chave_idempotencia?: string | null;
           created_at?: string;
           destinatario?: string;
           id?: string;
@@ -122,121 +341,54 @@ export type Database = {
         };
         Relationships: [];
       };
-      transacoes: {
+      premiacao: {
         Row: {
-          chave_idempotencia: string | null;
-          created_at: string;
-          de_paciente: string | null;
+          apurado_em: string;
+          ganhos_total: number;
           id: string;
-          motivo: string;
-          para_paciente: string;
-          pontos: number;
-          referencia: string | null;
+          nome: string;
+          paciente_id: string;
+          posicao: number;
         };
         Insert: {
-          chave_idempotencia?: string | null;
-          created_at?: string;
-          de_paciente?: string | null;
+          apurado_em?: string;
+          ganhos_total: number;
           id?: string;
-          motivo: string;
-          para_paciente: string;
-          pontos: number;
-          referencia?: string | null;
+          nome: string;
+          paciente_id: string;
+          posicao: number;
         };
         Update: {
-          created_at?: string;
-          de_paciente?: string | null;
+          apurado_em?: string;
+          ganhos_total?: number;
           id?: string;
-          motivo?: string;
-          para_paciente?: string;
-          pontos?: number;
-          referencia?: string | null;
-        };
-        Relationships: [];
-      };
-      gastos: {
-        Row: {
-          created_at: string;
-          id: string;
-          item: string;
-          paciente_id: string;
-          pontos: number;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          item: string;
-          paciente_id: string;
-          pontos: number;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          item?: string;
+          nome?: string;
           paciente_id?: string;
-          pontos?: number;
+          posicao?: number;
         };
-        Relationships: [];
-      };
-      curtidas: {
-        Row: {
-          created_at: string;
-          de_paciente: string;
-          id: string;
-          para_paciente: string;
-        };
-        Insert: {
-          created_at?: string;
-          de_paciente: string;
-          id?: string;
-          para_paciente: string;
-        };
-        Update: {
-          created_at?: string;
-          de_paciente?: string;
-          id?: string;
-          para_paciente?: string;
-        };
-        Relationships: [];
-      };
-      desafios: {
-        Row: {
-          created_at: string;
-          de_paciente: string;
-          escolha_de: number | null;
-          escolha_para: number | null;
-          id: string;
-          para_paciente: string;
-          pontos: number;
-          resolvido_em: string | null;
-          status: string;
-          vencedor: string | null;
-        };
-        Insert: {
-          created_at?: string;
-          de_paciente: string;
-          escolha_de?: number | null;
-          escolha_para?: number | null;
-          id?: string;
-          para_paciente: string;
-          pontos: number;
-          resolvido_em?: string | null;
-          status?: string;
-          vencedor?: string | null;
-        };
-        Update: {
-          created_at?: string;
-          de_paciente?: string;
-          escolha_de?: number | null;
-          escolha_para?: number | null;
-          id?: string;
-          para_paciente?: string;
-          pontos?: number;
-          resolvido_em?: string | null;
-          status?: string;
-          vencedor?: string | null;
-        };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "premiacao_paciente_id_fkey";
+            columns: ["paciente_id"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "premiacao_paciente_id_fkey";
+            columns: ["paciente_id"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "premiacao_paciente_id_fkey";
+            columns: ["paciente_id"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+        ];
       };
       prendas: {
         Row: {
@@ -266,34 +418,126 @@ export type Database = {
           segundos?: number;
           status?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "prendas_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prendas_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prendas_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+          {
+            foreignKeyName: "prendas_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prendas_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prendas_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+        ];
       };
-      premiacao: {
+      transacoes: {
         Row: {
-          apurado_em: string;
-          ganhos_total: number;
+          chave_idempotencia: string | null;
+          created_at: string;
+          de_paciente: string | null;
           id: string;
-          nome: string;
-          paciente_id: string;
-          posicao: number;
+          motivo: string;
+          para_paciente: string;
+          pontos: number;
+          referencia: string | null;
         };
         Insert: {
-          apurado_em?: string;
-          ganhos_total: number;
+          chave_idempotencia?: string | null;
+          created_at?: string;
+          de_paciente?: string | null;
           id?: string;
-          nome: string;
-          paciente_id: string;
-          posicao: number;
+          motivo: string;
+          para_paciente: string;
+          pontos: number;
+          referencia?: string | null;
         };
         Update: {
-          apurado_em?: string;
-          ganhos_total?: number;
+          chave_idempotencia?: string | null;
+          created_at?: string;
+          de_paciente?: string | null;
           id?: string;
-          nome?: string;
-          paciente_id?: string;
-          posicao?: number;
+          motivo?: string;
+          para_paciente?: string;
+          pontos?: number;
+          referencia?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "transacoes_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transacoes_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transacoes_de_paciente_fkey";
+            columns: ["de_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+          {
+            foreignKeyName: "transacoes_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transacoes_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "pacientes_publicos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transacoes_para_paciente_fkey";
+            columns: ["para_paciente"];
+            isOneToOne: false;
+            referencedRelation: "saldo_pacientes";
+            referencedColumns: ["paciente_id"];
+          },
+        ];
       };
     };
     Views: {
@@ -310,6 +554,32 @@ export type Database = {
           itens: Json | null;
           nome: string | null;
           personagem: string | null;
+        };
+        Insert: {
+          amnesia_anterograda?: number | null;
+          aptidao_audio?: number | null;
+          avatar?: Json | null;
+          created_at?: string | null;
+          fator_coringa?: number | null;
+          id?: string | null;
+          imunidade_etilica?: number | null;
+          inimigo_do_fim?: number | null;
+          itens?: Json | null;
+          nome?: string | null;
+          personagem?: string | null;
+        };
+        Update: {
+          amnesia_anterograda?: number | null;
+          aptidao_audio?: number | null;
+          avatar?: Json | null;
+          created_at?: string | null;
+          fator_coringa?: number | null;
+          id?: string | null;
+          imunidade_etilica?: number | null;
+          inimigo_do_fim?: number | null;
+          itens?: Json | null;
+          nome?: string | null;
+          personagem?: string | null;
         };
         Relationships: [];
       };
@@ -328,19 +598,22 @@ export type Database = {
       };
     };
     Functions: {
-      incrementar_panico: { Args: { _qtd?: number }; Returns: number };
-      internar_paciente: {
-        Args: {
-          _amnesia_anterograda: number;
-          _aptidao_audio: number;
-          _avatar: Json;
-          _fator_coringa: number;
-          _imunidade_etilica: number;
-          _inimigo_do_fim: number;
-          _nome: string;
-          _personagem: string;
+      apurar_premiacao: {
+        Args: { _momento: string };
+        Returns: {
+          apurado_em: string;
+          ganhos_total: number;
+          id: string;
+          nome: string;
+          paciente_id: string;
+          posicao: number;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "premiacao";
+          isOneToOne: false;
+          isSetofReturn: true;
         };
-        Returns: { id: string; token: string }[];
       };
       creditar_pontos: {
         Args: {
@@ -353,14 +626,106 @@ export type Database = {
         };
         Returns: number;
       };
+      criar_desafio: {
+        Args: { _de: string; _para: string; _pontos: number; _token: string };
+        Returns: string;
+      };
+      curtir: {
+        Args: { _de: string; _para: string; _token: string };
+        Returns: boolean;
+      };
+      equipar_item: {
+        Args: {
+          _item?: string;
+          _paciente: string;
+          _slot: string;
+          _token: string;
+        };
+        Returns: Json;
+      };
+      exigir_paciente: {
+        Args: { _paciente: string; _token: string };
+        Returns: undefined;
+      };
+      gastar_pontos: {
+        Args: {
+          _item: string;
+          _paciente: string;
+          _pontos: number;
+          _token: string;
+        };
+        Returns: number;
+      };
+      incrementar_panico: { Args: { _qtd?: number }; Returns: number };
+      internar_paciente: {
+        Args: {
+          _amnesia_anterograda: number;
+          _aptidao_audio: number;
+          _avatar: Json;
+          _fator_coringa: number;
+          _imunidade_etilica: number;
+          _inimigo_do_fim: number;
+          _nome: string;
+          _personagem: string;
+        };
+        Returns: {
+          id: string;
+          token: string;
+        }[];
+      };
+      jogar_desafio: {
+        Args: {
+          _desafio: string;
+          _escolha: number;
+          _paciente: string;
+          _token: string;
+        };
+        Returns: string;
+      };
+      mandar_prenda: {
+        Args: { _de: string; _para: string; _token: string };
+        Returns: {
+          id: string;
+          segundos: number;
+        }[];
+      };
       postar_recado: {
-        Args: { _autor: string; _chave?: string; _destinatario: string; _mensagem: string };
+        Args: {
+          _autor: string;
+          _chave?: string;
+          _destinatario: string;
+          _mensagem: string;
+        };
         Returns: boolean;
       };
       registrar_foto: {
-        Args: { _autor: string; _chave?: string; _legenda?: string; _path: string };
+        Args: {
+          _autor: string;
+          _chave?: string;
+          _legenda?: string;
+          _path: string;
+        };
         Returns: boolean;
       };
+      responder_desafio: {
+        Args: {
+          _aceita: boolean;
+          _desafio: string;
+          _paciente: string;
+          _token: string;
+        };
+        Returns: string;
+      };
+      responder_prenda: {
+        Args: {
+          _cumpriu: boolean;
+          _paciente: string;
+          _prenda: string;
+          _token: string;
+        };
+        Returns: number;
+      };
+      saldo_de: { Args: { _paciente: string }; Returns: number };
       transferir_pontos: {
         Args: {
           _de: string;
@@ -370,46 +735,6 @@ export type Database = {
           _token: string;
         };
         Returns: number;
-      };
-      gastar_pontos: {
-        Args: { _item: string; _paciente: string; _pontos: number; _token: string };
-        Returns: number;
-      };
-      equipar_item: {
-        Args: { _item?: string; _paciente: string; _slot: string; _token: string };
-        Returns: Json;
-      };
-      curtir: { Args: { _de: string; _para: string; _token: string }; Returns: boolean };
-      mandar_prenda: {
-        Args: { _de: string; _para: string; _token: string };
-        Returns: { id: string; segundos: number }[];
-      };
-      responder_prenda: {
-        Args: { _cumpriu: boolean; _paciente: string; _prenda: string; _token: string };
-        Returns: number;
-      };
-      criar_desafio: {
-        Args: { _de: string; _para: string; _pontos: number; _token: string };
-        Returns: string;
-      };
-      responder_desafio: {
-        Args: { _aceita: boolean; _desafio: string; _paciente: string; _token: string };
-        Returns: string;
-      };
-      jogar_desafio: {
-        Args: { _desafio: string; _escolha: number; _paciente: string; _token: string };
-        Returns: string;
-      };
-      apurar_premiacao: {
-        Args: { _momento: string };
-        Returns: {
-          apurado_em: string;
-          ganhos_total: number;
-          id: string;
-          nome: string;
-          paciente_id: string;
-          posicao: number;
-        }[];
       };
     };
     Enums: {

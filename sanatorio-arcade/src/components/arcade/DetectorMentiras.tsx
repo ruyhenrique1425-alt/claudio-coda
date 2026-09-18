@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { CartaoPixel } from "@/components/CartaoPixel";
 import { usePontosDoJogo } from "./usePontosDoJogo";
 
 type Fase = "pronto" | "lendo" | "resultado" | "indisponivel";
@@ -118,7 +119,7 @@ export function DetectorMentiras() {
       ) : null}
 
       {fase === "resultado" ? (
-        <div className="space-y-4">
+        <CartaoPixel tom={mentiu ? "vermelho" : "neon"} className="space-y-4">
           <motion.p
             animate={{ opacity: [1, 0.2, 1] }}
             transition={{ duration: 0.6, repeat: Infinity }}
@@ -132,7 +133,7 @@ export function DetectorMentiras() {
             {mentiu ? "mãos em pânico." : "pulso de cirurgião."}
           </p>
           {aviso ? <p className="font-arcade text-[8px] text-neon">{aviso}</p> : null}
-        </div>
+        </CartaoPixel>
       ) : null}
 
       {fase === "indisponivel" ? (

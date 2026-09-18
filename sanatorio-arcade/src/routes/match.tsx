@@ -238,6 +238,7 @@ function MatchPage() {
                   <PixelAvatar
                     personagem={p.personagem}
                     avatar={p.avatar}
+                    itens={p.itens}
                     size="md"
                     title={`Avatar de ${p.nome}`}
                   />
