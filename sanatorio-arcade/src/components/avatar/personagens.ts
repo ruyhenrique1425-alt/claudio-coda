@@ -95,6 +95,9 @@ const HEADS: Record<string, Rows> = {
   ],
 };
 
+/** Ids de cabeça disponíveis, para a oficina montar um seletor. */
+export const HEAD_IDS = Object.keys(HEADS);
+
 const BODIES: Record<string, Rows> = {
   jaqueta: [
     "..RRRRRRRRRR..",
@@ -117,6 +120,9 @@ const BODIES: Record<string, Rows> = {
     "..OOO....OOO..",
   ],
 };
+
+/** Ids de corpo disponíveis, para a oficina montar um seletor. */
+export const BODY_IDS = Object.keys(BODIES);
 
 /* ------------------------------- expressões ------------------------------- */
 
@@ -423,13 +429,59 @@ export function normalizarPersonagem(valor: unknown): PersonagemId {
   return (ids.includes(String(valor)) ? String(valor) : PERSONAGEM_PADRAO) as PersonagemId;
 }
 
+/* ------------------------- customização da oficina ------------------------- */
+
+/** Uma linha da tabela `personagens_customizados` (tudo opcional: sobrescreve só o preenchido). */
+export type CustomizacaoPersonagem = {
+  personagem_id: string;
+  nome: string | null;
+  tagline: string | null;
+  head: string | null;
+  body: string | null;
+  cabelo: string | null;
+  roupa: string | null;
+  acessorio: string | null;
+  item: string | null;
+};
+
+let CUSTOMIZACOES: Record<string, CustomizacaoPersonagem> = {};
+
+/** Aplica as customizações lidas do banco por cima do catálogo compilado. */
+export function definirCustomizacoes(linhas: readonly CustomizacaoPersonagem[]): void {
+  CUSTOMIZACOES = Object.fromEntries(linhas.map((l) => [l.personagem_id, l]));
+}
+
+function corValida(v: string | null | undefined): CorId | null {
+  return v && CORES.some((c) => c.id === v) ? (v as CorId) : null;
+}
+
 export function personagemPor(id: PersonagemId) {
-  return PERSONAGENS.find((p) => p.id === id) ?? PERSONAGENS[0];
+  const base = PERSONAGENS.find((p) => p.id === id) ?? PERSONAGENS[0];
+  const c = CUSTOMIZACOES[id];
+  if (!c) return base;
+
+  return {
+    ...base,
+    nome: c.nome || base.nome,
+    tagline: c.tagline || base.tagline,
+    head: c.head && HEADS[c.head] ? c.head : base.head,
+    body: c.body && BODIES[c.body] ? c.body : base.body,
+    padrao: {
+      cabelo: corValida(c.cabelo) ?? base.padrao.cabelo,
+      roupa: corValida(c.roupa) ?? base.padrao.roupa,
+    },
+  };
 }
 
 export function avatarPadraoDe(id: PersonagemId): Avatar {
   const p = personagemPor(id);
-  return { ...AVATAR_PADRAO, cabelo: p.padrao.cabelo, roupa: p.padrao.roupa };
+  const c = CUSTOMIZACOES[id];
+  const acessorio =
+    c?.acessorio && idsDe(ACESSORIOS).includes(c.acessorio)
+      ? (c.acessorio as AcessorioId)
+      : AVATAR_PADRAO.acessorio;
+  const item = c?.item && idsDe(ITENS).includes(c.item) ? (c.item as ItemId) : AVATAR_PADRAO.item;
+  return { ...AVATAR_PADRAO, cabelo: p.padrao.cabelo, roupa: p.padrao.roupa, acessorio, item };
 }
 
 export function avatarAleatorio(): { personagem: PersonagemId; avatar: Avatar } {

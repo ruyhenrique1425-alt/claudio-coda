@@ -110,28 +110,31 @@ export function EditorAvatar({
       </header>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        {PERSONAGENS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => escolher(item.id)}
-            aria-pressed={item.id === personagem}
-            className={`grid place-items-center gap-1 rounded-sm border-2 p-2 transition ${
-              item.id === personagem
-                ? "border-neon bg-neon/10 shadow-[0_0_16px_-6px_var(--neon)]"
-                : "border-purple/50 bg-card/30"
-            }`}
-          >
-            <PixelAvatar
-              personagem={item.id}
-              avatar={{ ...AVATAR_PADRAO, ...item.padrao }}
-              size="sm"
-            />
-            <span className="font-arcade text-center text-[6px] uppercase leading-tight text-muted-foreground">
-              {item.nome}
-            </span>
-          </button>
-        ))}
+        {PERSONAGENS.map((item) => {
+          const p = personagemPor(item.id);
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => escolher(item.id)}
+              aria-pressed={item.id === personagem}
+              className={`grid place-items-center gap-1 rounded-sm border-2 p-2 transition ${
+                item.id === personagem
+                  ? "border-neon bg-neon/10 shadow-[0_0_16px_-6px_var(--neon)]"
+                  : "border-purple/50 bg-card/30"
+              }`}
+            >
+              <PixelAvatar
+                personagem={item.id}
+                avatar={{ ...AVATAR_PADRAO, ...p.padrao }}
+                size="sm"
+              />
+              <span className="font-arcade text-center text-[6px] uppercase leading-tight text-muted-foreground">
+                {p.nome}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-4 grid place-items-center rounded-sm border-2 border-whisky bg-background/60 py-5">

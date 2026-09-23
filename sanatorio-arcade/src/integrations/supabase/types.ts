@@ -29,6 +29,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      conquistas_bar: {
+        Row: {
+          codigo: string;
+          criado_em: string;
+          fichas: number;
+          legenda: string;
+          onde_fica: string;
+          titulo: string;
+        };
+        Insert: {
+          codigo: string;
+          criado_em?: string;
+          fichas?: number;
+          legenda: string;
+          onde_fica: string;
+          titulo: string;
+        };
+        Update: {
+          codigo?: string;
+          criado_em?: string;
+          fichas?: number;
+          legenda?: string;
+          onde_fica?: string;
+          titulo?: string;
+        };
+        Relationships: [];
+      };
       curtidas: {
         Row: {
           created_at: string;
@@ -341,6 +368,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      personagens_customizados: {
+        Row: {
+          acessorio: string | null;
+          atualizado_em: string;
+          body: string | null;
+          cabelo: string | null;
+          head: string | null;
+          item: string | null;
+          nome: string | null;
+          personagem_id: string;
+          roupa: string | null;
+          tagline: string | null;
+        };
+        Insert: {
+          acessorio?: string | null;
+          atualizado_em?: string;
+          body?: string | null;
+          cabelo?: string | null;
+          head?: string | null;
+          item?: string | null;
+          nome?: string | null;
+          personagem_id: string;
+          roupa?: string | null;
+          tagline?: string | null;
+        };
+        Update: {
+          acessorio?: string | null;
+          atualizado_em?: string;
+          body?: string | null;
+          cabelo?: string | null;
+          head?: string | null;
+          item?: string | null;
+          nome?: string | null;
+          personagem_id?: string;
+          roupa?: string | null;
+          tagline?: string | null;
+        };
+        Relationships: [];
+      };
       premiacao: {
         Row: {
           apurado_em: string;
@@ -598,6 +664,10 @@ export type Database = {
       };
     };
     Functions: {
+      apagar_conquista_bar: {
+        Args: { _codigo: string; _senha: string };
+        Returns: undefined;
+      };
       apurar_premiacao: {
         Args: { _momento: string };
         Returns: {
@@ -724,6 +794,36 @@ export type Database = {
           _token: string;
         };
         Returns: number;
+      };
+      restaurar_personagem_customizado: {
+        Args: { _personagem_id: string; _senha: string };
+        Returns: undefined;
+      };
+      salvar_conquista_bar: {
+        Args: {
+          _codigo: string;
+          _fichas: number;
+          _legenda: string;
+          _onde_fica: string;
+          _senha: string;
+          _titulo: string;
+        };
+        Returns: undefined;
+      };
+      salvar_personagem_customizado: {
+        Args: {
+          _acessorio: string;
+          _body: string;
+          _cabelo: string;
+          _head: string;
+          _item: string;
+          _nome: string;
+          _personagem_id: string;
+          _roupa: string;
+          _senha: string;
+          _tagline: string;
+        };
+        Returns: undefined;
       };
       saldo_de: { Args: { _paciente: string }; Returns: number };
       transferir_pontos: {

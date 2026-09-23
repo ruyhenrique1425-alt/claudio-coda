@@ -1,3 +1,11 @@
+-- ============================================================================
+-- Migration consolidada: reúne, com CREATE OR REPLACE / IF NOT EXISTS
+-- idempotentes, tudo que já estava em 20260911120000_economia_sanatorio.sql
+-- e 20260912090000_offline_idempotencia.sql (removidas deste diretório por
+-- ficarem redundantes com esta). Reaplicar este arquivo sozinho, do zero,
+-- produz o mesmo estado final.
+-- ============================================================================
+
 ALTER TABLE public.pacientes
   ADD COLUMN IF NOT EXISTS token uuid NOT NULL DEFAULT gen_random_uuid(),
   ADD COLUMN IF NOT EXISTS itens jsonb NOT NULL DEFAULT '{"comprados":[],"equipados":{}}'::jsonb;

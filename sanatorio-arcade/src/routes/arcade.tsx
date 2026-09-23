@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Dices, Brain, Users, ScanFace, Wind, Spade } from "lucide-react";
+import { Dices, Brain, Users, Siren, Wind, Spade } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import { CartaoPixel } from "@/components/CartaoPixel";
@@ -14,7 +14,6 @@ import {
 import { RoletaEtilica } from "@/components/arcade/RoletaEtilica";
 import { TesteSobriedade } from "@/components/arcade/TesteSobriedade";
 import { TerapiaDeChoque } from "@/components/arcade/TerapiaDeChoque";
-import { DetectorMentiras } from "@/components/arcade/DetectorMentiras";
 import { BafometroDeDedo } from "@/components/arcade/BafometroDeDedo";
 import { Sueca } from "@/components/arcade/Sueca";
 
@@ -25,23 +24,24 @@ export const Route = createFileRoute("/arcade")({
       {
         name: "description",
         content:
-          "Seis máquinas na ala: Sueca Bêbada, Bafômetro de Dedo, Teste de Sobriedade, Roleta Etílica, Terapia de Choque e Detector de Mentiras.",
+          "Cinco máquinas na ala, mais o Botão do Pânico: Sueca Bêbada, Teste de Sobriedade, Roleta Etílica, Terapia de Choque e Bafômetro de Dedo.",
       },
       { property: "og:title", content: "Arcade do Sanatório" },
       {
         property: "og:description",
-        content: "Seis minigames caóticos para jogar direto do celular na festa, valendo fichas.",
+        content: "Minigames caóticos para jogar direto do celular na festa, valendo fichas.",
       },
     ],
   }),
   component: ArcadePage,
 });
 
-type JogoId = "sueca" | "roleta" | "sobriedade" | "bafometro" | "terapia" | "detector";
+type JogoId = "sueca" | "roleta" | "sobriedade" | "bafometro" | "terapia";
 
 // Roleta e Terapia abrem a lista: são os dois jogos de entrada mais fácil
 // (giro de roleta, missão social), o que a mesa costuma pedir primeiro
-// quando ninguém sabe por onde começar.
+// quando ninguém sabe por onde começar. O Bafômetro fecha a lista: é o que
+// mais exige do dedo e da atenção, então fica para quem já aqueceu.
 const JOGOS = [
   {
     id: "roleta" as JogoId,
@@ -68,14 +68,6 @@ const JOGOS = [
     tone: "purple" as const,
   },
   {
-    id: "bafometro" as JogoId,
-    titulo: "Bafômetro de Dedo",
-    resumo: "Dez segundos martelando a garrafa, três segurando firme.",
-    fichas: "até 50 fichas",
-    icon: Wind,
-    tone: "whisky" as const,
-  },
-  {
     id: "sobriedade" as JogoId,
     titulo: "Teste de Sobriedade",
     resumo: "A sequência acelera até ficar impossível. Sempre acelera.",
@@ -84,16 +76,17 @@ const JOGOS = [
     tone: "purple" as const,
   },
   {
-    id: "detector" as JogoId,
-    titulo: "Detector de Mentiras",
-    resumo: "O giroscópio sente o tremor de quem mente.",
-    fichas: "8 fichas por análise",
-    icon: ScanFace,
-    tone: "neon" as const,
+    id: "bafometro" as JogoId,
+    titulo: "Bafômetro de Dedo",
+    resumo: "Dez segundos martelando a garrafa, três segurando firme.",
+    fichas: "até 50 fichas",
+    icon: Wind,
+    tone: "whisky" as const,
   },
 ];
 
 function ArcadePage() {
+  const navigate = useNavigate();
   const [aberto, setAberto] = useState<JogoId | null>(null);
   const jogo = JOGOS.find((j) => j.id === aberto) ?? null;
 
@@ -104,36 +97,42 @@ function ArcadePage() {
           Arcade da ala
         </h1>
         <p className="mt-3 text-[12px] leading-relaxed text-muted-foreground">
-          Seis máquinas, todas valendo fichas para o ranking. A Sueca é de mesa: um celular no meio
-          da roda e todo mundo joga junto.
+          Cinco máquinas valendo fichas para o ranking, mais o Pânico coletivo. A Sueca é de mesa:
+          um celular no meio da roda e todo mundo joga junto.
         </p>
       </CartaoPixel>
 
       <div className="mt-5 space-y-4">
-        {JOGOS.map(({ id, titulo, resumo, fichas, icon: Icon, tone }) => (
-          <ArcadeButton
-            key={id}
-            tone={tone}
-            onClick={() => setAberto(id)}
-            className="w-full p-4 text-left"
-          >
-            <span className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-sm border-2 border-current">
-                <Icon className="h-6 w-6" />
+        {JOGOS.slice(0, 3).map((jogo) => (
+          <BotaoJogo key={jogo.id} {...jogo} onAbrir={() => setAberto(jogo.id)} />
+        ))}
+
+        {/* O Pânico é coletivo e ao vivo: abre a tela dedicada, não um diálogo. */}
+        <ArcadeButton
+          tone="vermelho"
+          onClick={() => void navigate({ to: "/panico" })}
+          className="w-full p-4 text-left"
+        >
+          <span className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-sm border-2 border-current">
+              <Siren className="h-6 w-6" />
+            </span>
+            <span className="min-w-0">
+              <span className="font-arcade block text-[9px] uppercase leading-relaxed">
+                Botão do Pânico
               </span>
-              <span className="min-w-0">
-                <span className="font-arcade block text-[9px] uppercase leading-relaxed">
-                  {titulo}
-                </span>
-                <span className="mt-2 block text-[11px] leading-relaxed text-muted-foreground">
-                  {resumo}
-                </span>
-                <span className="font-arcade mt-2 block text-[7px] uppercase text-whisky">
-                  {fichas}
-                </span>
+              <span className="mt-2 block text-[11px] leading-relaxed text-muted-foreground">
+                Contador coletivo ao vivo. Todo mundo clica no mesmo botão.
+              </span>
+              <span className="font-arcade mt-2 block text-[7px] uppercase text-whisky">
+                Sem fichas — é só caos em grupo
               </span>
             </span>
-          </ArcadeButton>
+          </span>
+        </ArcadeButton>
+
+        {JOGOS.slice(3).map((jogo) => (
+          <BotaoJogo key={jogo.id} {...jogo} onAbrir={() => setAberto(jogo.id)} />
         ))}
       </div>
 
@@ -154,10 +153,35 @@ function ArcadePage() {
             {aberto === "sobriedade" ? <TesteSobriedade /> : null}
             {aberto === "bafometro" ? <BafometroDeDedo /> : null}
             {aberto === "terapia" ? <TerapiaDeChoque /> : null}
-            {aberto === "detector" ? <DetectorMentiras /> : null}
           </div>
         </DialogContent>
       </Dialog>
     </section>
+  );
+}
+
+function BotaoJogo({
+  titulo,
+  resumo,
+  fichas,
+  icon: Icon,
+  tone,
+  onAbrir,
+}: (typeof JOGOS)[number] & { onAbrir: () => void }) {
+  return (
+    <ArcadeButton tone={tone} onClick={onAbrir} className="w-full p-4 text-left">
+      <span className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-sm border-2 border-current">
+          <Icon className="h-6 w-6" />
+        </span>
+        <span className="min-w-0">
+          <span className="font-arcade block text-[9px] uppercase leading-relaxed">{titulo}</span>
+          <span className="mt-2 block text-[11px] leading-relaxed text-muted-foreground">
+            {resumo}
+          </span>
+          <span className="font-arcade mt-2 block text-[7px] uppercase text-whisky">{fichas}</span>
+        </span>
+      </span>
+    </ArcadeButton>
   );
 }

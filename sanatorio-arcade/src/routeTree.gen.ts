@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArcadeRouteImport } from './routes/arcade'
+import { Route as BarAdminRouteImport } from './routes/bar-admin'
 import { Route as CameraRouteImport } from './routes/camera'
 import { Route as LojaRouteImport } from './routes/loja'
 import { Route as MatchRouteImport } from './routes/match'
 import { Route as MuralRouteImport } from './routes/mural'
+import { Route as OficinaRouteImport } from './routes/oficina'
 import { Route as PanicoRouteImport } from './routes/panico'
 import { Route as QrcodesRouteImport } from './routes/qrcodes'
 import { Route as RankingRouteImport } from './routes/ranking'
@@ -28,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
 const ArcadeRoute = ArcadeRouteImport.update({
   id: '/arcade',
   path: '/arcade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BarAdminRoute = BarAdminRouteImport.update({
+  id: '/bar-admin',
+  path: '/bar-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CameraRoute = CameraRouteImport.update({
@@ -48,6 +55,11 @@ const MatchRoute = MatchRouteImport.update({
 const MuralRoute = MuralRouteImport.update({
   id: '/mural',
   path: '/mural',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OficinaRoute = OficinaRouteImport.update({
+  id: '/oficina',
+  path: '/oficina',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PanicoRoute = PanicoRouteImport.update({
@@ -74,10 +86,12 @@ const QCodigoRoute = QCodigoRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
+  '/bar-admin': typeof BarAdminRoute
   '/camera': typeof CameraRoute
   '/loja': typeof LojaRoute
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
+  '/oficina': typeof OficinaRoute
   '/panico': typeof PanicoRoute
   '/qrcodes': typeof QrcodesRoute
   '/ranking': typeof RankingRoute
@@ -86,10 +100,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
+  '/bar-admin': typeof BarAdminRoute
   '/camera': typeof CameraRoute
   '/loja': typeof LojaRoute
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
+  '/oficina': typeof OficinaRoute
   '/panico': typeof PanicoRoute
   '/qrcodes': typeof QrcodesRoute
   '/ranking': typeof RankingRoute
@@ -99,10 +115,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/arcade': typeof ArcadeRoute
+  '/bar-admin': typeof BarAdminRoute
   '/camera': typeof CameraRoute
   '/loja': typeof LojaRoute
   '/match': typeof MatchRoute
   '/mural': typeof MuralRoute
+  '/oficina': typeof OficinaRoute
   '/panico': typeof PanicoRoute
   '/qrcodes': typeof QrcodesRoute
   '/ranking': typeof RankingRoute
@@ -113,10 +131,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/arcade'
+    | '/bar-admin'
     | '/camera'
     | '/loja'
     | '/match'
     | '/mural'
+    | '/oficina'
     | '/panico'
     | '/qrcodes'
     | '/ranking'
@@ -125,10 +145,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/arcade'
+    | '/bar-admin'
     | '/camera'
     | '/loja'
     | '/match'
     | '/mural'
+    | '/oficina'
     | '/panico'
     | '/qrcodes'
     | '/ranking'
@@ -137,10 +159,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/arcade'
+    | '/bar-admin'
     | '/camera'
     | '/loja'
     | '/match'
     | '/mural'
+    | '/oficina'
     | '/panico'
     | '/qrcodes'
     | '/ranking'
@@ -150,10 +174,12 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArcadeRoute: typeof ArcadeRoute
+  BarAdminRoute: typeof BarAdminRoute
   CameraRoute: typeof CameraRoute
   LojaRoute: typeof LojaRoute
   MatchRoute: typeof MatchRoute
   MuralRoute: typeof MuralRoute
+  OficinaRoute: typeof OficinaRoute
   PanicoRoute: typeof PanicoRoute
   QrcodesRoute: typeof QrcodesRoute
   RankingRoute: typeof RankingRoute
@@ -174,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/arcade'
       fullPath: '/arcade'
       preLoaderRoute: typeof ArcadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bar-admin': {
+      id: '/bar-admin'
+      path: '/bar-admin'
+      fullPath: '/bar-admin'
+      preLoaderRoute: typeof BarAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/camera': {
@@ -202,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/mural'
       fullPath: '/mural'
       preLoaderRoute: typeof MuralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oficina': {
+      id: '/oficina'
+      path: '/oficina'
+      fullPath: '/oficina'
+      preLoaderRoute: typeof OficinaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/panico': {
@@ -238,10 +278,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArcadeRoute: ArcadeRoute,
+  BarAdminRoute: BarAdminRoute,
   CameraRoute: CameraRoute,
   LojaRoute: LojaRoute,
   MatchRoute: MatchRoute,
   MuralRoute: MuralRoute,
+  OficinaRoute: OficinaRoute,
   PanicoRoute: PanicoRoute,
   QrcodesRoute: QrcodesRoute,
   RankingRoute: RankingRoute,

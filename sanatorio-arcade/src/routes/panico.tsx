@@ -38,6 +38,7 @@ const META = 5000;
 function PanicoPage() {
   const [cliques, setCliques] = useState<number | null>(null);
   const [alerta, setAlerta] = useState(false);
+  const [alertaFalso, setAlertaFalso] = useState(false);
   const [pulso, setPulso] = useState(0);
   const pendentes = useRef(0);
   const enviando = useRef(false);
@@ -208,12 +209,26 @@ function PanicoPage() {
         Aperte sem medo: o contador é o mesmo em todos os celulares, ao vivo.
       </p>
 
+      {/* Sirene de mentira: mesmo efeito de tela do alerta de verdade, mas só
+          neste celular — não soma clique nenhum e ninguém mais vê. É pegadinha,
+          não parte do contador coletivo. */}
+      <button
+        type="button"
+        onClick={() => setAlertaFalso(true)}
+        aria-label="Sirene de mentira (só neste celular)"
+        title="Sirene de mentira — só neste celular"
+        className="tap-44 fixed bottom-[calc(112px+env(safe-area-inset-bottom))] right-4 z-30 grid h-8 w-8 place-items-center rounded-full border-2 border-neon bg-neon/20 text-neon shadow-[0_0_10px_-2px_var(--neon)]"
+      >
+        <Siren className="h-4 w-4" />
+      </button>
+
       {alerta ? <AlertaGlobal /> : null}
+      {alertaFalso ? <AlertaGlobal falso onFechar={() => setAlertaFalso(false)} /> : null}
     </section>
   );
 }
 
-function AlertaGlobal() {
+function AlertaGlobal({ falso = false, onFechar }: { falso?: boolean; onFechar?: () => void }) {
   const [cor, setCor] = useState(0);
 
   useEffect(() => {
@@ -227,6 +242,7 @@ function AlertaGlobal() {
       style={{ background: cor === 0 ? "var(--neon)" : "var(--purple)" }}
       role="alertdialog"
       aria-modal="true"
+      onClick={onFechar}
     >
       <div className="max-w-sm rounded-sm border-4 border-black bg-black/85 p-6">
         <motion.h2
@@ -240,6 +256,11 @@ function AlertaGlobal() {
           Alerta logístico: Liberação imediata das caixas de Smirnoff (padrão 6 unidades) e Red Bull
           Zero nos bares principais da pista!
         </p>
+        {falso ? (
+          <p className="font-arcade mt-4 text-[7px] uppercase text-muted-foreground">
+            Toque para fechar
+          </p>
+        ) : null}
       </div>
     </div>
   );

@@ -249,8 +249,20 @@ const CENAS: Record<CodigoConquista, () => ReactElement> = {
   privada: CenaPrivada,
 };
 
-export function CenaCoringa({ codigo }: { codigo: CodigoConquista }) {
-  const Cena = CENAS[codigo];
+/** Código cadastrado depois pela administração: sem coreografia própria, só o Coringa piscando. */
+function CenaGenerica() {
+  return (
+    <motion.div
+      animate={{ y: [0, -6, 0], rotate: [-2, 2, -2] }}
+      transition={{ duration: 1.6, repeat: Infinity }}
+    >
+      <Ator />
+    </motion.div>
+  );
+}
+
+export function CenaCoringa({ codigo }: { codigo: string }) {
+  const Cena = (CENAS as Record<string, () => ReactElement>)[codigo] ?? CenaGenerica;
 
   return (
     <div className="relative grid h-52 w-full place-items-center overflow-hidden rounded-sm border-2 border-purple bg-black">

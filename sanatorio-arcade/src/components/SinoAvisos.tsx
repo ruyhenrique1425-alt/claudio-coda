@@ -3,7 +3,7 @@ import { Bell } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
 
-import { ouvirAvisos, pendencias, type Aviso } from "@/lib/avisos";
+import { assinarAvisos, pendencias, type Aviso } from "@/lib/avisos";
 import { avisosDoRanking } from "@/lib/avisos-ranking";
 import { online } from "@/lib/rede";
 import { responderPrenda, responderDesafio, lerRanking } from "@/lib/pontos";
@@ -49,12 +49,28 @@ export function SinoAvisos({ pacienteId }: { pacienteId: string }) {
     vibrar();
   }, []);
 
+  const conferirPendencias = useCallback(() => {
+    void pendencias(pacienteId)
+      .then((novos) => {
+        for (const aviso of novos) adicionar(aviso);
+      })
+      .catch(() => undefined);
+  }, [pacienteId, adicionar]);
+
   useEffect(() => {
     void pendencias(pacienteId)
       .then(setAvisos)
       .catch(() => undefined);
-    return ouvirAvisos({ pacienteId }, adicionar);
-  }, [pacienteId, adicionar]);
+
+    // Sem sinal bom, o socket fecha (como todo canal do app) e prenda/desafio
+    // pendentes voltam a aparecer pela consulta espaçada; curtida, match e
+    // doação (sem essa consulta) só chegam quando o realtime voltar.
+    return canalQuandoDerVerifica(
+      () => assinarAvisos({ pacienteId }, adicionar),
+      (canal) => void supabase.removeChannel(canal),
+      conferirPendencias,
+    );
+  }, [pacienteId, adicionar, conferirPendencias]);
 
   // Movimentação do placar: cada ficha nova pode mudar o pódio, então o app
   // relê o ranking (no máximo a cada 10s) e compara com o retrato anterior.

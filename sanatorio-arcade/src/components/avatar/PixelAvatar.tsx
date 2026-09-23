@@ -50,10 +50,12 @@ export function PixelAvatar({
     return g;
   }, [id, look, adornoId]);
 
-  // Bevel sutil (luz em cima/esquerda, sombra embaixo/direita) só nos
-  // tamanhos maiores: numa célula de 2-3px o realce vira ruído em vez de
-  // profundidade.
-  const bisel = px >= 6;
+  // Contorno (4 drop-shadow empilhados) e bisel (box-shadow por célula) só no
+  // avatar "lg" — o único usado sozinho na tela (Ficha, Loja, editor). Em
+  // "md"/"sm" ele aparece aos montes em lista (Match, mural, câmera): aplicar
+  // um filtro caro e ~224 box-shadow por boneco, multiplicado por dezenas de
+  // cards de uma vez, é o que travava a troca de página.
+  const relevo = size === "lg";
 
   return (
     <div
@@ -64,7 +66,13 @@ export function PixelAvatar({
         gridTemplateColumns: `repeat(${GRID_W}, ${px}px)`,
         gridTemplateRows: `repeat(${GRID_H}, ${px}px)`,
         imageRendering: "pixelated",
-        filter: glow ? `${CONTORNO} drop-shadow(0 0 10px var(--neon))` : CONTORNO,
+        filter: relevo
+          ? glow
+            ? `${CONTORNO} drop-shadow(0 0 10px var(--neon))`
+            : CONTORNO
+          : glow
+            ? "drop-shadow(0 0 10px var(--neon))"
+            : undefined,
       }}
     >
       {grid.flatMap((row, y) =>
@@ -75,7 +83,7 @@ export function PixelAvatar({
               c
                 ? {
                     background: c,
-                    boxShadow: bisel
+                    boxShadow: relevo
                       ? `inset 1px 1px 0 color-mix(in oklab, ${c} 65%, white), inset -1px -1px 0 color-mix(in oklab, ${c} 65%, black)`
                       : undefined,
                   }

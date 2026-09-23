@@ -11,7 +11,12 @@
 export type CodigoConquista = "bemvindo" | "van" | "bar" | "xeque" | "privada";
 
 export type Conquista = {
-  codigo: CodigoConquista;
+  /**
+   * String livre: as cinco originais usam `CodigoConquista`, mas a
+   * administração do bar cadastra códigos novos em tempo real (ver
+   * `definirConquistasBar`), então o tipo não pode ficar preso à união fixa.
+   */
+  codigo: string;
   titulo: string;
   ondeFica: string;
   legenda: string;
@@ -57,11 +62,29 @@ export const CONQUISTAS: Conquista[] = [
   },
 ];
 
-export function conquistaPor(codigo: string): Conquista | null {
-  return CONQUISTAS.find((c) => c.codigo === codigo) ?? null;
+/* --------------------------- códigos do bar (admin) ------------------------ */
+
+let CONQUISTAS_BAR: Conquista[] = [];
+
+/** Aplica os códigos cadastrados na tela de administração do bar. */
+export function definirConquistasBar(linhas: readonly Conquista[]): void {
+  CONQUISTAS_BAR = linhas.filter((l) => !CONQUISTAS.some((c) => c.codigo === l.codigo));
 }
 
-export const TOTAL_CONQUISTAS = CONQUISTAS.length;
+/** As cinco originais mais o que a administração cadastrou depois. */
+export function todasConquistas(): Conquista[] {
+  return [...CONQUISTAS, ...CONQUISTAS_BAR];
+}
+
+export function conquistaPor(codigo: string): Conquista | null {
+  return todasConquistas().find((c) => c.codigo === codigo) ?? null;
+}
+
+export const TOTAL_CONQUISTAS_ORIGINAIS = CONQUISTAS.length;
+
+export function totalConquistas(): number {
+  return todasConquistas().length;
+}
 
 /* ------------------------- guardadas antes da ficha ----------------------- */
 
@@ -71,19 +94,21 @@ const CHAVE_PENDENTES = "sanatorio:conquistas-pendentes";
  * Quem escaneia antes de fazer a ficha não perde a conquista: ela fica aqui e
  * é creditada assim que o prontuário existir.
  */
-export function lerPendentes(): CodigoConquista[] {
+export function lerPendentes(): string[] {
   try {
     const cru = localStorage.getItem(CHAVE_PENDENTES);
     if (!cru) return [];
     const lista = JSON.parse(cru) as unknown;
     if (!Array.isArray(lista)) return [];
-    return lista.filter((c): c is CodigoConquista => CONQUISTAS.some((x) => x.codigo === c));
+    return lista.filter(
+      (c): c is string => typeof c === "string" && todasConquistas().some((x) => x.codigo === c),
+    );
   } catch {
     return [];
   }
 }
 
-export function guardarPendente(codigo: CodigoConquista) {
+export function guardarPendente(codigo: string) {
   try {
     const atuais = lerPendentes();
     if (atuais.includes(codigo)) return;

@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -16,6 +16,8 @@ import { InstalarPwa } from "../components/InstalarPwa";
 import { ModoSitio } from "../components/ModoSitio";
 import { ReativarFicha } from "../components/ReativarFicha";
 import { Toaster } from "../components/ui/sonner";
+import { carregarCustomizacoes } from "../lib/oficina";
+import { carregarConquistasBar } from "../lib/bar-admin";
 
 function NotFoundComponent() {
   return (
@@ -154,13 +156,26 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // As customizações da oficina e os códigos do bar mudam módulos mutáveis
+  // em memória, sem que ninguém que já montou a tela perceba sozinho. Uma
+  // troca de key força o conteúdo da rota a remontar quando as duas leituras
+  // terminam, para todo boneco e todo código nascer já atualizado.
+  const [customPronto, setCustomPronto] = useState(false);
+  useEffect(() => {
+    void Promise.all([carregarCustomizacoes(), carregarConquistasBar()]).finally(() =>
+      setCustomPronto(true),
+    );
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ModoSitio />
       <ReativarFicha />
       <AppShell>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <div key={customPronto ? "customizado" : "padrao"}>
+          <Outlet />
+        </div>
       </AppShell>
       <InstalarPwa />
       {/* Faixa rápida dos avisos: some sozinha, sem tirar ninguém do jogo. */}

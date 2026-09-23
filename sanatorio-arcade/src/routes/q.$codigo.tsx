@@ -5,7 +5,7 @@ import { Gamepad2, ScanLine, Trophy } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import { CenaCoringa } from "@/components/conquistas/CenaCoringa";
-import { conquistaPor, guardarPendente, TOTAL_CONQUISTAS } from "@/lib/conquistas";
+import { conquistaPor, guardarPendente, totalConquistas } from "@/lib/conquistas";
 import { credenciais } from "@/lib/paciente-local";
 import { creditarQrCode } from "@/lib/pontos";
 
@@ -121,7 +121,7 @@ function PaginaConquista() {
 
       <p className="mt-4 flex items-center justify-center gap-2 text-center text-[11px] text-muted-foreground">
         <Trophy className="h-3.5 w-3.5 text-whisky" aria-hidden />
-        Faltam achar os outros códigos. São {TOTAL_CONQUISTAS} pela festa.
+        Faltam achar os outros códigos. São {totalConquistas()} pela festa.
       </p>
     </section>
   );

@@ -29,10 +29,13 @@ export type Aviso = {
 type Alvo = { pacienteId: string };
 
 /**
- * Assina os três canais de uma vez e devolve a função de desinscrição.
- * O nome de quem agiu vem depois, numa consulta à view pública.
+ * Monta e assina o canal de avisos (curtida, prenda, desafio e doação) e
+ * devolve o canal já inscrito. Quem chama decide como abrir/fechar — ver
+ * `canalQuandoDerVerifica` em `lib/realtime.ts`, que é quem de fato liga isso
+ * ao sinal do aparelho. O nome de quem agiu vem depois, numa consulta à view
+ * pública.
  */
-export function ouvirAvisos({ pacienteId }: Alvo, aoChegar: (aviso: Aviso) => void) {
+export function assinarAvisos({ pacienteId }: Alvo, aoChegar: (aviso: Aviso) => void) {
   async function nomeDe(id: string | null | undefined): Promise<string> {
     if (!id) return "ALGUÉM";
     const { data } = await supabase
@@ -233,9 +236,7 @@ export function ouvirAvisos({ pacienteId }: Alvo, aoChegar: (aviso: Aviso) => vo
     )
     .subscribe();
 
-  return () => {
-    void supabase.removeChannel(canal);
-  };
+  return canal;
 }
 
 /** Prendas e desafios que ficaram esperando enquanto o app estava fechado. */

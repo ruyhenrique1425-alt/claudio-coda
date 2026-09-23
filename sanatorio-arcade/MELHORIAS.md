@@ -98,7 +98,9 @@ sinal, ao abrir o app e a cada 45 segundos.
 **Reenvio não duplica.** Cada item da fila leva uma chave de idempotência
 gerada no celular. O banco tem índice único nessa chave, então o "timeout" que
 na verdade chegou não vira ponto creditado duas vezes quando a fila tentar de
-novo. É o que a migração `20260912090000` faz.
+novo. Isso está na migração consolidada `20260913032203` (as duas migrations
+anteriores que definiam a mesma coisa foram removidas por ficarem redundantes
+com ela).
 
 **O app abre sem sinal.** O service worker guarda o casco (HTML, JS, CSS,
 fontes e ícones) e serve do cache. Na navegação ele tenta a rede com prazo de 8
@@ -325,11 +327,91 @@ a tela de todo mundo. Cada assinatura agora tem `filter` pelo `paciente_id` do
 dono da tela, o que importa numa festa com dezenas de celulares abertos ao
 mesmo tempo.
 
-**Refino estético nos seis jogos.** Os painéis de resultado (Roleta, Terapia
-de Choque, Teste de Sobriedade, Bafômetro, Detector de Mentiras e as regras da
-Sueca) passaram a usar o mesmo `CartaoPixel` de canto em degraus do resto do
-app, em vez de caixas com `border-2` reto — o Detector de Mentiras, que não
-tinha nenhum cartão no resultado, ganhou um.
+**Refino estético nos jogos.** Os painéis de resultado (Roleta, Terapia de
+Choque, Teste de Sobriedade, Bafômetro e as regras da Sueca) passaram a usar o
+mesmo `CartaoPixel` de canto em degraus do resto do app, em vez de caixas com
+`border-2` reto.
 
 **CSS morto removido.** `.canto-pixel` e `.caixa-pixel-plano`, utilitários sem
 nenhuma referência no código, saíram de `styles.css`.
+
+## Segunda rodada de refino (setembro/2026)
+
+**Arcade reorganizado.** Detector de Mentiras saiu de vez — dependia do
+`DeviceOrientationEvent`, que falha em silêncio em boa parte dos Android e
+exige permissão por gesto a cada sessão no iOS, então era o jogo com maior
+chance de simplesmente não funcionar na festa. Bafômetro de Dedo foi para o
+fim da lista (é o que mais exige do dedo e da atenção). O Botão do Pânico
+ganhou uma entrada na própria tela do arcade, na 4ª posição, que leva direto
+para a tela dedicada — continua sem gastar fichas, é só caos em grupo.
+
+**Sirene de mentira.** Um botão verde discreto no canto da tela do Pânico
+dispara o mesmo efeito de tela cheia do alerta de verdade, mas só no aparelho
+de quem apertou — não soma clique nenhum no contador coletivo. É pegadinha,
+não faz parte do jogo real.
+
+**Travada na troca de página, corrigida.** O contorno e o bisel do avatar
+(drop-shadow empilhado + box-shadow em ~224 células por boneco) rodava em
+qualquer tamanho `md` para cima. Como o Match e o mural/câmera (via
+`RegistroEmbargado`) mostram vários avatares de uma vez em lista, cada troca
+para essas telas pagava esse custo dezenas de vezes de uma só vez. Agora o
+efeito só roda no avatar único (`size="lg"`) — Ficha, Loja, editor de
+personagem — que nunca aparece em lista.
+
+**`index.tsx` deixou de ser um componente-monolito.** As 418 linhas que
+misturavam formulário de triagem, editor de avatar e resumo do paciente
+internado viraram três peças: `TriagemForm` e `FichaInternado` (novos, em
+`src/components/ficha/`) mais o `index.tsx` enxuto que só orquestra estado e
+troca entre elas.
+
+**Migrations duplicadas, consolidadas.** As duas migrations que eu tinha
+escrito antes de existir uma migration "oficial" consolidada
+(`20260911120000_economia_sanatorio.sql` e
+`20260912090000_offline_idempotencia.sql`) saíram do repositório — tudo que
+elas definiam já está, palavra por palavra ou de forma equivalente, na
+`20260913032203`, que passou a citar isso no próprio cabeçalho. O mesmo para
+o fix duplicado de `equipar_item`.
+
+**Testes automatizados.** Vitest entrou no projeto (`npm test`), com 64 testes
+cobrindo a lógica pura mais sensível a regressão: cálculo de afinidade do
+Match, inventário da loja, montagem de pixels do avatar (incluindo a mistura
+de customizações da oficina), avisos de ranking e o catálogo de conquistas
+(incluindo a mistura com códigos do bar). Testar "tempo real" com dezenas de
+celulares simultâneos ao vivo continua fora do alcance de um ambiente sem um
+projeto Supabase real — o que dá para automatizar aqui é a lógica; a prova de
+carga é na festa ou com um projeto de teste à parte.
+
+**Auditoria de realtime.** O sino de avisos (match, prenda, desafio, doação)
+montava seu canal direto, sem passar pelo `canalQuandoDerVerifica` que todo
+outro canal do app usa — ou seja, não respeitava o "modo sítio": com sinal
+fraco, ficava tentando reconectar o socket em vez de cair para consulta
+espaçada, o oposto do que o resto do app faz de propósito para poupar
+bateria. Corrigido. Ranking e o contador do Pânico continuam com listener sem
+filtro por paciente, mas isso é inerente — qualquer transação pode mudar um
+placar ou um contador coletivo, não tem paciente_id para filtrar.
+
+**Falha real corrigida na crediticação de QR code.** `creditar_pontos`
+aceitava qualquer valor de fichas que o cliente mandasse para o motivo
+`qrcode`, sem checar se o código era de verdade — uma chamada direta à função
+(fora do app, por quem soubesse o RPC) forjava até 100 fichas com qualquer
+string como código. Agora o valor de fichas para QR code vem sempre do
+servidor, lido da tabela `conquistas_bar`; o que o cliente manda é ignorado
+para esse motivo.
+
+**Oficina de personagens.** Nova tela em `/oficina` (dentro do menu "Mais" da
+Ficha), protegida por senha, para editar nome, frase, cabeça, corpo, cores,
+acessório e item padrão de cada um dos 6 bonecos — sem precisar mexer em
+código. A senha padrão de fábrica é `sanatorio2026` (trocável direto no
+banco, `UPDATE oficina_config SET senha = '...'`).
+
+**Administração do bar.** Nova tela em `/bar-admin` (organizador, fora da
+barra de navegação — mesmo padrão de `/qrcodes`), com a mesma senha da
+oficina, para cadastrar novos códigos de QR code e a conquista de cada um,
+sem depender de parâmetro de URL nem de reimportar o projeto. O código
+cadastrado aparece automaticamente na folha de impressão de `/qrcodes` e no
+inventário de sobrevivência de quem o encontrar.
+
+**PWA (ícone e prompt de instalação).** Já estava tudo pronto de uma rodada
+anterior — ícone próprio, manifest, meta tags de iOS/Android e o componente
+`InstalarPwa` com prompt do Android e instruções manuais do iOS — só
+confirmado que continua funcionando.

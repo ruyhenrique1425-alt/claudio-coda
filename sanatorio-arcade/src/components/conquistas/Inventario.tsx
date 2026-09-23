@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { CONQUISTAS, lerPendentes, TOTAL_CONQUISTAS } from "@/lib/conquistas";
+import { lerPendentes, todasConquistas } from "@/lib/conquistas";
 import { online } from "@/lib/rede";
 
 const SELOS: Record<string, string> = {
@@ -13,6 +13,10 @@ const SELOS: Record<string, string> = {
   privada: "🚽",
 };
 
+// Código cadastrado depois pela administração: sem selo próprio, mas com um
+// troféu genérico em vez de deixar a célula vazia.
+const SELO_PADRAO = "🏆";
+
 /**
  * Inventário de sobrevivência: as cinco conquistas de QR code.
  *
@@ -21,6 +25,7 @@ const SELOS: Record<string, string> = {
  */
 export function Inventario({ pacienteId }: { pacienteId: string }) {
   const [achados, setAchados] = useState<string[]>([]);
+  const conquistas = todasConquistas();
 
   useEffect(() => {
     const locais = lerPendentes() as string[];
@@ -45,12 +50,12 @@ export function Inventario({ pacienteId }: { pacienteId: string }) {
           Inventário de sobrevivência
         </p>
         <p className="font-arcade text-[9px] text-whisky">
-          {achados.length}/{TOTAL_CONQUISTAS}
+          {achados.length}/{conquistas.length}
         </p>
       </div>
 
       <ul className="mt-4 grid grid-cols-5 gap-2">
-        {CONQUISTAS.map((c) => {
+        {conquistas.map((c) => {
           const tem = achados.includes(c.codigo);
           return (
             <li key={c.codigo}>
@@ -63,7 +68,7 @@ export function Inventario({ pacienteId }: { pacienteId: string }) {
                 }`}
               >
                 {tem ? (
-                  <span aria-hidden>{SELOS[c.codigo]}</span>
+                  <span aria-hidden>{SELOS[c.codigo] ?? SELO_PADRAO}</span>
                 ) : (
                   <Lock className="h-4 w-4 text-muted-foreground" aria-hidden />
                 )}
@@ -76,14 +81,14 @@ export function Inventario({ pacienteId }: { pacienteId: string }) {
         })}
       </ul>
 
-      {achados.length < TOTAL_CONQUISTAS ? (
+      {achados.length < conquistas.length ? (
         <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-          Faltam {TOTAL_CONQUISTAS - achados.length}. Estão espalhados pela festa — e um deles saiu
+          Faltam {conquistas.length - achados.length}. Estão espalhados pela festa — e um deles saiu
           antes, no Instagram da Sanatório.
         </p>
       ) : (
         <p className="mt-3 text-[11px] leading-relaxed text-whisky">
-          Cinco de cinco. Você vasculhou até o banheiro.
+          {conquistas.length} de {conquistas.length}. Você vasculhou até o banheiro.
         </p>
       )}
     </div>

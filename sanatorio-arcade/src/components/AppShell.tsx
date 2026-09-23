@@ -9,6 +9,7 @@ import {
   Siren,
   Trophy,
   User,
+  Wrench,
   X,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -56,6 +57,12 @@ const NO_MAIS = [
     label: "Loja",
     icon: ShoppingBag,
     resumo: "Molduras e adereços do seu avatar",
+  },
+  {
+    to: "/oficina",
+    label: "Oficina",
+    icon: Wrench,
+    resumo: "Edite nome, cores e itens dos 6 bonecos (senha)",
   },
 ] as const;
 

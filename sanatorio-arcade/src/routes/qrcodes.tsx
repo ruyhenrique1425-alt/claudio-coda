@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
-import { CONQUISTAS, type CodigoConquista } from "@/lib/conquistas";
+import { todasConquistas, type Conquista } from "@/lib/conquistas";
+import { carregarConquistasBar } from "@/lib/bar-admin";
 
 /**
  * Folha dos QR codes, para os moradores imprimirem.
@@ -24,9 +25,14 @@ export const Route = createFileRoute("/qrcodes")({
 function PaginaQrCodes() {
   const [base, setBase] = useState("");
   const [imagens, setImagens] = useState<Record<string, string>>({});
+  const [conquistas, setConquistas] = useState<Conquista[]>(() => todasConquistas());
 
   useEffect(() => {
     setBase(window.location.origin);
+    // Página de uso pontual do organizador: não espera o remonte do
+    // __root — busca os códigos do bar direto, para a folha sempre sair
+    // completa mesmo se aberta antes daquela leitura terminar.
+    void carregarConquistasBar().then(() => setConquistas(todasConquistas()));
   }, []);
 
   useEffect(() => {
@@ -34,7 +40,7 @@ function PaginaQrCodes() {
     let ativo = true;
 
     void Promise.all(
-      CONQUISTAS.map(async (c) => {
+      conquistas.map(async (c) => {
         const url = `${base}/q/${c.codigo}`;
         // Correção de erro alta: papel de bar amassa, molha e ainda assim lê.
         const png = await QRCode.toDataURL(url, {
@@ -52,7 +58,7 @@ function PaginaQrCodes() {
     return () => {
       ativo = false;
     };
-  }, [base]);
+  }, [base, conquistas]);
 
   return (
     <section className="print:bg-white print:text-black">
@@ -74,7 +80,7 @@ function PaginaQrCodes() {
       </header>
 
       <div className="mt-5 space-y-5">
-        {CONQUISTAS.map((c) => (
+        {conquistas.map((c) => (
           <article
             key={c.codigo}
             className="rounded-sm border-2 border-purple bg-card/40 p-4 text-center print:break-inside-avoid print:border-black print:bg-white"
