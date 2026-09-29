@@ -3,14 +3,12 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "motion/react";
-import { FileWarning, Loader2, Send } from "lucide-react";
+import { FileWarning, Loader2, Send, VenetianMask } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
+import { BotaoReagir } from "@/components/BotaoReagir";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
 import { Moldura, NomeDoPaciente } from "@/components/Moldura";
-import { RecadoEmbargado } from "@/components/RegistroEmbargado";
-import { ContagemRegressiva } from "@/components/ContagemRegressiva";
-import { REVELACAO, jaRevelou } from "@/lib/datas";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listarMural, MORADORES, type Morador } from "@/lib/sanatorio.functions";
@@ -43,10 +41,13 @@ const FICHAS: Record<Morador, { codigo: string; diagnostico: string }> = {
 function MuralPage() {
   const [aba, setAba] = useState<Morador>("Camarão");
   const [autor, setAutor] = useState<string | null>(null);
+  const [pacienteId, setPacienteId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setAutor(lerProntuario()?.nome ?? null);
+    const p = lerProntuario();
+    setAutor(p?.nome ?? null);
+    setPacienteId(p?.pacienteId ?? null);
     setHydrated(true);
   }, []);
 
@@ -67,7 +68,7 @@ function MuralPage() {
 
         {MORADORES.map((m) => (
           <TabsContent key={m} value={m} className="mt-4">
-            <Feed morador={m} autor={autor} hydrated={hydrated} />
+            <Feed morador={m} autor={autor} pacienteId={pacienteId} hydrated={hydrated} />
           </TabsContent>
         ))}
       </Tabs>
@@ -78,10 +79,12 @@ function MuralPage() {
 function Feed({
   morador,
   autor,
+  pacienteId,
   hydrated,
 }: {
   morador: Morador;
   autor: string | null;
+  pacienteId: string | null;
   hydrated: boolean;
 }) {
   const carregar = useServerFn(listarMural);
@@ -90,8 +93,10 @@ function Feed({
   const [naFila, setNaFila] = useState(false);
 
   const feed = useQuery({
-    queryKey: ["mural", morador],
-    queryFn: () => carregar({ data: { destinatario: morador } }),
+    queryKey: ["mural", morador, pacienteId],
+    queryFn: () =>
+      carregar({ data: { destinatario: morador, pacienteId: pacienteId ?? undefined } }),
+    enabled: hydrated,
     // Recados chegam durante a festa. Com sinal bom, de 15 em 15 segundos;
     // com sinal fraco, de dois em dois minutos; sem sinal, nem tenta.
     refetchInterval: intervaloConsciente(15_000, 120_000),
@@ -129,15 +134,10 @@ function Feed({
         <p className="font-arcade mt-3 text-[7px] uppercase tracking-widest text-muted-foreground">
           Arquivo confidencial · {feed.data?.length ?? 0} registros
         </p>
-
-        {!jaRevelou() ? (
-          <div className="mt-3 rounded-sm border border-whisky/50 bg-whisky/10 px-3 py-2 text-center">
-            <p className="font-arcade text-[7px] uppercase leading-relaxed text-whisky">
-              Recados lacrados até 30/10 ao meio-dia
-            </p>
-            <ContagemRegressiva ate={REVELACAO} rotulo="ABRE EM" className="mt-1 text-[10px]" />
-          </div>
-        ) : null}
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          Todo recado aparece na hora. Depois de uma hora o autor vira mistério até o dia seguinte —
+          o recado continua ali, só some quem escreveu.
+        </p>
       </header>
 
       <div className="mt-4 space-y-3 pb-24">
@@ -182,8 +182,11 @@ function Feed({
                     title={`Avatar de ${r.autor}`}
                   />
                 </Moldura>
-                <p className="font-arcade truncate text-[8px] uppercase text-whisky">
-                  <NomeDoPaciente nome={r.autor} itens={r.itens} />
+                <p className="font-arcade flex min-w-0 items-center gap-1.5 truncate text-[8px] uppercase text-whisky">
+                  {r.anonimo ? <VenetianMask className="h-3 w-3 shrink-0" aria-hidden /> : null}
+                  <span className="truncate">
+                    <NomeDoPaciente nome={r.autor} itens={r.itens} />
+                  </span>
                 </p>
                 <time className="shrink-0 text-[10px] text-muted-foreground">
                   {new Date(r.created_at).toLocaleString("pt-BR", {
@@ -195,18 +198,19 @@ function Feed({
                 </time>
               </div>
 
-              {r.mensagem === null ? (
-                <div className="mt-2">
-                  <RecadoEmbargado tamanho={r.tamanho ?? 40} />
-                  <p className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    deixou um recado para {morador}
-                  </p>
-                </div>
-              ) : (
-                <p className="mt-2 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground">
-                  {r.mensagem}
-                </p>
-              )}
+              <p className="mt-2 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground">
+                {r.mensagem}
+              </p>
+
+              <div className="mt-1 flex justify-end">
+                <BotaoReagir
+                  tipo="mural"
+                  itemId={r.id}
+                  contagemInicial={r.reacoes}
+                  reagidoInicial={r.reagido}
+                  podeReagir={Boolean(pacienteId)}
+                />
+              </div>
             </motion.article>
           ))
         )}

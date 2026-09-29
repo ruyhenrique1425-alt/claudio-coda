@@ -429,5 +429,35 @@ recentes, nível de pânico ao vivo (mesma leitura e canal realtime da tela
 `/panico`) e um botão para exportar o mural inteiro (os três moradores) em
 CSV, com BOM para o Excel abrir acentuado sem sopa de letrinhas. Reaproveita
 `listarPacientes`, `listarFotos` e `listarMural`, que já existiam para o
-guest — o painel respeita o mesmo embargo de fotos e recados que os
-convidados veem, em vez de furar a revelação por ser tela de administração.
+guest.
+
+## Quarta rodada (setembro/2026) — mural, câmera e navegação
+
+**Embargo fixo virou revelação rolante.** Fotos e recados não ficam mais
+travados até uma data única da festa (30/10 ao meio-dia): agora toda foto e
+todo recado aparece na hora, pra galera toda ver e interagir. Depois de uma
+hora, quem postou vira anônimo (aparece "Paciente desconhecido" com uma
+máscara no lugar do nome — o conteúdo continua ali) até o dia seguinte, hora
+em que o autor volta a aparecer — o "quem fez isso ontem?" da manhã, todo
+dia, em vez de um único grande momento no fim da festa. A lógica mora em
+`estadoDoPost` (`lib/datas.ts`), calculada em cima do fuso de Brasília (não
+do relógio do servidor nem do celular de quem está vendo), e testada em
+`datas.test.ts`. `listarFotos`/`listarMural` decidem por linha, não mais
+globalmente — o componente `RegistroEmbargado` (a versão antiga, "esconde
+tudo até a data") saiu do código.
+
+**Câmera com cara de câmera de novo.** O botão de anexar arquivo genérico
+virou um visor de vigilância: moldura escura com cantos de mira, "REC"
+piscando e um obturador redondo enorme no meio — o gesto físico ("aperte o
+círculo") em vez de ler um rótulo de botão.
+
+**Mural e Câmera reforçados na barra.** As duas ações que a festa inteira usa
+o tempo todo ganharam um selo visual (fundo neon suave, ícone um pouco maior)
+que as destaca das outras três mesmo paradas — não precisa estar na tela pra
+notar que é ali que a ação acontece. Rótulos da barra também subiram de 7px
+para 8px.
+
+**Reações em fotos e recados.** Um coração simples (toggle, sem escolha de
+emoji) em cada foto e cada recado, com contagem — tabela `reacoes` nova, RPC
+`reagir` com o mesmo travamento por token de toda escrita do app. Otimista na
+tela: reage na hora, desfaz sozinho se o servidor recusar.

@@ -3,9 +3,6 @@
  * relógio do celular de cada convidado pode estar em qualquer fuso.
  */
 
-/** Fotos e recados ficam embargados até 30/10 às 12h de Brasília. */
-export const REVELACAO = new Date("2026-10-30T15:00:00Z");
-
 /** O pódio congela às 3:33 do dia 30/10, horário de Brasília. */
 export const APURACAO = new Date("2026-10-30T06:33:00Z");
 
@@ -13,8 +10,32 @@ export const APURACAO = new Date("2026-10-30T06:33:00Z");
 export const ALTA_ABRE = 22;
 export const ALTA_FECHA = 7;
 
-export function jaRevelou(agora: Date = new Date()): boolean {
-  return agora.getTime() >= REVELACAO.getTime();
+/* ------------------------- revelação de fotos e mural ---------------------- */
+
+export type EstadoRevelacao = "recente" | "anonimo" | "revelado";
+
+const JANELA_RECENTE_MS = 60 * 60 * 1000;
+const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+/**
+ * "Dia civil" em Brasília como um número inteiro, imune ao fuso de quem roda
+ * o código (celular do convidado ou servidor). Dois horários caem no mesmo
+ * dia quando esse número bate.
+ */
+function diaBrasilia(data: Date): number {
+  return Math.floor((data.getTime() - BRASILIA_OFFSET_MS) / 86_400_000);
+}
+
+/**
+ * Uma foto ou recado nasce visível (com autor), fica anônimo depois de uma
+ * hora — ainda dá pra ver o quê, só não o quem — e volta a mostrar o autor
+ * no dia seguinte. É o "quem fez isso ontem?" da manhã seguinte, todo dia,
+ * em vez de um embargo único até uma data fixa da festa.
+ */
+export function estadoDoPost(criadoEm: Date | string, agora: Date = new Date()): EstadoRevelacao {
+  const quando = typeof criadoEm === "string" ? new Date(criadoEm) : criadoEm;
+  if (diaBrasilia(agora) !== diaBrasilia(quando)) return "revelado";
+  return agora.getTime() - quando.getTime() < JANELA_RECENTE_MS ? "recente" : "anonimo";
 }
 
 export function jaApurou(agora: Date = new Date()): boolean {

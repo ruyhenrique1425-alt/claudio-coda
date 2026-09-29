@@ -3,7 +3,17 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import type { Database } from "@/integrations/supabase/types";
-import { jaRevelou } from "@/lib/datas";
+import { estadoDoPost } from "@/lib/datas";
+
+/** Nome e avatar genéricos de quem está na janela anônima (1h após postar, até o dia seguinte). */
+const AUTOR_ANONIMO = "Paciente desconhecido";
+const AVATAR_ANONIMO = {
+  cabelo: "branco",
+  roupa: "verde",
+  acessorio: "mascara",
+  expressao: "vazio",
+  item: "nenhum",
+};
 
 export const MORADORES = ["Camarão", "Recruta", "Canela"] as const;
 export type Morador = (typeof MORADORES)[number];
@@ -85,8 +95,36 @@ async function avataresPorNome(sb: ReturnType<typeof client>) {
   return mapa;
 }
 
+/** Contagem de reações por item, e se um paciente específico já reagiu a cada um. */
+async function contarReacoes(
+  sb: ReturnType<typeof client>,
+  tipo: "foto" | "mural",
+  ids: string[],
+  pacienteId?: string,
+) {
+  const total = new Map<string, number>();
+  const minhas = new Set<string>();
+  if (ids.length === 0) return { total, minhas };
+
+  const { data } = await sb
+    .from("reacoes")
+    .select("item_id, paciente_id")
+    .eq("tipo_item", tipo)
+    .in("item_id", ids);
+
+  for (const r of data ?? []) {
+    total.set(r.item_id, (total.get(r.item_id) ?? 0) + 1);
+    if (pacienteId && r.paciente_id === pacienteId) minhas.add(r.item_id);
+  }
+  return { total, minhas };
+}
+
 export const listarMural = createServerFn({ method: "GET" })
-  .inputValidator((input: unknown) => z.object({ destinatario: z.enum(MORADORES) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({ destinatario: z.enum(MORADORES), pacienteId: z.string().uuid().optional() })
+      .parse(input),
+  )
   .handler(async ({ data }) => {
     const sb = client();
     const { data: rows, error } = await sb
@@ -100,20 +138,30 @@ export const listarMural = createServerFn({ method: "GET" })
     if (!rows?.length) return [];
 
     const mapa = await avataresPorNome(sb);
-    const revelado = jaRevelou();
+    const reacoes = await contarReacoes(
+      sb,
+      "mural",
+      rows.map((r) => r.id),
+      data.pacienteId,
+    );
 
-    // Antes da revelação o texto não sai daqui. O borrão do front é enfeite;
-    // a fechadura é esta linha.
-    return rows.map((r) => ({
-      id: r.id,
-      autor: r.autor,
-      created_at: r.created_at,
-      mensagem: revelado ? r.mensagem : null,
-      tamanho: revelado ? null : r.mensagem.length,
-      personagem: mapa.get(r.autor)?.personagem ?? null,
-      avatar: mapa.get(r.autor)?.avatar ?? null,
-      itens: mapa.get(r.autor)?.itens ?? null,
-    }));
+    // O recado aparece na hora. Depois de 1h vira anônimo (quem escreveu some,
+    // o texto continua) até o dia seguinte, quando o autor volta a aparecer.
+    return rows.map((r) => {
+      const anonimo = estadoDoPost(r.created_at) === "anonimo";
+      return {
+        id: r.id,
+        autor: anonimo ? AUTOR_ANONIMO : r.autor,
+        created_at: r.created_at,
+        mensagem: r.mensagem,
+        anonimo,
+        personagem: anonimo ? "coringa" : (mapa.get(r.autor)?.personagem ?? null),
+        avatar: anonimo ? AVATAR_ANONIMO : (mapa.get(r.autor)?.avatar ?? null),
+        itens: anonimo ? null : (mapa.get(r.autor)?.itens ?? null),
+        reacoes: reacoes.total.get(r.id) ?? 0,
+        reagido: reacoes.minhas.has(r.id),
+      };
+    });
   });
 
 export const postarNoMural = createServerFn({ method: "POST" })
@@ -158,45 +206,58 @@ export const registrarFoto = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const listarFotos = createServerFn({ method: "GET" }).handler(async () => {
-  const sb = client();
-  const { data: rows, error } = await sb
-    .from("fotos")
-    .select("id, autor, legenda, path, created_at")
-    .order("created_at", { ascending: false })
-    .limit(60);
+export const listarFotos = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) =>
+    z.object({ pacienteId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data: entrada }) => {
+    const sb = client();
+    const { data: rows, error } = await sb
+      .from("fotos")
+      .select("id, autor, legenda, path, created_at")
+      .order("created_at", { ascending: false })
+      .limit(60);
 
-  if (error) throw new Error("Não foi possível carregar a galeria.");
-  if (!rows?.length) return [];
+    if (error) throw new Error("Não foi possível carregar a galeria.");
+    if (!rows?.length) return [];
 
-  const mapa = await avataresPorNome(sb);
-  const revelado = jaRevelou();
+    const mapa = await avataresPorNome(sb);
+    const reacoes = await contarReacoes(
+      sb,
+      "foto",
+      rows.map((r) => r.id),
+      entrada.pacienteId,
+    );
 
-  // Antes de 30/10 às 12h nenhuma URL assinada é gerada. O que sai daqui é
-  // só quem registrou e o que registrou.
-  const urls = new Map<string, string>();
-  if (revelado) {
+    // A foto sai na hora para todo mundo. Só a identidade de quem tirou entra
+    // e sai de cena: visível na primeira hora, anônima depois, revelada no dia
+    // seguinte.
     const { data: signed } = await sb.storage.from("galeria").createSignedUrls(
       rows.map((r) => r.path),
       60 * 60 * 6,
     );
+    const urls = new Map<string, string>();
     for (const assinada of signed ?? []) {
       if (assinada.path && assinada.signedUrl) urls.set(assinada.path, assinada.signedUrl);
     }
-  }
 
-  return rows.map((r) => ({
-    id: r.id,
-    autor: r.autor,
-    created_at: r.created_at,
-    legenda: revelado ? r.legenda : null,
-    url: revelado ? (urls.get(r.path) ?? null) : null,
-    atividade: "registrou um momento",
-    personagem: mapa.get(r.autor)?.personagem ?? null,
-    avatar: mapa.get(r.autor)?.avatar ?? null,
-    itens: mapa.get(r.autor)?.itens ?? null,
-  }));
-});
+    return rows.map((r) => {
+      const anonimo = estadoDoPost(r.created_at) === "anonimo";
+      return {
+        id: r.id,
+        autor: anonimo ? AUTOR_ANONIMO : r.autor,
+        created_at: r.created_at,
+        legenda: r.legenda,
+        url: urls.get(r.path) ?? null,
+        anonimo,
+        personagem: anonimo ? "coringa" : (mapa.get(r.autor)?.personagem ?? null),
+        avatar: anonimo ? AVATAR_ANONIMO : (mapa.get(r.autor)?.avatar ?? null),
+        itens: anonimo ? null : (mapa.get(r.autor)?.itens ?? null),
+        reacoes: reacoes.total.get(r.id) ?? 0,
+        reagido: reacoes.minhas.has(r.id),
+      };
+    });
+  });
 
 export const listarPacientes = createServerFn({ method: "GET" }).handler(async () => {
   const { data: rows, error } = await client()

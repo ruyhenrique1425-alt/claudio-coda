@@ -30,13 +30,18 @@ import { lerProntuario } from "@/lib/paciente-local";
  * "Mais" junto com Ranking e Loja: é a tela que se visita uma vez para
  * internar e revisita pouco, então ela cede o lugar para as telas de uso
  * diário, que precisam estar sempre a um toque.
+ *
+ * Mural e Câmera são as duas ações que a festa inteira faz o tempo todo —
+ * registrar o momento e deixar recado — então ganham um selo (`destaque`)
+ * que as diferencia visualmente das outras três mesmo paradas, sem
+ * precisar estar ativas para chamar atenção.
  */
 const FIXAS = [
-  { to: "/mural", label: "Mural", icon: MessageSquare },
-  { to: "/camera", label: "Câmera", icon: Camera },
-  { to: "/match", label: "Match", icon: HeartCrack },
-  { to: "/arcade", label: "Arcade", icon: Gamepad2 },
-  { to: "/panico", label: "Pânico", icon: Siren },
+  { to: "/mural", label: "Mural", icon: MessageSquare, destaque: true },
+  { to: "/camera", label: "Câmera", icon: Camera, destaque: true },
+  { to: "/match", label: "Match", icon: HeartCrack, destaque: false },
+  { to: "/arcade", label: "Arcade", icon: Gamepad2, destaque: false },
+  { to: "/panico", label: "Pânico", icon: Siren, destaque: false },
 ] as const;
 
 const NO_MAIS = [
@@ -173,21 +178,29 @@ export function AppShell({ children }: { children: ReactNode }) {
         {/* Seis colunas iguais: cinco telas fixas + "Mais". Em 360px dá
             60px por coluna, folgado para ícone e rótulo. */}
         <ul className="mx-auto grid max-w-md grid-cols-6">
-          {FIXAS.map(({ to, label, icon: Icon }) => {
+          {FIXAS.map(({ to, label, icon: Icon, destaque }) => {
             const active = pathname === to;
             return (
               <li key={to}>
                 <Link
                   to={to}
                   className={`flex h-[74px] flex-col items-center justify-center gap-1.5 transition-colors ${
-                    active ? "text-neon" : "text-muted-foreground"
+                    active ? "text-neon" : destaque ? "text-foreground" : "text-muted-foreground"
                   }`}
                 >
-                  <Icon
-                    strokeWidth={active ? 2.4 : 2}
-                    className={`h-[26px] w-[26px] ${active ? "drop-shadow-[0_0_10px_var(--neon)]" : ""}`}
-                  />
-                  <span className="font-arcade text-[7px] uppercase">{label}</span>
+                  <span
+                    className={`grid place-items-center rounded-full transition-colors ${
+                      destaque && !active ? "bg-neon/15" : ""
+                    } ${destaque ? "h-9 w-9" : "h-8 w-8"}`}
+                  >
+                    <Icon
+                      strokeWidth={active ? 2.4 : destaque ? 2.2 : 2}
+                      className={`${destaque ? "h-[24px] w-[24px]" : "h-[22px] w-[22px]"} ${
+                        active ? "drop-shadow-[0_0_10px_var(--neon)]" : ""
+                      }`}
+                    />
+                  </span>
+                  <span className="font-arcade text-[8px] uppercase">{label}</span>
                   <span
                     className={`h-1 w-6 transition-all ${
                       active ? "bg-neon shadow-[0_0_10px_var(--neon)]" : "bg-transparent"
@@ -211,7 +224,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 strokeWidth={maisAberto || emMais ? 2.4 : 2}
                 className={`h-[26px] w-[26px] ${maisAberto || emMais ? "drop-shadow-[0_0_10px_var(--neon)]" : ""}`}
               />
-              <span className="font-arcade text-[7px] uppercase">Mais</span>
+              <span className="font-arcade text-[8px] uppercase">Mais</span>
               <span
                 className={`h-1 w-6 transition-all ${
                   emMais ? "bg-neon shadow-[0_0_10px_var(--neon)]" : "bg-transparent"

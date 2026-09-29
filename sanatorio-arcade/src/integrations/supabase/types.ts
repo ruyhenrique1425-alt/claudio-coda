@@ -529,6 +529,30 @@ export type Database = {
           },
         ];
       };
+      reacoes: {
+        Row: {
+          created_at: string;
+          id: string;
+          item_id: string;
+          paciente_id: string;
+          tipo_item: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          item_id: string;
+          paciente_id: string;
+          tipo_item: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          item_id?: string;
+          paciente_id?: string;
+          tipo_item?: string;
+        };
+        Relationships: [];
+      };
       transacoes: {
         Row: {
           chave_idempotencia: string | null;
@@ -779,6 +803,10 @@ export type Database = {
           _legenda?: string;
           _path: string;
         };
+        Returns: boolean;
+      };
+      reagir: {
+        Args: { _item_id: string; _paciente: string; _tipo_item: string; _token: string };
         Returns: boolean;
       };
       responder_desafio: {
