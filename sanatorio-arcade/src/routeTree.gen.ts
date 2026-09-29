@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminSanatorioRouteImport } from './routes/admin-sanatorio'
 import { Route as ArcadeRouteImport } from './routes/arcade'
 import { Route as BarAdminRouteImport } from './routes/bar-admin'
 import { Route as CameraRouteImport } from './routes/camera'
@@ -25,6 +26,11 @@ import { Route as QCodigoRouteImport } from './routes/q.$codigo'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSanatorioRoute = AdminSanatorioRouteImport.update({
+  id: '/admin-sanatorio',
+  path: '/admin-sanatorio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArcadeRoute = ArcadeRouteImport.update({
@@ -85,6 +91,7 @@ const QCodigoRoute = QCodigoRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-sanatorio': typeof AdminSanatorioRoute
   '/arcade': typeof ArcadeRoute
   '/bar-admin': typeof BarAdminRoute
   '/camera': typeof CameraRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-sanatorio': typeof AdminSanatorioRoute
   '/arcade': typeof ArcadeRoute
   '/bar-admin': typeof BarAdminRoute
   '/camera': typeof CameraRoute
@@ -114,6 +122,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin-sanatorio': typeof AdminSanatorioRoute
   '/arcade': typeof ArcadeRoute
   '/bar-admin': typeof BarAdminRoute
   '/camera': typeof CameraRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-sanatorio'
     | '/arcade'
     | '/bar-admin'
     | '/camera'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin-sanatorio'
     | '/arcade'
     | '/bar-admin'
     | '/camera'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin-sanatorio'
     | '/arcade'
     | '/bar-admin'
     | '/camera'
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminSanatorioRoute: typeof AdminSanatorioRoute
   ArcadeRoute: typeof ArcadeRoute
   BarAdminRoute: typeof BarAdminRoute
   CameraRoute: typeof CameraRoute
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-sanatorio': {
+      id: '/admin-sanatorio'
+      path: '/admin-sanatorio'
+      fullPath: '/admin-sanatorio'
+      preLoaderRoute: typeof AdminSanatorioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/arcade': {
@@ -277,6 +297,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminSanatorioRoute: AdminSanatorioRoute,
   ArcadeRoute: ArcadeRoute,
   BarAdminRoute: BarAdminRoute,
   CameraRoute: CameraRoute,

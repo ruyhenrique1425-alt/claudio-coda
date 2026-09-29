@@ -415,3 +415,19 @@ inventário de sobrevivência de quem o encontrar.
 anterior — ícone próprio, manifest, meta tags de iOS/Android e o componente
 `InstalarPwa` com prompt do Android e instruções manuais do iOS — só
 confirmado que continua funcionando.
+
+## Terceira rodada (setembro/2026)
+
+**Instalação: fechar não é para sempre.** Quem fechava o banner de instalação
+perdia o convite de vez (guardava num localStorage permanente). Agora fechar
+só recolhe para um botão pequeno fixo no canto — continua ali, discreto, para
+quando a pessoa quiser instalar mais tarde.
+
+**Painel do organizador em `/admin-sanatorio`.** Tela nova, fora da barra de
+navegação, protegida pela mesma senha da oficina e do bar: pacientes e fotos
+recentes, nível de pânico ao vivo (mesma leitura e canal realtime da tela
+`/panico`) e um botão para exportar o mural inteiro (os três moradores) em
+CSV, com BOM para o Excel abrir acentuado sem sopa de letrinhas. Reaproveita
+`listarPacientes`, `listarFotos` e `listarMural`, que já existiam para o
+guest — o painel respeita o mesmo embargo de fotos e recados que os
+convidados veem, em vez de furar a revelação por ser tela de administração.

@@ -685,6 +685,10 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      checar_senha_administracao: {
+        Args: { _senha: string };
+        Returns: boolean;
+      };
       creditar_pontos: {
         Args: {
           _chave?: string;
