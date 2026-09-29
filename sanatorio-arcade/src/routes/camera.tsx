@@ -3,11 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "motion/react";
-import { Camera, FileWarning, Loader2, VenetianMask } from "lucide-react";
+import { Camera, FileWarning, Loader2 } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import { CartaoPixel } from "@/components/CartaoPixel";
 import { BotaoReagir } from "@/components/BotaoReagir";
+import { ConteudoMisterioso } from "@/components/ConteudoMisterioso";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
 import { comprimir } from "@/lib/imagem";
 import { enfileirar } from "@/lib/fila";
@@ -91,8 +92,8 @@ function CameraPage() {
           </h1>
         </div>
         <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
-          Toda foto aparece na hora, pra galera toda ver. Depois de uma hora quem tirou vira
-          mistério até o dia seguinte — a foto continua no mural, só some o nome.
+          Toda foto aparece na hora, pra galera toda ver. Depois de uma hora a própria imagem vira
+          mistério até o dia seguinte — quem tirou continua aparecendo, só a foto que embaça.
         </p>
       </CartaoPixel>
 
@@ -234,12 +235,14 @@ function CameraPage() {
               className="overflow-hidden rounded-sm border border-neon/25 bg-card/40"
             >
               {f.url ? (
-                <img
-                  src={f.url}
-                  alt={f.legenda ?? `Registro de ${f.autor}`}
-                  loading="lazy"
-                  className="w-full object-cover"
-                />
+                <ConteudoMisterioso ativo={f.anonimo}>
+                  <img
+                    src={f.url}
+                    alt={f.legenda ?? `Registro de ${f.autor}`}
+                    loading="lazy"
+                    className="w-full object-cover"
+                  />
+                </ConteudoMisterioso>
               ) : null}
               <figcaption className="p-3">
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
@@ -250,9 +253,8 @@ function CameraPage() {
                     size="sm"
                     title={`Avatar de ${f.autor}`}
                   />
-                  <span className="font-arcade flex min-w-0 items-center gap-1.5 truncate text-[8px] uppercase text-whisky">
-                    {f.anonimo ? <VenetianMask className="h-3 w-3 shrink-0" aria-hidden /> : null}
-                    <span className="truncate">{f.autor}</span>
+                  <span className="font-arcade truncate text-[8px] uppercase text-whisky">
+                    {f.autor}
                   </span>
                   <time className="shrink-0 text-[10px] text-muted-foreground">
                     {new Date(f.created_at).toLocaleString("pt-BR", {

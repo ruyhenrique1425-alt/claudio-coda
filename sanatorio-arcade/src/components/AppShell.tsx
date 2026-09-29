@@ -32,15 +32,17 @@ import { lerProntuario } from "@/lib/paciente-local";
  * diário, que precisam estar sempre a um toque.
  *
  * Mural e Câmera são as duas ações que a festa inteira faz o tempo todo —
- * registrar o momento e deixar recado — então ganham um selo (`destaque`)
- * que as diferencia visualmente das outras três mesmo paradas, sem
- * precisar estar ativas para chamar atenção.
+ * registrar o momento e deixar recado — então ficam nas colunas centrais
+ * (as mais fáceis de mirar com o polegar) e ganham um selo (`destaque`)
+ * que as diferencia visualmente das outras mesmo paradas. Match e Arcade,
+ * de uso mais esporádico, vão para a esquerda; Pânico fica isolado à
+ * direita por ser o botão de emergência.
  */
 const FIXAS = [
-  { to: "/mural", label: "Mural", icon: MessageSquare, destaque: true },
-  { to: "/camera", label: "Câmera", icon: Camera, destaque: true },
   { to: "/match", label: "Match", icon: HeartCrack, destaque: false },
   { to: "/arcade", label: "Arcade", icon: Gamepad2, destaque: false },
+  { to: "/mural", label: "Mural", icon: MessageSquare, destaque: true },
+  { to: "/camera", label: "Câmera", icon: Camera, destaque: true },
   { to: "/panico", label: "Pânico", icon: Siren, destaque: false },
 ] as const;
 

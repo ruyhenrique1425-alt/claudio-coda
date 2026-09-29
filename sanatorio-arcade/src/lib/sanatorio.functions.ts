@@ -5,16 +5,6 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { estadoDoPost } from "@/lib/datas";
 
-/** Nome e avatar genéricos de quem está na janela anônima (1h após postar, até o dia seguinte). */
-const AUTOR_ANONIMO = "Paciente desconhecido";
-const AVATAR_ANONIMO = {
-  cabelo: "branco",
-  roupa: "verde",
-  acessorio: "mascara",
-  expressao: "vazio",
-  item: "nenhum",
-};
-
 export const MORADORES = ["Camarão", "Recruta", "Canela"] as const;
 export type Morador = (typeof MORADORES)[number];
 
@@ -145,19 +135,20 @@ export const listarMural = createServerFn({ method: "GET" })
       data.pacienteId,
     );
 
-    // O recado aparece na hora. Depois de 1h vira anônimo (quem escreveu some,
-    // o texto continua) até o dia seguinte, quando o autor volta a aparecer.
+    // O recado aparece na hora. Depois de 1h o texto vira segredo (o autor
+    // continua visível) até o dia seguinte, quando o recado se revela de novo.
     return rows.map((r) => {
       const anonimo = estadoDoPost(r.created_at) === "anonimo";
+      const avatar = mapa.get(r.autor);
       return {
         id: r.id,
-        autor: anonimo ? AUTOR_ANONIMO : r.autor,
+        autor: r.autor,
         created_at: r.created_at,
         mensagem: r.mensagem,
         anonimo,
-        personagem: anonimo ? "coringa" : (mapa.get(r.autor)?.personagem ?? null),
-        avatar: anonimo ? AVATAR_ANONIMO : (mapa.get(r.autor)?.avatar ?? null),
-        itens: anonimo ? null : (mapa.get(r.autor)?.itens ?? null),
+        personagem: avatar?.personagem ?? null,
+        avatar: avatar?.avatar ?? null,
+        itens: avatar?.itens ?? null,
         reacoes: reacoes.total.get(r.id) ?? 0,
         reagido: reacoes.minhas.has(r.id),
       };
@@ -229,9 +220,9 @@ export const listarFotos = createServerFn({ method: "GET" })
       entrada.pacienteId,
     );
 
-    // A foto sai na hora para todo mundo. Só a identidade de quem tirou entra
-    // e sai de cena: visível na primeira hora, anônima depois, revelada no dia
-    // seguinte.
+    // A foto sai na hora para todo mundo. Quem tirou nunca sai de cena: só a
+    // própria imagem embaça na tela depois de 1h, até o dia seguinte revelar
+    // de novo (o servidor sempre manda a URL — o mistério é só visual).
     const { data: signed } = await sb.storage.from("galeria").createSignedUrls(
       rows.map((r) => r.path),
       60 * 60 * 6,
@@ -243,16 +234,17 @@ export const listarFotos = createServerFn({ method: "GET" })
 
     return rows.map((r) => {
       const anonimo = estadoDoPost(r.created_at) === "anonimo";
+      const avatar = mapa.get(r.autor);
       return {
         id: r.id,
-        autor: anonimo ? AUTOR_ANONIMO : r.autor,
+        autor: r.autor,
         created_at: r.created_at,
         legenda: r.legenda,
         url: urls.get(r.path) ?? null,
         anonimo,
-        personagem: anonimo ? "coringa" : (mapa.get(r.autor)?.personagem ?? null),
-        avatar: anonimo ? AVATAR_ANONIMO : (mapa.get(r.autor)?.avatar ?? null),
-        itens: anonimo ? null : (mapa.get(r.autor)?.itens ?? null),
+        personagem: avatar?.personagem ?? null,
+        avatar: avatar?.avatar ?? null,
+        itens: avatar?.itens ?? null,
         reacoes: reacoes.total.get(r.id) ?? 0,
         reagido: reacoes.minhas.has(r.id),
       };

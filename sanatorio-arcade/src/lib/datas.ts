@@ -27,10 +27,11 @@ function diaBrasilia(data: Date): number {
 }
 
 /**
- * Uma foto ou recado nasce visível (com autor), fica anônimo depois de uma
- * hora — ainda dá pra ver o quê, só não o quem — e volta a mostrar o autor
- * no dia seguinte. É o "quem fez isso ontem?" da manhã seguinte, todo dia,
- * em vez de um embargo único até uma data fixa da festa.
+ * Uma foto ou recado nasce visível (com autor e conteúdo), fica em segredo
+ * depois de uma hora — o autor continua à vista, só o conteúdo (a foto, o
+ * texto do recado) embaça — e volta a revelar tudo no dia seguinte. É o "o
+ * que rolou ontem?" da manhã seguinte, todo dia, em vez de um embargo único
+ * até uma data fixa da festa.
  */
 export function estadoDoPost(criadoEm: Date | string, agora: Date = new Date()): EstadoRevelacao {
   const quando = typeof criadoEm === "string" ? new Date(criadoEm) : criadoEm;

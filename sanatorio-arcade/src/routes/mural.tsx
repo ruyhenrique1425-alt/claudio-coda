@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "motion/react";
-import { FileWarning, Loader2, Send, VenetianMask } from "lucide-react";
+import { FileWarning, Loader2, Send } from "lucide-react";
 
 import { ArcadeButton } from "@/components/ArcadeButton";
 import { BotaoReagir } from "@/components/BotaoReagir";
+import { ConteudoMisterioso } from "@/components/ConteudoMisterioso";
 import { PixelAvatar } from "@/components/avatar/PixelAvatar";
 import { Moldura, NomeDoPaciente } from "@/components/Moldura";
 
@@ -135,8 +136,8 @@ function Feed({
           Arquivo confidencial · {feed.data?.length ?? 0} registros
         </p>
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-          Todo recado aparece na hora. Depois de uma hora o autor vira mistério até o dia seguinte —
-          o recado continua ali, só some quem escreveu.
+          Todo recado aparece na hora. Depois de uma hora o próprio texto vira mistério até o dia
+          seguinte — quem escreveu continua à vista, só o recado que embaça.
         </p>
       </header>
 
@@ -182,11 +183,8 @@ function Feed({
                     title={`Avatar de ${r.autor}`}
                   />
                 </Moldura>
-                <p className="font-arcade flex min-w-0 items-center gap-1.5 truncate text-[8px] uppercase text-whisky">
-                  {r.anonimo ? <VenetianMask className="h-3 w-3 shrink-0" aria-hidden /> : null}
-                  <span className="truncate">
-                    <NomeDoPaciente nome={r.autor} itens={r.itens} />
-                  </span>
+                <p className="font-arcade truncate text-[8px] uppercase text-whisky">
+                  <NomeDoPaciente nome={r.autor} itens={r.itens} />
                 </p>
                 <time className="shrink-0 text-[10px] text-muted-foreground">
                   {new Date(r.created_at).toLocaleString("pt-BR", {
@@ -198,9 +196,11 @@ function Feed({
                 </time>
               </div>
 
-              <p className="mt-2 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground">
-                {r.mensagem}
-              </p>
+              <ConteudoMisterioso ativo={r.anonimo} className="mt-2 rounded-sm">
+                <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-foreground">
+                  {r.mensagem}
+                </p>
+              </ConteudoMisterioso>
 
               <div className="mt-1 flex justify-end">
                 <BotaoReagir
